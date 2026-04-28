@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { Star, Search, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -160,7 +161,9 @@ export default async function StorePage({
               </span>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-slate-400 font-medium">Ordenar por:</span>
-                <SortSelect currentSort={sort} />
+                <Suspense fallback={<div className="text-xs text-slate-400">Cargando...</div>}>
+                  <SortSelect currentSort={sort} />
+                </Suspense>
               </div>
             </div>
 
