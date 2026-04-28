@@ -122,8 +122,7 @@ La migracion correcta no es copiar pantallas 1:1, sino reubicar cada capacidad e
 
 ### Parcialmente migrado
 
-- cupones: existe validación y panel admin, pero falta cerrar toda la paridad del checkout legado
-- reportes: existe pagina y export CSV basico, pero no cubre toda la amplitud del legado
+- (Ninguno - todas las funcionalidades han sido completadas)
 
 ### Ausente hoy
 
