@@ -1,0 +1,164 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  OPERATOR
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String
+  fullName  String
+  email     String?
+  role      Role     @default(OPERATOR)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  stockMovements StockMovement[]
+}
+
+model Category {
+  id           Int      @id @default(autoincrement())
+  name         String
+  slug         String   @unique
+  description  String?
+  parentId     Int?
+  image        String?
+  displayOrder Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  parent       Category?  @relation("SubCategories", fields: [parentId], references: [id])
+  children     Category[] @relation("SubCategories")
+  products     Product[]
+}
+
+model Product {
+  id              Int      @id @default(autoincrement())
+  sku             String   @unique
+  name            String
+  slug            String   @unique
+  description     String?
+  longDescription String?
+  categoryId      Int
+  price           Decimal  @db.Decimal(10,2)
+  costPrice       Decimal? @db.Decimal(10,2)
+  stock           Int      @default(0)
+  minStock        Int      @default(5)
+  mainImage       String?
+  brand           String?
+  weight          String?
+  isFeatured      Boolean  @default(false)
+  isActive        Boolean  @default(true)
+  views           Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  category        Category @relation(fields: [categoryId], references: [id])
+  images          ProductImage[]
+  orderItems      OrderItem[]
+  stockMovements  StockMovement[]
+}
+
+model ProductImage {
+  id           Int      @id @default(autoincrement())
+  productId    Int
+  imagePath    String
+  displayOrder Int      @default(0)
+  isMain       Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  TRANSFER
+  CASH
+  OTHER
+}
+
+model Order {
+  id              Int           @id @default(autoincrement())
+  orderNumber     String        @unique
+  customerName    String
+  customerEmail   String?
+  customerPhone   String
+  customerAddress String?
+  totalAmount     Decimal       @db.Decimal(10,2)
+  status          OrderStatus   @default(PENDING)
+  paymentMethod   PaymentMethod @default(TRANSFER)
+  notes           String?
+  whatsappSent    Boolean       @default(false)
+  whatsappSentAt  DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  items           OrderItem[]
+}
+
+model OrderItem {
+  id           Int      @id @default(autoincrement())
+  orderId      Int
+  productId    Int
+  productName  String
+  productSku   String
+  quantity     Int
+  unitPrice    Decimal  @db.Decimal(10,2)
+  subtotal     Decimal  @db.Decimal(10,2)
+  createdAt    DateTime @default(now())
+
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+}
+
+enum MovementType {
+  IN
+  OUT
+  ADJUSTMENT
+}
+
+model StockMovement {
+  id            Int          @id @default(autoincrement())
+  productId     Int
+  movementType  MovementType
+  quantity      Int
+  previousStock Int
+  newStock      Int
+  referenceType String?
+  referenceId   Int?
+  notes         String?
+  userId        Int?
+  createdAt     DateTime     @default(now())
+
+  product       Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user          User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model Setting {
+  id           Int      @id @default(autoincrement())
+  settingKey   String   @unique
+  settingValue String?
+  description  String?
+  updatedAt    DateTime @updatedAt
+}
