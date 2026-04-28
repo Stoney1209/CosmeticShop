@@ -19,11 +19,20 @@ export default withAuth(
   },
   {
     callbacks: {
-      authorized: () => true, // We handle authorization in the middleware function above
+      authorized: () => true,
     },
   }
 );
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/productos/:path*", "/categorias/:path*", "/pedidos/:path*", "/clientes/:path*", "/inventario/:path*", "/login"],
+  matcher: [
+    "/dashboard/:path*",
+    "/productos/:path*",
+    "/categorias/:path*",
+    "/pedidos/:path*",
+    "/usuarios/:path*",
+    "/inventario/:path*",
+    "/reportes/:path*",
+    "/login"
+  ],
 };
