@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCart } from "@/store/cart";
 import { createOrder } from "@/app/actions/orders";
+import { validateCoupon } from "@/app/actions/validate-coupon";
 import { toast } from "sonner";
 
 export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
@@ -22,6 +23,11 @@ export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
+
+  // Coupon state
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<any | null>(null);
+  const [discountAmount, setDiscountAmount] = useState(0);
 
   useEffect(() => {
     setIsMounted(true);
@@ -39,7 +45,9 @@ export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
       customerName: name,
       customerPhone: phone,
       customerAddress: address,
-      totalAmount: cart.totalPrice(),
+      totalAmount: cart.totalPrice() - discountAmount,
+      discountAmount: discountAmount,
+      couponCode: appliedCoupon?.code,
       items: cart.items.map(item => ({
         productId: item.id,
         productVariantId: item.variantId,
@@ -65,8 +73,9 @@ export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
           message += `- ${item.quantity}x ${item.name}${variantText} ($${item.price.toFixed(2)})\n`;
         });
         
-        message += `\n*Total a pagar: $${cart.totalPrice().toFixed(2)}*\n\n`;
-        message += `Mis datos:\nNombre: ${name}\nTeléfono: ${phone}\nDirección: ${address || 'A convenir'}\n\n`;
+        message += `\n*Total a pagar: $${(cart.totalPrice() - discountAmount).toFixed(2)}*`;
+        if (discountAmount > 0) message += ` _(Ahorraste $${discountAmount.toFixed(2)})_`;
+        message += `\n\nMis datos:\nNombre: ${name}\nTeléfono: ${phone}\nDirección: ${address || 'A convenir'}\n\n`;
         message += `Por favor indíquenme los pasos para el pago y envío.`;
         
         const encodedMessage = encodeURIComponent(message);
@@ -140,7 +149,10 @@ export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
               <Separator className="mb-4" />
               <div className="flex justify-between font-bold text-lg mb-6">
                 <span>Total a pagar</span>
-                <span>${cart.totalPrice().toFixed(2)}</span>
+                <div className="text-right">
+                  {discountAmount > 0 && <p className="text-xs text-slate-400 line-through">${cart.totalPrice().toFixed(2)}</p>}
+                  <p className="text-green-600">${(cart.totalPrice() - discountAmount).toFixed(2)}</p>
+                </div>
               </div>
               <Button type="submit" disabled={isSubmitting} className="w-full bg-green-600 hover:bg-green-700 text-white rounded-full py-6 text-lg shadow-lg shadow-green-200 transition-all active:scale-95">
                 {isSubmitting ? "Registrando..." : "Enviar por WhatsApp"}
@@ -192,11 +204,65 @@ export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
                 ))}
               </div>
             </ScrollArea>
-            <div className="py-6 mt-auto bg-white">
-              <Separator className="mb-4" />
-              <div className="flex justify-between font-bold text-lg mb-6">
+            
+            <div className="py-6 mt-auto bg-white space-y-4">
+              {/* Coupon UI */}
+              <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase text-slate-400">Cupón de descuento</Label>
+                <div className="flex gap-2">
+                  <Input 
+                    placeholder="Código" 
+                    value={couponCode} 
+                    onChange={e => setCouponCode(e.target.value.toUpperCase())}
+                    disabled={!!appliedCoupon}
+                    className="h-10 font-bold uppercase"
+                  />
+                  {appliedCoupon ? (
+                    <Button variant="outline" size="sm" onClick={() => {
+                      setAppliedCoupon(null);
+                      setDiscountAmount(0);
+                      setCouponCode("");
+                    }} className="text-red-500 border-red-200 hover:bg-red-50">
+                      Quitar
+                    </Button>
+                  ) : (
+                    <Button variant="outline" size="sm" onClick={async () => {
+                      if (!couponCode) return;
+                      const res = await validateCoupon(couponCode, cart.totalPrice());
+                      if (res.success) {
+                        const c = res.coupon;
+                        let disc = 0;
+                        if (c.discountType === "PERCENTAGE") {
+                          disc = cart.totalPrice() * (c.value / 100);
+                          if (c.maxDiscount && disc > c.maxDiscount) disc = c.maxDiscount;
+                        } else {
+                          disc = c.value;
+                        }
+                        setAppliedCoupon(c);
+                        setDiscountAmount(disc);
+                        toast.success("Cupón aplicado correctamente");
+                      } else {
+                        toast.error(res.error);
+                      }
+                    }} className="text-pink-600 border-pink-200 hover:bg-pink-50">
+                      Aplicar
+                    </Button>
+                  )}
+                </div>
+                {appliedCoupon && (
+                  <p className="text-[10px] font-bold text-green-600 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" /> {appliedCoupon.code} aplicado (-${discountAmount.toFixed(2)})
+                  </p>
+                )}
+              </div>
+
+              <Separator />
+              <div className="flex justify-between font-bold text-lg">
                 <span>Total estimado</span>
-                <span className="text-pink-600">${cart.totalPrice().toFixed(2)}</span>
+                <div className="text-right">
+                  {discountAmount > 0 && <p className="text-xs text-slate-400 line-through font-normal">${cart.totalPrice().toFixed(2)}</p>}
+                  <p className="text-pink-600">${(cart.totalPrice() - discountAmount).toFixed(2)}</p>
+                </div>
               </div>
               <Button onClick={() => setIsCheckoutForm(true)} className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-full py-6 text-lg transition-all active:scale-95 shadow-xl shadow-slate-200">
                 Proceder al Checkout
