@@ -2,7 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, ShoppingBag, Tags, Users, FileText, Settings, PackageOpen, BarChart3 } from "lucide-react";
+import { 
+  LayoutDashboard, 
+  ShoppingBag, 
+  Tags, 
+  Users, 
+  FileText, 
+  Settings, 
+  PackageOpen, 
+  BarChart3,
+  Ticket,
+  UserCircle
+} from "lucide-react";
 
 const navItems = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -11,8 +22,11 @@ const navItems = [
   { name: "Inventario", href: "/inventario", icon: PackageOpen },
   { name: "Pedidos", href: "/pedidos", icon: FileText },
   { name: "Usuarios", href: "/usuarios", icon: Users },
+  { name: "Clientes", href: "/clientes", icon: UserCircle },
+  { name: "Cupones", href: "/cupones", icon: Ticket },
   { name: "Reportes", href: "/reportes", icon: BarChart3 },
   { name: "Configuración", href: "/configuracion", icon: Settings },
+  { name: "Variantes", href: "/configuracion/variantes", icon: Settings },
 ];
 
 export function Sidebar() {

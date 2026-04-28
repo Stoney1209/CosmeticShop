@@ -1,37 +1,42 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { getProducts } from "@/app/actions/products";
-import { getCategories } from "@/app/actions/categories";
+import { prisma } from "@/lib/prisma";
 import { ProductsClient } from "./ProductsClient";
 
-export const metadata = {
-  title: "Productos | Cosmetics Admin",
-};
-
 export default async function ProductsPage() {
-  const products = await getProducts();
-  const categories = await getCategories();
+  const products = await prisma.product.findMany({
+    orderBy: { createdAt: "desc" },
+    include: {
+      category: true,
+      variants: {
+        include: {
+          values: {
+            include: { type: true }
+          }
+        }
+      }
+    }
+  });
 
-  // Convert Decimals to numbers for client components
-  const serializedProducts = products.map(p => ({
-    ...p,
-    price: Number(p.price),
-    costPrice: p.costPrice ? Number(p.costPrice) : null
-  }));
+  const categories = await prisma.category.findMany({
+    orderBy: { name: "asc" }
+  });
+
+  const variantTypes = await prisma.variantType.findMany({
+    include: { values: true },
+    orderBy: { name: "asc" }
+  });
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900">Productos</h2>
-          <p className="text-slate-500 mt-2">Administra el catálogo, precios e inventario de tus cosméticos.</p>
-        </div>
+    <div className="p-6">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold tracking-tight">Productos</h1>
+        <p className="text-muted-foreground mt-1">Gestiona tu catálogo de belleza, inventario y variantes.</p>
       </div>
-
-      <Card className="border-slate-200 shadow-sm">
-        <CardContent className="p-0">
-          <ProductsClient initialProducts={serializedProducts} categories={categories} />
-        </CardContent>
-      </Card>
+      
+      <ProductsClient 
+        initialProducts={JSON.parse(JSON.stringify(products))} 
+        categories={JSON.parse(JSON.stringify(categories))}
+        variantTypes={JSON.parse(JSON.stringify(variantTypes))}
+      />
     </div>
   );
 }

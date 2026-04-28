@@ -7,7 +7,17 @@ import { AddToCartButton } from "./AddToCartButton";
 export default async function ProductPage({ params }: { params: { slug: string } }) {
   const product = await prisma.product.findUnique({
     where: { slug: params.slug },
-    include: { category: true }
+    include: { 
+      category: true,
+      variants: {
+        include: {
+          values: {
+            include: { type: true }
+          }
+        },
+        where: { isActive: true }
+      }
+    }
   });
 
   if (!product || !product.isActive) {
@@ -19,6 +29,19 @@ export default async function ProductPage({ params }: { params: { slug: string }
     where: { categoryId: product.categoryId, id: { not: product.id }, isActive: true },
     take: 4,
     orderBy: { createdAt: "desc" }
+  });
+
+  // Group variant values by type for the selector
+  const variantOptions: {[key: string]: any[]} = {};
+  product.variants.forEach(variant => {
+    variant.values.forEach(val => {
+      if (!variantOptions[val.type.name]) {
+        variantOptions[val.type.name] = [];
+      }
+      if (!variantOptions[val.type.name].find(v => v.id === val.id)) {
+        variantOptions[val.type.name].push(val);
+      }
+    });
   });
 
   return (
@@ -59,7 +82,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
             <div className="text-sm font-bold text-pink-600 uppercase tracking-widest mb-2">
               {product.brand || product.category?.name || "Cosmetics"}
             </div>
-            <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 leading-tight mb-4">
+            <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 leading-tight mb-4 font-heading">
               {product.name}
             </h1>
             <div className="flex items-center gap-4 mb-4">
@@ -79,11 +102,14 @@ export default async function ProductPage({ params }: { params: { slug: string }
           </div>
 
           <div className="border-t border-slate-200 pt-8">
-            <AddToCartButton product={product} />
+            <AddToCartButton 
+              product={JSON.parse(JSON.stringify(product))} 
+              variantOptions={variantOptions}
+            />
           </div>
 
           {/* Guarantee / Features */}
-          <div className="grid grid-cols-2 gap-4 pt-8 text-sm text-slate-600 bg-slate-50 p-6 rounded-2xl">
+          <div className="grid grid-cols-2 gap-4 pt-8 text-sm text-slate-600 bg-[#fcf9f8] p-6 rounded-2xl border border-pink-50">
             <div className="flex items-center gap-2">
               <span className="text-xl">✨</span> Producto 100% Original
             </div>
@@ -103,7 +129,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
       {/* Related Products */}
       {related.length > 0 && (
         <div className="mt-24">
-          <h2 className="text-2xl font-bold text-slate-900 mb-8">También te podría gustar</h2>
+          <h2 className="text-2xl font-bold text-slate-900 mb-8 font-heading">También te podría gustar</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {related.map(item => (
               <Link key={item.id} href={`/producto/${item.slug}`} className="group">

@@ -42,8 +42,10 @@ export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
       totalAmount: cart.totalPrice(),
       items: cart.items.map(item => ({
         productId: item.id,
+        productVariantId: item.variantId,
         productName: item.name,
-        productSku: item.slug, // Normally SKU, using slug as fallback for now
+        productSku: item.slug, 
+        variantLabel: item.variantLabel,
         quantity: item.quantity,
         unitPrice: item.price,
         subtotal: item.price * item.quantity
@@ -59,7 +61,8 @@ export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
         let message = `¡Hola! Acabo de registrar el pedido *${result.order?.orderNumber}*:\n\n`;
         
         cart.items.forEach((item) => {
-          message += `- ${item.quantity}x ${item.name} ($${item.price.toFixed(2)})\n`;
+          const variantText = item.variantLabel ? ` (${item.variantLabel})` : "";
+          message += `- ${item.quantity}x ${item.name}${variantText} ($${item.price.toFixed(2)})\n`;
         });
         
         message += `\n*Total a pagar: $${cart.totalPrice().toFixed(2)}*\n\n`;
@@ -110,7 +113,7 @@ export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
         {cart.items.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center text-slate-500 p-6">
             <ShoppingBag className="w-16 h-16 text-slate-200 mb-4" />
-            <p className="text-lg font-medium">Tu carrito está vacío</p>
+            <p className="text-lg font-medium font-heading">Tu carrito está vacío</p>
             <p className="text-sm">Agrega algunos productos para continuar.</p>
           </div>
         ) : isCheckoutForm ? (
@@ -139,7 +142,7 @@ export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
                 <span>Total a pagar</span>
                 <span>${cart.totalPrice().toFixed(2)}</span>
               </div>
-              <Button type="submit" disabled={isSubmitting} className="w-full bg-green-600 hover:bg-green-700 text-white rounded-full py-6 text-lg shadow-lg shadow-green-200">
+              <Button type="submit" disabled={isSubmitting} className="w-full bg-green-600 hover:bg-green-700 text-white rounded-full py-6 text-lg shadow-lg shadow-green-200 transition-all active:scale-95">
                 {isSubmitting ? "Registrando..." : "Enviar por WhatsApp"}
               </Button>
             </div>
@@ -150,8 +153,8 @@ export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
             <ScrollArea className="flex-1 -mx-6 px-6 py-4">
               <div className="space-y-4">
                 {cart.items.map((item) => (
-                  <div key={item.id} className="flex gap-4">
-                    <div className="h-20 w-20 bg-slate-100 rounded-md border border-slate-200 overflow-hidden flex-shrink-0">
+                  <div key={`${item.id}-${item.variantId || 'base'}`} className="flex gap-4 group">
+                    <div className="h-20 w-20 bg-slate-100 rounded-xl border border-slate-200 overflow-hidden flex-shrink-0 shadow-sm">
                       {item.image ? (
                         <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
                       ) : (
@@ -160,19 +163,26 @@ export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
                     </div>
                     <div className="flex-1 flex flex-col">
                       <div className="flex justify-between">
-                        <h4 className="font-medium text-slate-900 line-clamp-2 text-sm pr-4">{item.name}</h4>
-                        <button onClick={() => cart.removeItem(item.id)} className="text-slate-400 hover:text-red-500 self-start">
+                        <div>
+                          <h4 className="font-bold text-slate-900 line-clamp-1 text-sm pr-4 font-heading">{item.name}</h4>
+                          {item.variantLabel && (
+                            <span className="text-[10px] bg-pink-50 text-pink-600 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border border-pink-100">
+                              {item.variantLabel}
+                            </span>
+                          )}
+                        </div>
+                        <button onClick={() => cart.removeItem(item.id, item.variantId)} className="text-slate-400 hover:text-red-500 self-start transition-colors">
                           <X className="w-4 h-4" />
                         </button>
                       </div>
-                      <div className="text-sm font-bold text-slate-900 mt-1">${item.price.toFixed(2)}</div>
-                      <div className="mt-auto flex items-center gap-2">
-                        <div className="flex items-center border border-slate-200 rounded-md">
-                          <button onClick={() => cart.updateQuantity(item.id, item.quantity - 1)} className="px-2 py-1 text-slate-500 hover:text-slate-900 hover:bg-slate-50" disabled={item.quantity <= 1}>
+                      <div className="text-sm font-bold text-slate-900 mt-auto flex items-center justify-between">
+                        <span>${item.price.toFixed(2)}</span>
+                        <div className="flex items-center border border-slate-200 rounded-lg bg-white shadow-sm">
+                          <button onClick={() => cart.updateQuantity(item.id, item.quantity - 1, item.variantId)} className="px-2 py-1 text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors" disabled={item.quantity <= 1}>
                             <Minus className="w-3 h-3" />
                           </button>
-                          <span className="text-xs font-medium w-6 text-center">{item.quantity}</span>
-                          <button onClick={() => cart.updateQuantity(item.id, item.quantity + 1)} className="px-2 py-1 text-slate-500 hover:text-slate-900 hover:bg-slate-50">
+                          <span className="text-xs font-bold w-6 text-center">{item.quantity}</span>
+                          <button onClick={() => cart.updateQuantity(item.id, item.quantity + 1, item.variantId)} className="px-2 py-1 text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors">
                             <Plus className="w-3 h-3" />
                           </button>
                         </div>
@@ -185,10 +195,10 @@ export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
             <div className="py-6 mt-auto bg-white">
               <Separator className="mb-4" />
               <div className="flex justify-between font-bold text-lg mb-6">
-                <span>Total</span>
-                <span>${cart.totalPrice().toFixed(2)}</span>
+                <span>Total estimado</span>
+                <span className="text-pink-600">${cart.totalPrice().toFixed(2)}</span>
               </div>
-              <Button onClick={() => setIsCheckoutForm(true)} className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-full py-6 text-lg">
+              <Button onClick={() => setIsCheckoutForm(true)} className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-full py-6 text-lg transition-all active:scale-95 shadow-xl shadow-slate-200">
                 Proceder al Checkout
               </Button>
             </div>

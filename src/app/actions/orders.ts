@@ -21,7 +21,16 @@ export async function createOrder(data: {
   customerName: string;
   customerPhone: string;
   customerAddress?: string;
-  items: { productId: number; productName: string; productSku: string; quantity: number; unitPrice: number; subtotal: number }[];
+  items: { 
+    productId: number; 
+    productVariantId?: number;
+    productName: string; 
+    productSku: string; 
+    variantLabel?: string;
+    quantity: number; 
+    unitPrice: number; 
+    subtotal: number 
+  }[];
   totalAmount: number;
 }) {
   try {
@@ -40,7 +49,15 @@ export async function createOrder(data: {
           customerAddress: data.customerAddress,
           totalAmount: data.totalAmount,
           items: {
-            create: data.items
+            create: data.items.map(item => ({
+              productId: item.productId,
+              productVariantId: item.productVariantId,
+              productName: item.variantLabel ? `${item.productName} (${item.variantLabel})` : item.productName,
+              productSku: item.productSku,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              subtotal: item.subtotal
+            }))
           }
         },
         include: { items: true }
@@ -48,16 +65,26 @@ export async function createOrder(data: {
 
       // Update stock
       for (const item of data.items) {
+        // Decrement main product stock
         await tx.product.update({
           where: { id: item.productId },
           data: { stock: { decrement: item.quantity } }
         });
+
+        // Decrement variant stock if exists
+        if (item.productVariantId) {
+          await tx.productVariant.update({
+            where: { id: item.productVariantId },
+            data: { stock: { decrement: item.quantity } }
+          });
+        }
       }
 
       return newOrder;
     });
 
     revalidatePath("/pedidos");
+    revalidatePath("/inventario");
     return { success: true, order };
   } catch (error) {
     console.error("Error creating order:", error);
@@ -83,6 +110,13 @@ export async function updateOrderStatus(id: number, status: "PENDING" | "CONFIRM
             where: { id: item.productId },
             data: { stock: { increment: item.quantity } }
           });
+          
+          if (item.productVariantId) {
+            await tx.productVariant.update({
+              where: { id: item.productVariantId },
+              data: { stock: { increment: item.quantity } }
+            });
+          }
         }
       }
 
@@ -93,6 +127,13 @@ export async function updateOrderStatus(id: number, status: "PENDING" | "CONFIRM
             where: { id: item.productId },
             data: { stock: { decrement: item.quantity } }
           });
+
+          if (item.productVariantId) {
+            await tx.productVariant.update({
+              where: { id: item.productVariantId },
+              data: { stock: { decrement: item.quantity } }
+            });
+          }
         }
       }
 
@@ -100,6 +141,7 @@ export async function updateOrderStatus(id: number, status: "PENDING" | "CONFIRM
     });
 
     revalidatePath("/pedidos");
+    revalidatePath("/inventario");
     return { success: true, order };
   } catch (error) {
     console.error("Error updating order status:", error);
