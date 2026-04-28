@@ -3,6 +3,7 @@ import { Star, Search, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
 import { Input } from "@/components/ui/input";
+import { SortSelect } from "@/components/shop/SortSelect";
 
 export const metadata = {
   title: "Catálogo | Cosmetics Shop",
@@ -159,20 +160,7 @@ export default async function StorePage({
               </span>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-slate-400 font-medium">Ordenar por:</span>
-                <select 
-                  className="text-sm border-none bg-transparent font-bold text-slate-900 focus:ring-0 cursor-pointer outline-none"
-                  defaultValue={sort}
-                  onChange={(e) => {
-                    const params = new URLSearchParams(window.location.search);
-                    params.set('sort', e.target.value);
-                    window.location.search = params.toString();
-                  }}
-                >
-                  <option value="newest">Más recientes</option>
-                  <option value="price_asc">Precio: menor a mayor</option>
-                  <option value="price_desc">Precio: mayor a menor</option>
-                  <option value="name_asc">Nombre: A-Z</option>
-                </select>
+                <SortSelect currentSort={sort} />
               </div>
             </div>
 
