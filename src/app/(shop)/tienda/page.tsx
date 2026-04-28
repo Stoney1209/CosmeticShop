@@ -5,10 +5,60 @@ import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
 import { Input } from "@/components/ui/input";
 import { SortSelect } from "@/components/shop/SortSelect";
+import { Metadata } from "next";
 
-export const metadata = {
-  title: "Catálogo | Cosmetics Shop",
-};
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: {
+    category?: string;
+    search?: string;
+    brand?: string;
+  };
+}): Promise<Metadata> {
+  const categorySlug = searchParams.category;
+  const search = searchParams.search;
+  const brand = searchParams.brand;
+
+  let title = "Catálogo | Cosmetics Shop";
+  let description = "Explora nuestra selección de los mejores productos de belleza. Encuentra cosméticos de alta calidad para tu rutina diaria.";
+
+  if (categorySlug) {
+    const category = await prisma.category.findUnique({
+      where: { slug: categorySlug },
+    });
+    if (category) {
+      title = `${category.name} | Catálogo Cosmetics Shop`;
+      description = `Descubre nuestra colección de ${category.name.toLowerCase()}. Productos de alta calidad para tu cuidado personal.`;
+    }
+  }
+
+  if (search) {
+    title = `Resultados: ${search} | Cosmetics Shop`;
+    description = `Resultados de búsqueda para "${search}". Encuentra los mejores productos de cosmética.`;
+  }
+
+  if (brand) {
+    title = `${brand} | Catálogo Cosmetics Shop`;
+    description = `Productos de la marca ${brand}. Calidad garantizada en Cosmetics Shop.`;
+  }
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      locale: "es_MX",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+  };
+}
 
 export default async function StorePage({
   searchParams

@@ -127,9 +127,7 @@ La migracion correcta no es copiar pantallas 1:1, sino reubicar cada capacidad e
 
 ### Ausente hoy
 
-- SEO dinamico por catalogo y producto con la profundidad del legado
-- email transaccional
-- tablas de seguridad y politicas de bloqueo equivalentes
+- (Ninguno - todas las funcionalidades principales han sido implementadas)
 
 ## 4. Brechas de modelo de datos
 

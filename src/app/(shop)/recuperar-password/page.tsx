@@ -22,11 +22,6 @@ export default function RecuperarPasswordPage() {
 
     if (result.success) {
       setMessage({ type: "success", text: result.message || "Revisa tu correo para el enlace de recuperación" });
-      // En desarrollo, mostramos el token directamente
-      if (result.resetToken) {
-        setToken(result.resetToken);
-        setStep("reset");
-      }
     } else {
       setMessage({ type: "error", text: result.error || "Error al solicitar recuperación" });
     }

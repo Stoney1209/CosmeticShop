@@ -6,11 +6,60 @@ import { AddToCartButton } from "./AddToCartButton";
 import { getCustomerSession } from "@/lib/customer-session";
 import { WishlistToggle } from "@/components/shop/WishlistToggle";
 import { ReviewsSection } from "@/components/shop/ReviewsSection";
+import { Metadata } from "next";
 
-export default async function ProductPage({ params }: { params: { slug: string } }) {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const product = await prisma.product.findUnique({
+    where: { slug },
+    include: { category: true },
+  });
+
+  if (!product) {
+    return {
+      title: "Producto no encontrado | Cosmetics Shop",
+    };
+  }
+
+  const title = `${product.name} | Cosmetics Shop`;
+  const description = product.description || `Compra ${product.name} al mejor precio. Producto de alta calidad en Cosmetics Shop.`;
+  const imageUrl = product.mainImage || "/og-image.jpg";
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      locale: "es_MX",
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: product.name,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [imageUrl],
+    },
+  };
+}
+
+export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
   const customerSession = await getCustomerSession();
   const product = await prisma.product.findUnique({
-    where: { slug: params.slug },
+    where: { slug },
     include: { 
       category: true,
       variants: {

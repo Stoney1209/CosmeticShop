@@ -1,14 +1,13 @@
 "use server";
 
 import bcrypt from "bcryptjs";
-import crypto from "node:crypto";
+import crypto from "crypto";
+
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import {
-  clearCustomerSession,
-  getCustomerSession,
-  setCustomerSession,
-} from "@/lib/customer-session";
+import { clearCustomerSession, getCustomerSession, setCustomerSession } from "@/lib/customer-session";
+import { sendEmail, generateWelcomeEmail, generatePasswordResetEmail } from "@/lib/email";
+import { recordLoginAttempt, isIpBlocked, getRecentFailedAttempts } from "@/lib/security";
 
 function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
@@ -48,23 +47,41 @@ export async function registerCustomer(data: {
     fullName: customer.fullName,
   });
 
+  // Send welcome email
+  const { subject, html, text } = generateWelcomeEmail(customer.fullName);
+  await sendEmail({ to: customer.email, subject, html, text });
+
   revalidatePath("/");
   return { success: true };
 }
 
-export async function loginCustomer(data: { email: string; password: string }) {
+export async function loginCustomer(data: { email: string; password: string; ipAddress?: string }) {
   const email = normalizeEmail(data.email);
+  const ipAddress = data.ipAddress || "unknown";
+
+  // Check if IP is blocked
+  if (await isIpBlocked(ipAddress)) {
+    return { success: false, error: "Demasiados intentos fallidos. Intenta más tarde." };
+  }
+
   const customer = await prisma.customer.findUnique({ where: { email } });
 
   if (!customer || !customer.isActive) {
+    await recordLoginAttempt(ipAddress, email, false);
     return { success: false, error: "Credenciales incorrectas." };
   }
 
   const valid = await bcrypt.compare(data.password, customer.password);
   if (!valid) {
+    await recordLoginAttempt(ipAddress, email, false);
+    const recentAttempts = await getRecentFailedAttempts(ipAddress);
+    if (recentAttempts > 0) {
+      return { success: false, error: `Credenciales incorrectas. Intentos restantes: ${5 - recentAttempts}` };
+    }
     return { success: false, error: "Credenciales incorrectas." };
   }
 
+  await recordLoginAttempt(ipAddress, email, true);
   await setCustomerSession({
     id: customer.id,
     email: customer.email,
@@ -134,12 +151,14 @@ export async function requestPasswordReset(email: string) {
     },
   });
 
-  // TODO: Enviar email con el link de recuperación
-  // Por ahora, en desarrollo, retornamos el token
+  // Send password reset email
+  const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/recuperar-password?token=${resetToken}`;
+  const { subject, html, text } = generatePasswordResetEmail(resetUrl);
+  await sendEmail({ to: customer.email, subject, html, text });
+
   return { 
     success: true, 
     message: "Se ha enviado un correo con las instrucciones.",
-    resetToken // Solo para desarrollo
   };
 }
 
