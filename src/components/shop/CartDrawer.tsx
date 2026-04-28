@@ -12,7 +12,7 @@ import { useCart } from "@/store/cart";
 import { createOrder } from "@/app/actions/orders";
 import { toast } from "sonner";
 
-export function CartDrawer() {
+export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
   const [isMounted, setIsMounted] = useState(false);
   const cart = useCart();
   
@@ -54,8 +54,8 @@ export function CartDrawer() {
       const result = await createOrder(orderData);
       
       if (result.success) {
-        // Replace with your actual WhatsApp business number
-        const phoneNumber = "521234567890"; 
+        // Use the number passed from the database
+        const phoneNumber = whatsappNumber.replace(/\D/g, ""); 
         let message = `¡Hola! Acabo de registrar el pedido *${result.order?.orderNumber}*:\n\n`;
         
         cart.items.forEach((item) => {

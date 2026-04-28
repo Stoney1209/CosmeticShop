@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { Star } from "lucide-react";
+import { Star, Search, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
+import { Input } from "@/components/ui/input";
 
 export const metadata = {
   title: "Catálogo | Cosmetics Shop",
@@ -10,10 +11,21 @@ export const metadata = {
 export default async function StorePage({
   searchParams
 }: {
-  searchParams: { category?: string; search?: string }
+  searchParams: { 
+    category?: string; 
+    search?: string;
+    minPrice?: string;
+    maxPrice?: string;
+    brand?: string;
+    sort?: string;
+  }
 }) {
   const categorySlug = searchParams.category;
   const search = searchParams.search;
+  const minPrice = searchParams.minPrice ? parseFloat(searchParams.minPrice) : undefined;
+  const maxPrice = searchParams.maxPrice ? parseFloat(searchParams.maxPrice) : undefined;
+  const brand = searchParams.brand;
+  const sort = searchParams.sort || "newest";
 
   let whereClause: any = { isActive: true };
 
@@ -22,18 +34,45 @@ export default async function StorePage({
   }
   
   if (search) {
-    whereClause.name = { contains: search, mode: "insensitive" };
+    whereClause.OR = [
+      { name: { contains: search, mode: "insensitive" } },
+      { sku: { contains: search, mode: "insensitive" } },
+      { brand: { contains: search, mode: "insensitive" } }
+    ];
   }
+
+  if (minPrice !== undefined || maxPrice !== undefined) {
+    whereClause.price = {};
+    if (minPrice !== undefined) whereClause.price.gte = minPrice;
+    if (maxPrice !== undefined) whereClause.price.lte = maxPrice;
+  }
+
+  if (brand) {
+    whereClause.brand = brand;
+  }
+
+  // Define sorting
+  let orderBy: any = { createdAt: "desc" };
+  if (sort === "price_asc") orderBy = { price: "asc" };
+  if (sort === "price_desc") orderBy = { price: "desc" };
+  if (sort === "name_asc") orderBy = { name: "asc" };
 
   const products = await prisma.product.findMany({
     where: whereClause,
-    orderBy: { createdAt: "desc" },
+    orderBy: orderBy,
     include: { category: true }
   });
 
   const categories = await prisma.category.findMany({
     where: { isActive: true },
     orderBy: { displayOrder: "asc" }
+  });
+
+  // Get unique brands for the filter
+  const brands = await prisma.product.groupBy({
+    by: ['brand'],
+    where: { brand: { not: null } },
+    _count: { id: true }
   });
 
   return (
@@ -44,44 +83,100 @@ export default async function StorePage({
             {categorySlug ? `Categoría: ${categorySlug.toUpperCase()}` : "Todo el Catálogo"}
           </h1>
           <p className="text-slate-500 text-lg">
-            {search ? `Resultados para "${search}"` : "Explora nuestra selección de los mejores productos de belleza del mundo."}
+            {search ? `Resultados para "${search}"` : "Explora nuestra selección de los mejores productos de belleza."}
           </p>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8 items-start">
           {/* Sidebar / Filters */}
-          <aside className="w-full lg:w-64 flex-shrink-0 bg-white p-6 rounded-2xl border border-slate-200">
-            <h3 className="font-bold text-slate-900 mb-4 uppercase tracking-wider text-sm">Categorías</h3>
-            <ul className="space-y-3">
-              <li>
-                <Link href="/tienda" className={`text-sm ${!categorySlug ? "text-pink-600 font-bold" : "text-slate-600 hover:text-pink-600"}`}>
-                  Todas las categorías
-                </Link>
-              </li>
-              {categories.map(c => (
-                <li key={c.id}>
-                  <Link href={`/tienda?category=${c.slug}`} className={`text-sm ${categorySlug === c.slug ? "text-pink-600 font-bold" : "text-slate-600 hover:text-pink-600"}`}>
-                    {c.name}
+          <aside className="w-full lg:w-72 flex-shrink-0 space-y-6">
+            {/* Categories */}
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+              <h3 className="font-bold text-slate-900 mb-4 uppercase tracking-wider text-xs flex items-center gap-2">
+                <Filter className="w-4 h-4" /> Categorías
+              </h3>
+              <ul className="space-y-2">
+                <li>
+                  <Link href="/tienda" className={`text-sm block py-1 transition-colors ${!categorySlug ? "text-pink-600 font-bold" : "text-slate-600 hover:text-pink-600"}`}>
+                    Todas las categorías
                   </Link>
                 </li>
-              ))}
-            </ul>
+                {categories.map(c => (
+                  <li key={c.id}>
+                    <Link href={`/tienda?category=${c.slug}${brand ? `&brand=${brand}` : ""}`} className={`text-sm block py-1 transition-colors ${categorySlug === c.slug ? "text-pink-600 font-bold" : "text-slate-600 hover:text-pink-600"}`}>
+                      {c.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Brands */}
+            {brands.length > 0 && (
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <h3 className="font-bold text-slate-900 mb-4 uppercase tracking-wider text-xs">Marcas</h3>
+                <div className="flex flex-wrap gap-2">
+                  <Link 
+                    href={`/tienda${categorySlug ? `?category=${categorySlug}` : ""}`}
+                    className={`text-xs px-3 py-1.5 rounded-full border transition-all ${!brand ? "bg-pink-600 text-white border-pink-600 shadow-md shadow-pink-100" : "bg-white text-slate-600 border-slate-200 hover:border-pink-300"}`}
+                  >
+                    Todas
+                  </Link>
+                  {brands.map(b => (
+                    <Link 
+                      key={b.brand} 
+                      href={`/tienda?brand=${encodeURIComponent(b.brand!)}${categorySlug ? `&category=${categorySlug}` : ""}`}
+                      className={`text-xs px-3 py-1.5 rounded-full border transition-all ${brand === b.brand ? "bg-pink-600 text-white border-pink-600 shadow-md shadow-pink-100" : "bg-white text-slate-600 border-slate-200 hover:border-pink-300"}`}
+                    >
+                      {b.brand}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Price Filter (Visual UI) */}
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+              <h3 className="font-bold text-slate-900 mb-4 uppercase tracking-wider text-xs">Rango de Precio</h3>
+              <form className="flex gap-2 items-center" action="/tienda" method="GET">
+                {categorySlug && <input type="hidden" name="category" value={categorySlug} />}
+                {brand && <input type="hidden" name="brand" value={brand} />}
+                <Input name="minPrice" type="number" placeholder="Min" className="h-9 text-xs" defaultValue={searchParams.minPrice} />
+                <span className="text-slate-400">-</span>
+                <Input name="maxPrice" type="number" placeholder="Max" className="h-9 text-xs" defaultValue={searchParams.maxPrice} />
+                <Button type="submit" size="icon" className="h-9 w-9 bg-slate-900 text-white shrink-0">
+                  <Search className="w-3 h-3" />
+                </Button>
+              </form>
+            </div>
           </aside>
 
           {/* Product Grid */}
-          <div className="flex-1">
-            <div className="mb-6 flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200">
+          <div className="flex-1 w-full">
+            <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
               <span className="text-sm font-medium text-slate-500">
-                Mostrando <span className="text-slate-900">{products.length}</span> productos
+                Mostrando <span className="text-slate-900 font-bold">{products.length}</span> productos
               </span>
-              <select className="text-sm border-none bg-transparent font-medium text-slate-700 focus:ring-0 cursor-pointer outline-none">
-                <option>Más recientes</option>
-                <option>Precio: menor a mayor</option>
-                <option>Precio: mayor a menor</option>
-              </select>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-400 font-medium">Ordenar por:</span>
+                <select 
+                  className="text-sm border-none bg-transparent font-bold text-slate-900 focus:ring-0 cursor-pointer outline-none"
+                  defaultValue={sort}
+                  onChange={(e) => {
+                    const params = new URLSearchParams(window.location.search);
+                    params.set('sort', e.target.value);
+                    window.location.search = params.toString();
+                  }}
+                >
+                  <option value="newest">Más recientes</option>
+                  <option value="price_asc">Precio: menor a mayor</option>
+                  <option value="price_desc">Precio: mayor a menor</option>
+                  <option value="name_asc">Nombre: A-Z</option>
+                </select>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
               {products.length > 0 ? (
                 products.map((product) => (
                   <div key={product.id} className="group bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-xl hover:border-pink-200 transition-all duration-300 flex flex-col">
@@ -95,15 +190,18 @@ export default async function StorePage({
                       )}
                     </div>
                     <div className="p-5 flex flex-col flex-grow">
-                      <div className="text-xs text-pink-500 font-medium mb-1 uppercase tracking-wider">{product.category?.name}</div>
+                      <div className="flex justify-between items-start mb-1">
+                        <div className="text-[10px] text-pink-500 font-bold uppercase tracking-widest">{product.category?.name}</div>
+                        {product.brand && <div className="text-[10px] text-slate-400 font-semibold">{product.brand}</div>}
+                      </div>
                       <Link href={`/producto/${product.slug}`} className="block mb-2">
-                        <h3 className="font-bold text-slate-900 text-lg line-clamp-2 group-hover:text-pink-600 transition-colors leading-tight">{product.name}</h3>
+                        <h3 className="font-bold text-slate-900 text-base line-clamp-2 group-hover:text-pink-600 transition-colors leading-tight">{product.name}</h3>
                       </Link>
                       <div className="flex items-center gap-1 mb-auto">
-                        {[1,2,3,4,5].map(star => <Star key={star} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />)}
+                        {[1,2,3,4,5].map(star => <Star key={star} className="w-3 h-3 fill-amber-400 text-amber-400" />)}
                       </div>
                       <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-100">
-                        <span className="text-xl font-extrabold text-slate-900">${Number(product.price).toFixed(2)}</span>
+                        <span className="text-lg font-extrabold text-slate-900">${Number(product.price).toFixed(2)}</span>
                         <Button size="sm" className="bg-slate-900 text-white hover:bg-pink-600 rounded-full font-semibold transition-colors" asChild>
                           <Link href={`/producto/${product.slug}`}>Ver detalles</Link>
                         </Button>
@@ -112,10 +210,13 @@ export default async function StorePage({
                   </div>
                 ))
               ) : (
-                <div className="col-span-full flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-dashed border-slate-300">
-                  <span className="text-4xl mb-4 text-slate-300">🔍</span>
-                  <p className="text-slate-600 font-medium text-lg">No se encontraron productos.</p>
-                  <p className="text-slate-500">Intenta navegar por otra categoría.</p>
+                <div className="col-span-full flex flex-col items-center justify-center py-24 bg-white rounded-2xl border border-dashed border-slate-200">
+                  <span className="text-5xl mb-4 grayscale opacity-50">🔍</span>
+                  <p className="text-slate-600 font-bold text-xl">Sin resultados</p>
+                  <p className="text-slate-400 text-sm mt-1">Intenta con otros filtros o términos de búsqueda.</p>
+                  <Button variant="outline" className="mt-6 rounded-full" asChild>
+                    <Link href="/tienda">Limpiar todos los filtros</Link>
+                  </Button>
                 </div>
               )}
             </div>

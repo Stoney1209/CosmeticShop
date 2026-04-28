@@ -33,10 +33,10 @@ export function Footer() {
           <div>
             <h3 className="font-semibold text-white mb-4">Atención al Cliente</h3>
             <ul className="space-y-2 text-sm">
-              <li><Link href="/contacto" className="hover:text-pink-400 transition-colors">Contacto</Link></li>
-              <li><Link href="/envios" className="hover:text-pink-400 transition-colors">Política de Envíos</Link></li>
-              <li><Link href="/devoluciones" className="hover:text-pink-400 transition-colors">Devoluciones</Link></li>
-              <li><Link href="/faq" className="hover:text-pink-400 transition-colors">Preguntas Frecuentes</Link></li>
+              <li><span className="text-slate-500 cursor-default">Contacto (Próximamente)</span></li>
+              <li><span className="text-slate-500 cursor-default">Política de Envíos</span></li>
+              <li><span className="text-slate-500 cursor-default">Devoluciones</span></li>
+              <li><span className="text-slate-500 cursor-default">Preguntas Frecuentes</span></li>
             </ul>
           </div>
 
@@ -49,7 +49,7 @@ export function Footer() {
                 placeholder="Tu email" 
                 className="bg-slate-900 border border-slate-800 rounded-md px-3 py-2 text-sm w-full focus:outline-none focus:border-pink-500 text-white"
               />
-              <button className="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+              <button type="button" className="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
                 Unirse
               </button>
             </form>
