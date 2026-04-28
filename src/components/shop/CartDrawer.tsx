@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ShoppingBag, X, Plus, Minus, ArrowRight } from "lucide-react";
+import { ShoppingBag, X, Plus, Minus, ArrowRight, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -229,7 +229,7 @@ export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
                     <Button variant="outline" size="sm" onClick={async () => {
                       if (!couponCode) return;
                       const res = await validateCoupon(couponCode, cart.totalPrice());
-                      if (res.success) {
+                      if (res.success && res.coupon) {
                         const c = res.coupon;
                         let disc = 0;
                         if (c.discountType === "PERCENTAGE") {

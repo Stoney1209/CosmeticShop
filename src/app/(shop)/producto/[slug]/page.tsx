@@ -3,8 +3,12 @@ import Link from "next/link";
 import { Star, ChevronRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { AddToCartButton } from "./AddToCartButton";
+import { getCustomerSession } from "@/lib/customer-session";
+import { WishlistToggle } from "@/components/shop/WishlistToggle";
+import { ReviewsSection } from "@/components/shop/ReviewsSection";
 
 export default async function ProductPage({ params }: { params: { slug: string } }) {
+  const customerSession = await getCustomerSession();
   const product = await prisma.product.findUnique({
     where: { slug: params.slug },
     include: { 
@@ -16,7 +20,21 @@ export default async function ProductPage({ params }: { params: { slug: string }
           }
         },
         where: { isActive: true }
-      }
+      },
+      reviews: {
+        where: {
+          isActive: true,
+          isApproved: true,
+        },
+        orderBy: { createdAt: "desc" },
+        include: {
+          customer: {
+            select: {
+              fullName: true,
+            },
+          },
+        },
+      },
     }
   });
 
@@ -43,6 +61,21 @@ export default async function ProductPage({ params }: { params: { slug: string }
       }
     });
   });
+
+  const inWishlist = customerSession
+    ? !!(await prisma.wishlist.findUnique({
+        where: {
+          customerId_productId: {
+            customerId: customerSession.id,
+            productId: product.id,
+          },
+        },
+      }))
+    : false;
+
+  const hasReviewed = customerSession
+    ? product.reviews.some((review) => review.customerId === customerSession.id)
+    : false;
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
@@ -106,6 +139,13 @@ export default async function ProductPage({ params }: { params: { slug: string }
               product={JSON.parse(JSON.stringify(product))} 
               variantOptions={variantOptions}
             />
+            <div className="mt-4">
+              <WishlistToggle
+                productId={product.id}
+                initialInWishlist={inWishlist}
+                isLoggedIn={!!customerSession}
+              />
+            </div>
           </div>
 
           {/* Guarantee / Features */}
@@ -147,6 +187,20 @@ export default async function ProductPage({ params }: { params: { slug: string }
           </div>
         </div>
       )}
+
+      <ReviewsSection
+        productId={product.id}
+        reviews={product.reviews.map((review) => ({
+          id: review.id,
+          rating: review.rating,
+          title: review.title,
+          comment: review.comment,
+          createdAt: review.createdAt.toISOString(),
+          customer: review.customer,
+        }))}
+        isLoggedIn={!!customerSession}
+        canReview={!!customerSession && !hasReviewed}
+      />
     </div>
   );
 }

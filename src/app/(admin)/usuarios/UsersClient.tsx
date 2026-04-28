@@ -19,7 +19,18 @@ export function UsersClient({ initialUsers }: { initialUsers: any[] }) {
   
   const [form, setForm] = useState({ username: "", fullName: "", email: "", password: "", role: "OPERATOR", isActive: true });
 
-  const handleEdit = (u: any) => { setEditing(u); setForm({ ...u, password: "" }); setIsDialogOpen(true); };
+  const handleEdit = (u: any) => {
+    setEditing(u);
+    setForm({
+      username: u.username,
+      fullName: u.fullName,
+      email: u.email ?? "",
+      password: "",
+      role: u.role,
+      isActive: u.isActive,
+    });
+    setIsDialogOpen(true);
+  };
   const handleDelete = async (id: number) => {
     if(!confirm("¿Eliminar usuario?")) return;
     const res = await deleteUser(id);
@@ -55,7 +66,7 @@ export function UsersClient({ initialUsers }: { initialUsers: any[] }) {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <Label>Rol</Label>
-                  <Select value={form.role} onValueChange={v=>setForm({...form, role: v})}>
+                  <Select value={form.role} onValueChange={v=>setForm({...form, role: v ?? "OPERATOR"})}>
                     <SelectTrigger><SelectValue/></SelectTrigger>
                     <SelectContent><SelectItem value="ADMIN">Administrador</SelectItem><SelectItem value="OPERATOR">Operador</SelectItem></SelectContent>
                   </Select>
@@ -79,7 +90,7 @@ export function UsersClient({ initialUsers }: { initialUsers: any[] }) {
           {users.map(u => (
             <TableRow key={u.id}>
               <TableCell className="font-bold">{u.username}</TableCell>
-              <TableCell>{u.fullName}<br/><span className="text-xs text-slate-500">{u.email}</span></TableCell>
+              <TableCell>{u.fullName}<br/><span className="text-xs text-slate-500">{u.email ?? ""}</span></TableCell>
               <TableCell><Badge variant="outline">{u.role}</Badge></TableCell>
               <TableCell>{u.isActive ? <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">Activo</Badge> : <Badge variant="destructive">Inactivo</Badge>}</TableCell>
               <TableCell className="text-right">

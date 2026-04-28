@@ -3,6 +3,7 @@ import { Search, Menu, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CartDrawer } from "./CartDrawer";
+import { getCustomerSession } from "@/lib/customer-session";
 import { prisma } from "@/lib/prisma";
 
 export async function Header() {
@@ -10,6 +11,7 @@ export async function Header() {
   const whatsappSetting = await prisma.setting.findUnique({
     where: { settingKey: "whatsapp_number" }
   });
+  const customerSession = await getCustomerSession();
 
   const whatsappNumber = whatsappSetting?.settingValue || "521234567890";
 
@@ -42,11 +44,16 @@ export async function Header() {
           </div>
 
           <div className="flex items-center gap-2 md:gap-4">
-            <Link href="/login">
+            <Link href={customerSession ? "/mi-cuenta" : "/cuenta/ingresar"}>
               <Button variant="ghost" size="icon" className="hidden md:flex text-slate-600 hover:text-pink-600">
                 <User className="h-5 w-5" />
               </Button>
             </Link>
+            {customerSession && (
+              <Link href="/mi-cuenta" className="hidden text-sm font-medium text-slate-600 hover:text-pink-600 md:block">
+                Hola, {customerSession.fullName.split(" ")[0]}
+              </Link>
+            )}
             <CartDrawer whatsappNumber={whatsappNumber} />
           </div>
         </div>

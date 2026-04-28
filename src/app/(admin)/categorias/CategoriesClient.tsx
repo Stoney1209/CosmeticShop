@@ -165,7 +165,7 @@ export function CategoriesClient({ initialCategories }: { initialCategories: Cat
               
               <div className="space-y-2">
                 <Label htmlFor="parent">Categoría Padre</Label>
-                <Select value={parentId} onValueChange={setParentId}>
+                <Select value={parentId} onValueChange={(value) => setParentId(value ?? "none")}>
                   <SelectTrigger id="parent">
                     <SelectValue placeholder="Ninguna (Principal)" />
                   </SelectTrigger>

@@ -85,6 +85,22 @@ export function ProductsClient({ initialProducts, categories, variantTypes }: { 
     setIsDialogOpen(true);
   };
 
+  const handleDelete = async (id: number) => {
+    if (!confirm("¿Eliminar este producto?")) return;
+
+    try {
+      const result = await deleteProduct(id);
+      if (result.success) {
+        setProducts(products.filter((product) => product.id !== id));
+        toast.success("Producto eliminado");
+      } else {
+        toast.error(result.error);
+      }
+    } catch {
+      toast.error("Error inesperado al eliminar");
+    }
+  };
+
   const generateVariants = () => {
     if (selectedVariantTypes.length === 0) return;
 
@@ -222,7 +238,7 @@ export function ProductsClient({ initialProducts, categories, variantTypes }: { 
                     <div className="grid grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <Label className="text-xs font-bold uppercase text-slate-500">Categoría</Label>
-                        <Select value={categoryId} onValueChange={setCategoryId}>
+                        <Select value={categoryId} onValueChange={(value) => setCategoryId(value ?? "")}>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecciona..." />
                           </SelectTrigger>

@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { getCustomerSession } from "@/lib/customer-session";
 
 export async function getOrders() {
   try {
@@ -21,6 +22,8 @@ export async function createOrder(data: {
   customerName: string;
   customerPhone: string;
   customerAddress?: string;
+  discountAmount?: number;
+  couponCode?: string;
   items: { 
     productId: number; 
     productVariantId?: number;
@@ -34,6 +37,85 @@ export async function createOrder(data: {
   totalAmount: number;
 }) {
   try {
+    const session = await getCustomerSession();
+
+    // Validaciones server-side antes de crear el pedido
+    for (const item of data.items) {
+      // Validar que el producto existe y está activo
+      const product = await prisma.product.findUnique({
+        where: { id: item.productId },
+        include: {
+          variants: item.productVariantId ? {
+            where: { id: item.productVariantId, isActive: true }
+          } : undefined
+        }
+      });
+
+      if (!product || !product.isActive) {
+        return { success: false, error: `El producto ${item.productName} no está disponible` };
+      }
+
+      // Validar stock suficiente
+      if (product.stock < item.quantity) {
+        return { success: false, error: `Stock insuficiente para ${item.productName}` };
+      }
+
+      // Validar variante si existe
+      if (item.productVariantId) {
+        const variant = product.variants?.[0];
+        if (!variant) {
+          return { success: false, error: `La variante seleccionada no está disponible` };
+        }
+        if (variant.stock < item.quantity) {
+          return { success: false, error: `Stock insuficiente para la variante de ${item.productName}` };
+        }
+        // Validar precio de variante si tiene precio específico
+        if (variant.price && Number(variant.price) !== item.unitPrice) {
+          return { success: false, error: `El precio de ${item.productName} ha cambiado` };
+        }
+      } else {
+        // Validar precio del producto
+        if (Number(product.price) !== item.unitPrice) {
+          return { success: false, error: `El precio de ${item.productName} ha cambiado` };
+        }
+      }
+
+      // Validar cálculo de subtotal
+      const expectedSubtotal = item.quantity * item.unitPrice;
+      if (Math.abs(expectedSubtotal - item.subtotal) > 0.01) {
+        return { success: false, error: `Error en el cálculo del subtotal para ${item.productName}` };
+      }
+    }
+
+    // Validar cupón si se proporciona
+    if (data.couponCode) {
+      const coupon = await prisma.coupon.findUnique({
+        where: { code: data.couponCode.toUpperCase(), isActive: true }
+      });
+
+      if (!coupon) {
+        return { success: false, error: "Cupón no válido" };
+      }
+
+      if (coupon.expiryDate && new Date(coupon.expiryDate) < new Date()) {
+        return { success: false, error: "Cupón expirado" };
+      }
+
+      if (coupon.usageLimit && coupon.usageCount >= coupon.usageLimit) {
+        return { success: false, error: "Cupón agotado" };
+      }
+
+      if (coupon.minAmount && data.totalAmount < Number(coupon.minAmount)) {
+        return { success: false, error: `Compra mínima de $${Number(coupon.minAmount).toFixed(2)} requerida` };
+      }
+    }
+
+    // Validar cálculo total
+    const calculatedTotal = data.items.reduce((sum, item) => sum + item.subtotal, 0) - (data.discountAmount || 0);
+    if (Math.abs(calculatedTotal - data.totalAmount) > 0.01) {
+      return { success: false, error: "Error en el cálculo del total" };
+    }
+
     // Generate order number
     const dateStr = new Date().toISOString().slice(0,10).replace(/-/g, "");
     const count = await prisma.order.count({ where: { createdAt: { gte: new Date(new Date().setHours(0,0,0,0)) } } });
@@ -44,10 +126,14 @@ export async function createOrder(data: {
       const newOrder = await tx.order.create({
         data: {
           orderNumber,
+          customerId: session?.id,
           customerName: data.customerName,
+          customerEmail: session?.email,
           customerPhone: data.customerPhone,
           customerAddress: data.customerAddress,
           totalAmount: data.totalAmount,
+          discountAmount: data.discountAmount || 0,
+          couponCode: data.couponCode || null,
           items: {
             create: data.items.map(item => ({
               productId: item.productId,
@@ -80,11 +166,20 @@ export async function createOrder(data: {
         }
       }
 
+      // Increment coupon usage count if applicable
+      if (data.couponCode) {
+        await tx.coupon.update({
+          where: { code: data.couponCode.toUpperCase() },
+          data: { usageCount: { increment: 1 } }
+        });
+      }
+
       return newOrder;
     });
 
     revalidatePath("/pedidos");
     revalidatePath("/inventario");
+    revalidatePath("/mis-pedidos");
     return { success: true, order };
   } catch (error) {
     console.error("Error creating order:", error);
