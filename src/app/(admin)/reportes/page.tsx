@@ -7,10 +7,37 @@ export const metadata = { title: "Reportes | Admin" };
 export default async function ReportsPage() {
   const data = await getReportsData();
   
-  // Serialize
+  // Serialize all data for client component
   const sData = {
     recentOrders: data.recentOrders.map(o => ({ ...o, totalAmount: Number(o.totalAmount) })),
-    bestSellers: data.bestSellers.map(b => ({ ...b, subtotal: Number(b._sum.subtotal || 0), quantity: b._sum.quantity || 0, productId: b.productId, productName: b.productName }))
+    bestSellers: data.bestSellers.map(b => ({ 
+      ...b, 
+      _sum: {
+        quantity: b._sum.quantity || 0,
+        subtotal: Number(b._sum.subtotal || 0)
+      },
+      productId: b.productId, 
+      productName: b.productName 
+    })),
+    today: {
+      orders: data.today.orders,
+      revenue: Number(data.today.revenue)
+    },
+    month: {
+      orders: data.month.orders,
+      revenue: Number(data.month.revenue)
+    },
+    totals: data.totals,
+    ordersByStatus: data.ordersByStatus.map((item: any) => ({
+      ...item,
+      _sum: {
+        totalAmount: Number(item._sum.totalAmount || 0)
+      }
+    })),
+    recentCustomers: data.recentCustomers.map(c => ({
+      ...c,
+      createdAt: c.createdAt.toISOString()
+    }))
   };
 
   return (
