@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Database, Download, Clock } from "lucide-react";
+import { BackupClient } from "./BackupClient";
 
 export const metadata = { title: "Respaldos | Admin" };
 
@@ -18,12 +19,9 @@ export default function BackupsPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-slate-500">
-            Crea un respaldo completo de la base de datos. El archivo se descargará en formato SQL.
+            Crea un respaldo completo de la base de datos. El archivo se descargará en formato JSON.
           </p>
-          <Button className="w-full">
-            <Database className="mr-2 h-4 w-4" />
-            Crear Respaldo Ahora
-          </Button>
+          <BackupClient />
         </CardContent>
       </Card>
 

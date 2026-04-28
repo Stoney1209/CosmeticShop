@@ -4,25 +4,26 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { productId: string } }
+  { params }: { params: Promise<{ productId: string }> }
 ) {
   try {
+    const { productId } = await params;
     const session = await getCustomerSession();
 
     if (!session) {
-      return NextResponse.json({
-        success: true,
-        data: { inWishlist: false },
-      });
+      return NextResponse.json(
+        { success: false, error: "No autenticado" },
+        { status: 401 }
+      );
     }
 
-    const productId = parseInt(params.productId);
+    const productIdNum = parseInt(productId);
 
     const wishlistItem = await prisma.wishlist.findUnique({
       where: {
         customerId_productId: {
           customerId: session.id,
-          productId,
+          productId: productIdNum,
         },
       },
     });

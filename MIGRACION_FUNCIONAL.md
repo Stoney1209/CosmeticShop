@@ -127,14 +127,8 @@ La migracion correcta no es copiar pantallas 1:1, sino reubicar cada capacidad e
 
 ### Ausente hoy
 
-- paginacion de catalogo
-- filtro `in_stock` en UI
 - SEO dinamico por catalogo y producto con la profundidad del legado
 - email transaccional
-- import/export masivo funcional (solo UI placeholder)
-- backup funcional desde admin (solo UI placeholder)
-- facturacion funcional (solo UI placeholder)
-- carritos abandonados funcional (solo UI placeholder)
 - tablas de seguridad y politicas de bloqueo equivalentes
 
 ## 4. Brechas de modelo de datos

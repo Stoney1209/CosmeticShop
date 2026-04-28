@@ -20,6 +20,8 @@ export default async function StorePage({
     maxPrice?: string;
     brand?: string;
     sort?: string;
+    page?: string;
+    inStock?: string;
   }
 }) {
   const categorySlug = searchParams.category;
@@ -28,6 +30,9 @@ export default async function StorePage({
   const maxPrice = searchParams.maxPrice ? parseFloat(searchParams.maxPrice) : undefined;
   const brand = searchParams.brand;
   const sort = searchParams.sort || "newest";
+  const page = parseInt(searchParams.page || "1");
+  const limit = 12;
+  const inStock = searchParams.inStock === "true";
 
   let whereClause: any = { isActive: true };
 
@@ -53,17 +58,30 @@ export default async function StorePage({
     whereClause.brand = brand;
   }
 
+  if (inStock) {
+    whereClause.stock = { gt: 0 };
+  }
+
   // Define sorting
   let orderBy: any = { createdAt: "desc" };
   if (sort === "price_asc") orderBy = { price: "asc" };
   if (sort === "price_desc") orderBy = { price: "desc" };
   if (sort === "name_asc") orderBy = { name: "asc" };
 
-  const products = await prisma.product.findMany({
-    where: whereClause,
-    orderBy: orderBy,
-    include: { category: true }
-  });
+  const skip = (page - 1) * limit;
+
+  const [products, total] = await Promise.all([
+    prisma.product.findMany({
+      where: whereClause,
+      orderBy: orderBy,
+      include: { category: true },
+      skip,
+      take: limit,
+    }),
+    prisma.product.count({ where: whereClause }),
+  ]);
+
+  const totalPages = Math.ceil(total / limit);
 
   const categories = await prisma.category.findMany({
     where: { isActive: true },
@@ -143,6 +161,7 @@ export default async function StorePage({
               <form className="flex gap-2 items-center" action="/tienda" method="GET">
                 {categorySlug && <input type="hidden" name="category" value={categorySlug} />}
                 {brand && <input type="hidden" name="brand" value={brand} />}
+                {inStock && <input type="hidden" name="inStock" value="true" />}
                 <Input name="minPrice" type="number" placeholder="Min" className="h-9 text-xs" defaultValue={searchParams.minPrice} />
                 <span className="text-slate-400">-</span>
                 <Input name="maxPrice" type="number" placeholder="Max" className="h-9 text-xs" defaultValue={searchParams.maxPrice} />
@@ -151,13 +170,47 @@ export default async function StorePage({
                 </Button>
               </form>
             </div>
+
+            {/* Availability Filter */}
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+              <h3 className="font-bold text-slate-900 mb-4 uppercase tracking-wider text-xs">Disponibilidad</h3>
+              <div className="flex flex-col gap-2">
+                <Link 
+                  href={`/tienda?${new URLSearchParams({
+                    ...(categorySlug && { category: categorySlug }),
+                    ...(brand && { brand }),
+                    ...(searchParams.minPrice && { minPrice: searchParams.minPrice }),
+                    ...(searchParams.maxPrice && { maxPrice: searchParams.maxPrice }),
+                    ...(searchParams.search && { search: searchParams.search }),
+                    ...(searchParams.sort && { sort: searchParams.sort }),
+                  }).toString()}`}
+                  className={`text-sm py-2 px-3 rounded-lg transition-all ${!inStock ? "bg-pink-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
+                >
+                  Todos
+                </Link>
+                <Link 
+                  href={`/tienda?${new URLSearchParams({
+                    ...(categorySlug && { category: categorySlug }),
+                    ...(brand && { brand }),
+                    ...(searchParams.minPrice && { minPrice: searchParams.minPrice }),
+                    ...(searchParams.maxPrice && { maxPrice: searchParams.maxPrice }),
+                    ...(searchParams.search && { search: searchParams.search }),
+                    ...(searchParams.sort && { sort: searchParams.sort }),
+                    inStock: "true",
+                  }).toString()}`}
+                  className={`text-sm py-2 px-3 rounded-lg transition-all ${inStock ? "bg-pink-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
+                >
+                  En stock
+                </Link>
+              </div>
+            </div>
           </aside>
 
           {/* Product Grid */}
           <div className="flex-1 w-full">
             <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
               <span className="text-sm font-medium text-slate-500">
-                Mostrando <span className="text-slate-900 font-bold">{products.length}</span> productos
+                Mostrando <span className="text-slate-900 font-bold">{products.length}</span> de <span className="text-slate-900 font-bold">{total}</span> productos
               </span>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-slate-400 font-medium">Ordenar por:</span>
@@ -211,6 +264,74 @@ export default async function StorePage({
                 </div>
               )}
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center gap-2 mt-8">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page === 1}
+                  asChild
+                >
+                  <Link href={`/tienda?${new URLSearchParams({
+                    ...(categorySlug && { category: categorySlug }),
+                    ...(brand && { brand }),
+                    ...(searchParams.minPrice && { minPrice: searchParams.minPrice }),
+                    ...(searchParams.maxPrice && { maxPrice: searchParams.maxPrice }),
+                    ...(searchParams.search && { search: searchParams.search }),
+                    ...(searchParams.sort && { sort: searchParams.sort }),
+                    ...(inStock && { inStock: "true" }),
+                    page: (page - 1).toString(),
+                  }).toString()}`}>
+                    Anterior
+                  </Link>
+                </Button>
+                
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                  <Button
+                    key={pageNum}
+                    variant={page === pageNum ? "default" : "outline"}
+                    size="sm"
+                    className="w-10"
+                    asChild
+                  >
+                    <Link href={`/tienda?${new URLSearchParams({
+                      ...(categorySlug && { category: categorySlug }),
+                      ...(brand && { brand }),
+                      ...(searchParams.minPrice && { minPrice: searchParams.minPrice }),
+                      ...(searchParams.maxPrice && { maxPrice: searchParams.maxPrice }),
+                      ...(searchParams.search && { search: searchParams.search }),
+                      ...(searchParams.sort && { sort: searchParams.sort }),
+                      ...(inStock && { inStock: "true" }),
+                      page: pageNum.toString(),
+                    }).toString()}`}>
+                      {pageNum}
+                    </Link>
+                  </Button>
+                ))}
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page === totalPages}
+                  asChild
+                >
+                  <Link href={`/tienda?${new URLSearchParams({
+                    ...(categorySlug && { category: categorySlug }),
+                    ...(brand && { brand }),
+                    ...(searchParams.minPrice && { minPrice: searchParams.minPrice }),
+                    ...(searchParams.maxPrice && { maxPrice: searchParams.maxPrice }),
+                    ...(searchParams.search && { search: searchParams.search }),
+                    ...(searchParams.sort && { sort: searchParams.sort }),
+                    ...(inStock && { inStock: "true" }),
+                    page: (page + 1).toString(),
+                  }).toString()}`}>
+                    Siguiente
+                  </Link>
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>

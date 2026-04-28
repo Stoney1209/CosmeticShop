@@ -4,10 +4,10 @@ import { getCustomerSession } from "@/lib/customer-session";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const { slug } = params;
+    const { slug } = await params;
 
     const product = await prisma.product.findUnique({
       where: { slug },
@@ -54,7 +54,7 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     const session = await getCustomerSession();
@@ -66,7 +66,7 @@ export async function POST(
       );
     }
 
-    const { slug } = params;
+    const { slug } = await params;
     const body = await request.json();
     const { rating, title, comment, orderId } = body;
 

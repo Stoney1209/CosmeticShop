@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, Settings, Download } from "lucide-react";
+import { InvoicingClient } from "./InvoicingClient";
 
 export const metadata = { title: "Facturación | Admin" };
 
@@ -14,30 +15,27 @@ export default function InvoicingPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Configuración PAC</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-slate-500">
-            Configura los datos del PAC (Proveedor de Autorización de Certificación) para emitir facturas.
-          </p>
-          <Button variant="outline">
-            <Settings className="mr-2 h-4 w-4" />
-            Configurar PAC
-          </Button>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
           <CardTitle>Datos Fiscales</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-slate-500">
             Configura los datos fiscales de tu empresa para emitir facturas.
           </p>
-          <Button variant="outline">
-            <FileText className="mr-2 h-4 w-4" />
-            Editar Datos Fiscales
+          <InvoicingClient />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Configuración PAC</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-slate-500">
+            Configura los datos del PAC (Proveedor de Autorización de Certificación) para emitir facturas.
+          </p>
+          <Button variant="outline" disabled>
+            <Settings className="mr-2 h-4 w-4" />
+            Configurar PAC (Próximamente)
           </Button>
         </CardContent>
       </Card>
