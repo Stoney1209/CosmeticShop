@@ -13,9 +13,7 @@ import {
   BarChart3,
   Ticket,
   UserCircle,
-  Plus,
-  HelpCircle,
-  User
+  HelpCircle
 } from "lucide-react";
 
 const navItems = [
@@ -64,16 +62,6 @@ export function Sidebar() {
             </Link>
           );
         })}
-
-        <div className="pt-6 pb-2">
-          <Link
-            href="/productos"
-            className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-[#7a5646] text-white font-medium shadow-md hover:bg-[#603f30] transition-all duration-200"
-          >
-            <Plus className="w-4 h-4" />
-            Add Product
-          </Link>
-        </div>
 
         <div className="pt-4 space-y-1">
           {secondaryNavItems.map((item) => {
