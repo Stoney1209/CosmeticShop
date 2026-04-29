@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { getCustomerSession } from "@/lib/customer-session";
+import { sendEmail, generateOrderConfirmationEmail, generateAdminOrderNotificationEmail, generateOrderStatusUpdateEmail } from "@/lib/email";
 
 export async function getOrders() {
   try {
@@ -180,6 +181,29 @@ export async function createOrder(data: {
     revalidatePath("/pedidos");
     revalidatePath("/inventario");
     revalidatePath("/mis-pedidos");
+
+    // Send confirmation emails (non-blocking)
+    try {
+      // Send to customer
+      if (session?.email) {
+        const { subject, html, text } = generateOrderConfirmationEmail(orderNumber, data.totalAmount);
+        await sendEmail({ to: session.email, subject, html, text });
+      }
+
+      // Send to admin (get from settings or use default)
+      const adminEmail = process.env.ADMIN_EMAIL || "admin@cosmeticsshop.com";
+      const { subject: adminSubject, html: adminHtml, text: adminText } = generateAdminOrderNotificationEmail(
+        orderNumber,
+        data.totalAmount,
+        data.customerName,
+        data.items.map(item => ({ name: item.productName, quantity: item.quantity, price: item.unitPrice }))
+      );
+      await sendEmail({ to: adminEmail, subject: adminSubject, html: adminHtml, text: adminText });
+    } catch (emailError) {
+      console.error("Error sending order emails:", emailError);
+      // Don't fail the order if email fails
+    }
+
     return { success: true, order };
   } catch (error) {
     console.error("Error creating order:", error);
@@ -234,6 +258,16 @@ export async function updateOrderStatus(id: number, status: "PENDING" | "CONFIRM
 
       return updatedOrder;
     });
+
+    // Send status update email to customer
+    try {
+      if (order.customerEmail) {
+        const { subject, html, text } = generateOrderStatusUpdateEmail(order.orderNumber, status, order.customerName);
+        await sendEmail({ to: order.customerEmail, subject, html, text });
+      }
+    } catch (emailError) {
+      console.error("Error sending status update email:", emailError);
+    }
 
     revalidatePath("/pedidos");
     revalidatePath("/inventario");

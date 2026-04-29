@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import crypto from "node:crypto";
 import { setCustomerSession } from "@/lib/customer-session";
+import { sendEmail, generateEmailVerificationEmail, generateWelcomeEmail } from "@/lib/email";
 
 export async function POST(request: NextRequest) {
   try {
@@ -50,8 +51,22 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // TODO: Enviar email de verificación
-    // Por ahora, en desarrollo, retornamos el token
+    // Send verification email
+    try {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+      const verificationUrl = `${appUrl}/verificar-email?token=${verificationToken}`;
+      
+      const { subject, html, text } = generateEmailVerificationEmail(verificationUrl, customer.fullName);
+      await sendEmail({ to: customer.email, subject, html, text });
+      
+      // Also send welcome email
+      const welcomeEmail = generateWelcomeEmail(customer.fullName);
+      await sendEmail({ to: customer.email, subject: welcomeEmail.subject, html: welcomeEmail.html, text: welcomeEmail.text });
+    } catch (emailError) {
+      console.error("Error sending verification email:", emailError);
+      // Don't fail registration if email fails, but log it
+    }
+
     await setCustomerSession({
       id: customer.id,
       email: customer.email,
@@ -65,7 +80,7 @@ export async function POST(request: NextRequest) {
         email: customer.email,
         fullName: customer.fullName,
         isVerified: customer.isVerified,
-        verificationToken, // Solo para desarrollo
+        message: "Revisa tu correo para verificar tu cuenta",
       },
     });
   } catch (error) {

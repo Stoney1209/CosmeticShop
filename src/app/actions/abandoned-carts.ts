@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { sendEmail, generateAbandonedCartEmail } from "@/lib/email";
 
 export async function getAbandonedCarts() {
   try {
@@ -72,8 +73,51 @@ export async function sendRecoveryEmail(cartId: number) {
       return { success: false, error: "Carrito no encontrado" };
     }
 
-    // In a real implementation, you would send an email here
-    // For now, we'll just mark it as notified
+    if (!cart.customer?.email) {
+      return { success: false, error: "El cliente no tiene email registrado" };
+    }
+
+    // Parse cart data to get items
+    const cartItems = cart.cartData as Array<{ productId: number; quantity: number; price: number }> || [];
+    
+    // Fetch product details for the email
+    const productIds = cartItems.map(item => item.productId);
+    const products = await prisma.product.findMany({
+      where: { id: { in: productIds } },
+      select: { id: true, name: true, price: true },
+    });
+
+    const itemsWithNames = cartItems.map(item => {
+      const product = products.find(p => p.id === item.productId);
+      return {
+        name: product?.name || "Producto",
+        price: item.price,
+      };
+    });
+
+    // Generate recovery URL
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const cartUrl = `${appUrl}/tienda`;
+
+    // Send recovery email
+    const { subject, html, text } = generateAbandonedCartEmail(
+      cart.customer.fullName,
+      cartUrl,
+      itemsWithNames
+    );
+    
+    const emailResult = await sendEmail({
+      to: cart.customer.email,
+      subject,
+      html,
+      text,
+    });
+
+    if (!emailResult.success) {
+      return { success: false, error: "Error al enviar el correo de recuperación" };
+    }
+
+    // Mark as notified
     await prisma.abandonedCart.update({
       where: { id: cartId },
       data: {
@@ -83,7 +127,7 @@ export async function sendRecoveryEmail(cartId: number) {
     });
 
     revalidatePath("/admin/carritos-abandonados");
-    return { success: true };
+    return { success: true, message: "Correo de recuperación enviado exitosamente" };
   } catch (error) {
     console.error("Error sending recovery email:", error);
     return { success: false, error: "Error al enviar correo de recuperación" };

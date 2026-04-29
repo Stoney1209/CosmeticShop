@@ -1,3 +1,8 @@
+import { Resend } from "resend";
+
+const resend = new Resend(process.env.RESEND_API_KEY || "re_GfUNAzQL_Q91bjGrXQ6jhXs4TjV21hVx3");
+const FROM_EMAIL = process.env.EMAIL_FROM || "noreply@cosmeticsshop.com";
+
 interface EmailOptions {
   to: string;
   subject: string;
@@ -6,21 +11,32 @@ interface EmailOptions {
 }
 
 export async function sendEmail({ to, subject, html, text }: EmailOptions) {
-  // TODO: Configure email provider (Resend, SendGrid, Nodemailer, etc.)
-  // For now, this is a placeholder that logs the email
-  console.log("Email would be sent:", { to, subject, html, text });
-  
-  // Example integration with Resend (uncomment and configure):
-  // const resend = new Resend(process.env.RESEND_API_KEY);
-  // await resend.emails.send({
-  //   from: process.env.EMAIL_FROM || 'noreply@cosmeticsshop.com',
-  //   to,
-  //   subject,
-  //   html,
-  //   text,
-  // });
+  try {
+    // Validate email
+    if (!to || !to.includes("@")) {
+      console.error("Invalid email address:", to);
+      return { success: false, error: "Invalid email address" };
+    }
 
-  return { success: true };
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      subject,
+      html,
+      text: text || html.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim(),
+    });
+
+    if (error) {
+      console.error("Resend email error:", error);
+      return { success: false, error: error.message };
+    }
+
+    console.log("Email sent successfully:", { to, subject, id: data?.id });
+    return { success: true, id: data?.id };
+  } catch (error) {
+    console.error("Error sending email:", error);
+    return { success: false, error: "Failed to send email" };
+  }
 }
 
 export function generateWelcomeEmail(name: string) {
@@ -72,5 +88,94 @@ export function generatePasswordResetEmail(resetUrl: string) {
       </div>
     `,
     text: `Restablecer tu contraseña. Haz clic en el siguiente enlace: ${resetUrl}. Este enlace expirará en 1 hora.`,
+  };
+}
+
+export function generateEmailVerificationEmail(verificationUrl: string, name: string) {
+  return {
+    subject: "Verifica tu correo electrónico - Cosmetics Shop",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1 style="color: #ec4899;">Verifica tu correo electrónico</h1>
+        <p>Hola ${name},</p>
+        <p>Gracias por registrarte en Cosmetics Shop. Para completar tu registro, por favor verifica tu correo electrónico haciendo clic en el siguiente enlace:</p>
+        <p><a href="${verificationUrl}" style="color: #ec4899; display: inline-block; padding: 12px 24px; background-color: #ec4899; color: white; text-decoration: none; border-radius: 6px;">Verificar mi correo</a></p>
+        <p>O copia y pega este enlace en tu navegador: ${verificationUrl}</p>
+        <p>Si no creaste esta cuenta, puedes ignorar este correo.</p>
+        <p>El equipo de Cosmetics Shop</p>
+      </div>
+    `,
+    text: `Verifica tu correo electrónico. Hola ${name}, visita este enlace para verificar tu cuenta: ${verificationUrl}`,
+  };
+}
+
+export function generateAdminOrderNotificationEmail(orderNumber: string, totalAmount: number, customerName: string, items: Array<{name: string, quantity: number, price: number}>) {
+  const itemsList = items.map(item => `<li>${item.name} x${item.quantity} - $${item.price.toFixed(2)}</li>`).join('');
+  
+  return {
+    subject: `Nuevo pedido #${orderNumber} - Cosmetics Shop`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1 style="color: #ec4899;">¡Nuevo Pedido Recibido!</h1>
+        <p>Se ha recibido un nuevo pedido en la tienda.</p>
+        <h3>Detalles del pedido:</h3>
+        <ul>
+          <li><strong>Número:</strong> ${orderNumber}</li>
+          <li><strong>Cliente:</strong> ${customerName}</li>
+          <li><strong>Total:</strong> $${totalAmount.toFixed(2)}</li>
+        </ul>
+        <h3>Productos:</h3>
+        <ul>${itemsList}</ul>
+        <p>Accede al panel de administración para procesar el pedido.</p>
+      </div>
+    `,
+    text: `Nuevo pedido #${orderNumber} de ${customerName} por $${totalAmount.toFixed(2)}`,
+  };
+}
+
+export function generateAbandonedCartEmail(customerName: string, cartUrl: string, items: Array<{name: string, price: number}>) {
+  const itemsList = items.map(item => `<li>${item.name} - $${item.price.toFixed(2)}</li>`).join('');
+  
+  return {
+    subject: "¿Olvidaste algo en tu carrito? - Cosmetics Shop",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1 style="color: #ec4899;">¿Olvidaste algo?</h1>
+        <p>Hola ${customerName},</p>
+        <p>Vimos que dejaste algunos productos en tu carrito. ¡No te preocupes, los guardamos para ti!</p>
+        <h3>Tu carrito contiene:</h3>
+        <ul>${itemsList}</ul>
+        <p><a href="${cartUrl}" style="color: #ec4899; display: inline-block; padding: 12px 24px; background-color: #ec4899; color: white; text-decoration: none; border-radius: 6px;">Completar mi compra</a></p>
+        <p>Si tienes alguna pregunta, no dudes en contactarnos.</p>
+        <p>El equipo de Cosmetics Shop</p>
+      </div>
+    `,
+    text: `¿Olvidaste algo en tu carrito? Hola ${customerName}, completa tu compra aquí: ${cartUrl}`,
+  };
+}
+
+export function generateOrderStatusUpdateEmail(orderNumber: string, status: string, customerName: string) {
+  const statusMessages: Record<string, string> = {
+    PENDING: "Tu pedido está pendiente de confirmación.",
+    CONFIRMED: "¡Tu pedido ha sido confirmado!",
+    PROCESSING: "Tu pedido está siendo procesado.",
+    COMPLETED: "¡Tu pedido ha sido completado!",
+    CANCELLED: "Tu pedido ha sido cancelado.",
+  };
+
+  return {
+    subject: `Actualización de tu pedido #${orderNumber} - Cosmetics Shop`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1 style="color: #ec4899;">Actualización de Pedido</h1>
+        <p>Hola ${customerName},</p>
+        <p>${statusMessages[status] || "Hay una actualización en tu pedido."}</p>
+        <p><strong>Número de pedido:</strong> ${orderNumber}</p>
+        <p><strong>Estado:</strong> ${status}</p>
+        <p>Puedes ver más detalles en tu cuenta.</p>
+        <p>El equipo de Cosmetics Shop</p>
+      </div>
+    `,
+    text: `Actualización de tu pedido #${orderNumber}: ${statusMessages[status]}`,
   };
 }
