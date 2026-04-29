@@ -47,7 +47,14 @@ export function CouponsClient({ initialCoupons }: { initialCoupons: Coupon[] }) 
         usageLimit: formData.usageLimit || undefined,
         expiryDate: formData.expiryDate || undefined
       });
-      setCoupons([result, ...coupons]);
+      // Serialize Decimal values to numbers
+      const serializedResult: Coupon = {
+        ...result,
+        value: Number(result.value),
+        minAmount: result.minAmount ? Number(result.minAmount) : null,
+        maxDiscount: result.maxDiscount ? Number(result.maxDiscount) : null,
+      };
+      setCoupons([serializedResult, ...coupons]);
       setIsOpen(false);
       setFormData({ code: "", discountType: "PERCENTAGE", value: 0, minAmount: 0, expiryDate: "", usageLimit: 0 });
       toast.success("Cupón creado exitosamente");
