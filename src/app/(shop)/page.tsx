@@ -5,12 +5,11 @@ import { prisma } from "@/lib/prisma";
 import { ProductCard } from "@/components/shop/ProductCard";
 
 export const metadata = {
-  title: "Cosmetics Shop | Belleza y Skincare",
-  description: "Tu tienda de cosméticos online con los mejores productos.",
+  title: "Cosmetics Shop | Belleza y Skincare de Lujo",
+  description: "Tu boutique de cosméticos online con los mejores productos de belleza premium.",
 };
 
 export default async function HomePage() {
-  // Fetch featured products
   const featuredProductsRaw = await prisma.product.findMany({
     where: { isActive: true },
     take: 8,
@@ -18,7 +17,6 @@ export default async function HomePage() {
     include: { category: true }
   });
 
-  // Serialize products for client component
   const featuredProducts = featuredProductsRaw.map((product: any) => ({
     id: product.id,
     name: product.name,
@@ -31,37 +29,37 @@ export default async function HomePage() {
   }));
 
   return (
-    <div>
-      {/* Hero Section */}
-      <section className="relative bg-pink-50 overflow-hidden">
+    <div className="bg-[var(--surface)]">
+      <section className="relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-[var(--secondary-container)] to-transparent rounded-full blur-3xl opacity-60 -z-10" />
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="max-w-2xl">
-              <span className="inline-block py-1 px-3 rounded-full bg-pink-100 text-pink-600 text-sm font-semibold mb-6">
-                Colección de Primavera 🌸
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+            <div className="max-w-xl">
+              <span className="inline-block py-1.5 px-4 rounded-full chip text-xs tracking-widest mb-8 animate-fade-up">
+                Nueva Colección Primavera
               </span>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-slate-900 leading-tight mb-6">
-                Descubre tu belleza <span className="text-pink-500">natural</span>
+              <h1 className="text-5xl md:text-6xl lg:text-[72px] font-heading text-[var(--on-surface)] leading-[1.1] mb-8 text-balance animate-fade-up animate-stagger-1">
+                Descubre tu belleza <span className="text-[var(--primary)] italic">natural</span>
               </h1>
-              <p className="text-lg text-slate-600 mb-8 max-w-lg">
+              <p className="text-lg text-[var(--on-surface-variant)] mb-10 max-w-md animate-fade-up animate-stagger-2">
                 Los mejores productos de skincare y maquillaje seleccionados por expertos para resaltar lo mejor de ti.
               </p>
-              <div className="flex flex-wrap gap-4">
-                <Button size="lg" className="bg-slate-900 hover:bg-slate-800 text-white rounded-full px-8" asChild>
+              <div className="flex flex-wrap gap-4 animate-fade-up animate-stagger-3">
+                <Button size="lg" className="rounded-full px-8 bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--on-primary)] shadow-md hover:shadow-lg" asChild>
                   <Link href="/tienda">Comprar Ahora</Link>
                 </Button>
-                <Button size="lg" variant="outline" className="rounded-full px-8 border-pink-200 text-pink-700 hover:bg-pink-50" asChild>
+                <Button size="lg" variant="outline" className="rounded-full px-8 border-[var(--outline-variant)] text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)]" asChild>
                   <Link href="/tienda?category=skincare">Ver Skincare</Link>
                 </Button>
               </div>
             </div>
             <div className="relative hidden lg:block">
-              <div className="absolute inset-0 bg-gradient-to-tr from-pink-200 to-amber-100 rounded-full blur-3xl opacity-50 transform scale-110 -z-10"></div>
-              <div className="aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl border-4 border-white relative bg-white flex items-center justify-center">
-                <div className="absolute inset-0 bg-gradient-to-t from-pink-500/20 to-transparent z-10 pointer-events-none"></div>
-                <div className="absolute inset-0 bg-pink-100/50 flex flex-col items-center justify-center text-pink-400">
-                   <span className="text-9xl mb-4" aria-hidden="true">✦</span>
-                   <p className="text-pink-500 font-medium tracking-widest uppercase text-sm">Glamour</p>
+              <div className="absolute inset-0 bg-gradient-to-tr from-[var(--secondary-container)] via-[var(--primary-container)]/30 to-[var(--surface)] rounded-full blur-3xl opacity-80 transform scale-110 -z-10" />
+              <div className="aspect-[4/5] rounded-2xl overflow-hidden shadow-[var(--shadow-ambient)] border border-[var(--surface-container-lowest)] relative bg-[var(--surface-container-low)] flex items-center justify-center">
+                <div className="absolute inset-0 bg-gradient-to-t from-[var(--primary)]/5 to-transparent z-10 pointer-events-none" />
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-[var(--outline-variant)]/50">
+                   <span className="text-[120px] mb-4 select-none" aria-hidden="true">✦</span>
+                   <p className="text-[var(--primary)] font-heading tracking-[0.3em] uppercase text-sm">Luminous</p>
                 </div>
               </div>
             </div>
@@ -69,40 +67,42 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Featured Categories */}
-      <section className="py-16 bg-white">
+      <section className="py-20 lg:py-28 bg-[var(--surface-container-lowest)]">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-slate-900">Compra por Categoría</h2>
-            <p className="text-slate-500 mt-2">Encuentra exactamente lo que necesitas</p>
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-heading text-[var(--on-surface)]">Compra por Categoría</h2>
+            <p className="text-[var(--on-surface-variant)] mt-3">Encuentra exactamente lo que necesitas</p>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
             {[
-              { name: "Maquillaje", url: "/tienda?category=maquillaje", color: "bg-rose-100", border: "border-rose-200" },
-              { name: "Skincare", url: "/tienda?category=skincare", color: "bg-emerald-100", border: "border-emerald-200" },
-              { name: "Perfumes", url: "/tienda?category=perfumes", color: "bg-purple-100", border: "border-purple-200" },
-              { name: "Cabello", url: "/tienda?category=cabello", color: "bg-amber-100", border: "border-amber-200" },
-            ].map((cat) => (
-              <Link key={cat.name} href={cat.url} className={`group relative rounded-2xl overflow-hidden aspect-square flex items-center justify-center bg-slate-50 border ${cat.border} hover:shadow-lg transition-all`}>
-                <div className={`absolute inset-0 opacity-40 group-hover:opacity-60 transition-opacity ${cat.color}`}></div>
-                <h3 className="relative z-10 text-xl font-bold text-slate-800 group-hover:scale-110 transition-transform">{cat.name}</h3>
+              { name: "Maquillaje", slug: "maquillaje", color: "bg-[#f5e6e0]" },
+              { name: "Skincare", slug: "skincare", color: "bg-[#e8f0e8]" },
+              { name: "Perfumes", slug: "perfumes", color: "bg-[#f0e8f5]" },
+              { name: "Cabello", slug: "cabello", color: "bg-[#f5f0e6]" },
+            ].map((cat, i) => (
+              <Link 
+                key={cat.name} 
+                href={`/tienda?category=${cat.slug}`} 
+                className={`group relative rounded-2xl overflow-hidden aspect-[4/5] flex items-center justify-center ${cat.color} border border-[var(--outline-variant)]/30 hover:shadow-[var(--shadow-ambient-hover)] transition-all duration-300 hover:-translate-y-1`}
+              >
+                <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${cat.color}`} />
+                <h3 className="relative z-10 text-xl font-heading text-[var(--on-surface)] group-hover:scale-105 transition-transform duration-300">{cat.name}</h3>
               </Link>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Featured Products */}
-      <section className="py-16 bg-slate-50 border-t border-slate-100">
+      <section className="py-20 lg:py-28">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-end justify-between mb-8">
+          <div className="flex items-end justify-between mb-12">
             <div>
-              <h2 className="text-3xl font-bold text-slate-900">Novedades</h2>
-              <p className="text-slate-500 mt-2">Los últimos productos agregados a nuestra colección</p>
+              <h2 className="text-3xl md:text-4xl font-heading text-[var(--on-surface)]">Novedades</h2>
+              <p className="text-[var(--on-surface-variant)] mt-2">Los últimos productos agregados a nuestra colección</p>
             </div>
-            <Link href="/tienda" className="hidden md:flex items-center text-pink-600 font-medium hover:text-pink-700">
-              Ver todo <ArrowRight className="ml-1 w-4 h-4" />
+            <Link href="/tienda" className="hidden md:flex items-center gap-2 text-sm font-medium text-[var(--primary)] hover:text-[var(--on-primary-container)] transition-colors">
+              Ver todo <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
 
@@ -112,30 +112,35 @@ export default async function HomePage() {
                 <ProductCard key={product.id} product={product} />
               ))
             ) : (
-              <div className="col-span-full flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-dashed border-slate-200">
-                <span className="text-4xl mb-4 text-slate-200">🛍️</span>
-                <p className="text-slate-500 font-medium">Aún no hay productos en la tienda.</p>
-                <p className="text-sm text-slate-400">Visita el panel de administración para empezar a vender.</p>
+              <div className="col-span-full flex flex-col items-center justify-center py-20 bg-[var(--surface-container-low)] rounded-2xl border border-dashed border-[var(--outline-variant)]">
+                <span className="text-5xl mb-4 text-[var(--outline-variant)]/50">✦</span>
+                <p className="text-[var(--on-surface-variant)] font-medium text-lg">Aún no hay productos en la tienda.</p>
+                <p className="text-sm text-[var(--on-surface-variant)]/70 mt-1">Visita el panel de administración para empezar a vender.</p>
               </div>
             )}
           </div>
-          <div className="mt-10 text-center md:hidden">
-            <Button variant="outline" size="lg" className="w-full rounded-full border-slate-300 text-slate-700" asChild>
+          <div className="mt-12 text-center md:hidden">
+            <Button variant="outline" size="lg" className="w-full rounded-full border-[var(--outline-variant)] text-[var(--on-surface-variant)]" asChild>
               <Link href="/tienda">Ver todos los productos</Link>
             </Button>
           </div>
         </div>
       </section>
       
-      {/* Newsletter Banner */}
-      <section className="bg-pink-600 text-white py-16">
+      <section className="py-20 lg:py-28 bg-[var(--primary-container)]">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center max-w-2xl">
-          <h2 className="text-3xl font-bold mb-4">¿Quieres un 15% de descuento?</h2>
-          <p className="text-pink-100 mb-8">Suscríbete a nuestro boletín y recibe consejos de belleza y ofertas exclusivas antes que nadie.</p>
-          <form className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto" aria-label="Formulario de suscripción">
+          <h2 className="text-3xl md:text-4xl font-heading text-[var(--on-primary-container)] mb-4">¿Quieres un 15% de descuento?</h2>
+          <p className="text-[var(--on-primary-container)]/80 mb-10">Suscríbete a nuestro boletín y recibe consejos de belleza y ofertas exclusivas antes que nadie.</p>
+          <form className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto" aria-label="Formulario de suscripción">
             <label htmlFor="hero-email" className="sr-only">Correo electrónico</label>
-            <input id="hero-email" type="email" placeholder="Ingresa tu email" className="flex-1 px-4 py-3 rounded-full text-slate-900 focus:outline-none focus:ring-2 focus:ring-white" required />
-            <Button type="submit" size="lg" className="bg-slate-900 hover:bg-slate-800 text-white rounded-full">Suscribirme</Button>
+            <input 
+              id="hero-email" 
+              type="email" 
+              placeholder="Ingresa tu email" 
+              className="flex-1 px-5 py-3.5 rounded-full bg-[var(--surface-container-lowest)] text-[var(--on-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 border-0" 
+              required 
+            />
+            <Button type="submit" size="lg" className="rounded-full px-8 bg-[var(--on-primary-container)] text-[var(--primary-container)] hover:bg-[var(--on-primary-container)]/90">Suscribirme</Button>
           </form>
         </div>
       </section>

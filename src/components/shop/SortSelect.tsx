@@ -18,16 +18,15 @@ export function SortSelect({ currentSort }: { currentSort: string }) {
     router.push(`/tienda?${params.toString()}`);
   };
 
-  // Evitamos el mismatch de hidratación no renderizando el select hasta que el cliente esté listo
   if (!mounted) {
     return (
-      <div className="h-9 w-32 bg-slate-100 animate-pulse rounded-md"></div>
+      <div className="h-8 w-36 bg-[var(--surface-container-low)] animate-pulse rounded-lg"></div>
     );
   }
 
   return (
     <select 
-      className="text-sm border-none bg-transparent font-bold text-slate-900 focus:ring-0 cursor-pointer outline-none"
+      className="text-sm border-none bg-[var(--surface-container-low)] font-medium text-[var(--on-surface)] rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-[var(--primary)]/30 cursor-pointer outline-none"
       defaultValue={currentSort}
       onChange={(e) => handleSortChange(e.target.value)}
     >

@@ -17,14 +17,12 @@ export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
   const [isMounted, setIsMounted] = useState(false);
   const cart = useCart();
   
-  // Checkout flow state
   const [isCheckoutForm, setIsCheckoutForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
 
-  // Coupon state
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<any | null>(null);
   const [discountAmount, setDiscountAmount] = useState(0);
@@ -64,7 +62,6 @@ export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
       const result = await createOrder(orderData);
       
       if (result.success) {
-        // Use the number passed from the database
         const phoneNumber = whatsappNumber.replace(/\D/g, ""); 
         let message = `¡Hola! Acabo de registrar el pedido *${result.order?.orderNumber}*:\n\n`;
         
@@ -81,7 +78,6 @@ export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
         const encodedMessage = encodeURIComponent(message);
         window.open(`https://wa.me/${phoneNumber}?text=${encodedMessage}`, '_blank');
         
-        // Clear cart and close
         cart.clearCart();
         setIsCheckoutForm(false);
       } else {
@@ -97,21 +93,21 @@ export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
   return (
     <Sheet onOpenChange={(open) => !open && setIsCheckoutForm(false)}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative text-slate-600 hover:text-pink-600">
+        <Button variant="ghost" size="icon" className="relative text-[var(--on-surface-variant)] hover:text-[var(--primary)] hover:bg-[var(--secondary-container)]/50">
           <ShoppingBag className="h-5 w-5" />
           {cart.items.length > 0 && (
-            <span className="absolute top-1 right-1 h-4 w-4 rounded-full bg-pink-600 text-[10px] font-bold text-white flex items-center justify-center border-2 border-white">
+            <span className="absolute top-1 right-1 h-4 w-4 rounded-full bg-[var(--primary)] text-[10px] font-bold text-[var(--on-primary)] flex items-center justify-center border-2 border-[var(--surface)]">
               {cart.totalItems()}
             </span>
           )}
         </Button>
       </SheetTrigger>
       <SheetContent className="w-full sm:max-w-md flex flex-col p-0">
-        <SheetHeader className="px-6 py-4 border-b border-slate-100">
-          <SheetTitle className="text-xl font-bold flex items-center gap-2">
+        <SheetHeader className="px-6 py-5 border-b border-[var(--outline-variant)]/20">
+          <SheetTitle className="text-xl font-heading flex items-center gap-2.5">
             {isCheckoutForm ? (
-              <span className="flex items-center gap-2 cursor-pointer text-slate-500 hover:text-slate-900" onClick={() => setIsCheckoutForm(false)}>
-                <ArrowRight className="w-4 h-4 rotate-180" /> Volver al carrito
+              <span className="flex items-center gap-2 cursor-pointer text-[var(--on-surface-variant)] hover:text-[var(--on-surface)] transition-colors" onClick={() => setIsCheckoutForm(false)}>
+                <ArrowRight className="w-4 h-4 rotate-180" /> Volver
               </span>
             ) : (
               <><ShoppingBag className="w-5 h-5" /> Tu Carrito</>
@@ -120,81 +116,79 @@ export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
         </SheetHeader>
         
         {cart.items.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-slate-500 p-6">
-            <ShoppingBag className="w-16 h-16 text-slate-200 mb-4" />
-            <p className="text-lg font-medium font-heading">Tu carrito está vacío</p>
+          <div className="flex-1 flex flex-col items-center justify-center p-6" style={{ color: 'var(--on-surface-variant)' }}>
+            <ShoppingBag className="w-16 h-16 mb-4" />
+            <p className="text-lg font-heading text-[var(--on-surface)]">Tu carrito está vacío</p>
             <p className="text-sm">Agrega algunos productos para continuar.</p>
           </div>
         ) : isCheckoutForm ? (
-          // Checkout Form
           <form onSubmit={handleWhatsAppCheckout} className="flex-1 flex flex-col px-6">
-            <ScrollArea className="flex-1 -mx-6 px-6 py-4">
-              <div className="space-y-4">
-                <p className="text-sm text-slate-500">Completa tus datos para registrar el pedido. Serás redirigido a WhatsApp para coordinar el pago.</p>
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nombre completo *</Label>
-                  <Input id="name" required value={name} onChange={e => setName(e.target.value)} placeholder="Ej. Ana García" />
+            <ScrollArea className="flex-1 -mx-6 px-6 py-5">
+              <div className="space-y-5">
+                <p className="text-sm text-[var(--on-surface-variant)]">Completa tus datos para registrar el pedido. Serás redirigido a WhatsApp.</p>
+                <div className="space-y-2.5">
+                  <Label htmlFor="checkout-name">Nombre completo *</Label>
+                  <Input id="checkout-name" required value={name} onChange={e => setName(e.target.value)} placeholder="Ej. Ana García" className="bg-[var(--surface-container-low)]" />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Teléfono (WhatsApp) *</Label>
-                  <Input id="phone" required type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="Ej. 55 1234 5678" />
+                <div className="space-y-2.5">
+                  <Label htmlFor="checkout-phone">Teléfono (WhatsApp) *</Label>
+                  <Input id="checkout-phone" required type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="Ej. 55 1234 5678" className="bg-[var(--surface-container-low)]" />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="address">Dirección de envío (Opcional)</Label>
-                  <Input id="address" value={address} onChange={e => setAddress(e.target.value)} placeholder="Ej. Calle Principal 123..." />
+                <div className="space-y-2.5">
+                  <Label htmlFor="checkout-address">Dirección de envío (Opcional)</Label>
+                  <Input id="checkout-address" value={address} onChange={e => setAddress(e.target.value)} placeholder="Ej. Calle Principal 123..." className="bg-[var(--surface-container-low)]" />
                 </div>
               </div>
             </ScrollArea>
-            <div className="py-6 mt-auto bg-white">
-              <Separator className="mb-4" />
-              <div className="flex justify-between font-bold text-lg mb-6">
+            <div className="py-6 mt-auto bg-[var(--surface-container-lowest)]">
+              <Separator className="mb-5" />
+              <div className="flex justify-between font-heading text-lg mb-6">
                 <span>Total a pagar</span>
                 <div className="text-right">
-                  {discountAmount > 0 && <p className="text-xs text-slate-400 line-through">${cart.totalPrice().toFixed(2)}</p>}
-                  <p className="text-green-600">${(cart.totalPrice() - discountAmount).toFixed(2)}</p>
+                  {discountAmount > 0 && <p className="text-xs text-[var(--on-surface-variant)] line-through">${cart.totalPrice().toFixed(2)}</p>}
+                  <p className="text-[var(--primary)]">${(cart.totalPrice() - discountAmount).toFixed(2)}</p>
                 </div>
               </div>
-              <Button type="submit" disabled={isSubmitting} className="w-full bg-green-600 hover:bg-green-700 text-white rounded-full py-6 text-lg shadow-lg shadow-green-200 transition-all active:scale-95">
+              <Button type="submit" disabled={isSubmitting} className="w-full bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--on-primary)] rounded-full py-5 text-base shadow-md">
                 {isSubmitting ? "Registrando..." : "Enviar por WhatsApp"}
               </Button>
             </div>
           </form>
         ) : (
-          // Cart Items
           <div className="flex-1 flex flex-col px-6">
-            <ScrollArea className="flex-1 -mx-6 px-6 py-4">
-              <div className="space-y-4">
+            <ScrollArea className="flex-1 -mx-6 px-6 py-5">
+              <div className="space-y-5">
                 {cart.items.map((item) => (
                   <div key={`${item.id}-${item.variantId || 'base'}`} className="flex gap-4 group">
-                    <div className="h-20 w-20 bg-slate-100 rounded-xl border border-slate-200 overflow-hidden flex-shrink-0 shadow-sm">
+                    <div className="h-20 w-20 bg-[var(--surface-container-low)] rounded-xl border border-[var(--outline-variant)]/20 overflow-hidden flex-shrink-0">
                       {item.image ? (
                         <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
                       ) : (
-                        <div className="h-full w-full flex items-center justify-center text-slate-300">✦</div>
+                        <div className="h-full w-full flex items-center justify-center text-[var(--outline-variant)]/40">✦</div>
                       )}
                     </div>
                     <div className="flex-1 flex flex-col">
                       <div className="flex justify-between">
                         <div>
-                          <h4 className="font-bold text-slate-900 line-clamp-1 text-sm pr-4 font-heading">{item.name}</h4>
+                          <h4 className="font-heading text-sm text-[var(--on-surface)] line-clamp-1 pr-3">{item.name}</h4>
                           {item.variantLabel && (
-                            <span className="text-[10px] bg-pink-50 text-pink-600 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border border-pink-100">
+                            <span className="text-[10px] bg-[var(--secondary-container)] text-[var(--on-secondary-container)] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider mt-1 inline-block">
                               {item.variantLabel}
                             </span>
                           )}
                         </div>
-                        <button onClick={() => cart.removeItem(item.id, item.variantId)} className="text-slate-400 hover:text-red-500 self-start transition-colors">
+                        <button onClick={() => cart.removeItem(item.id, item.variantId)} className="text-[var(--on-surface-variant)]/40 hover:text-[var(--error)] self-start transition-colors">
                           <X className="w-4 h-4" />
                         </button>
                       </div>
-                      <div className="text-sm font-bold text-slate-900 mt-auto flex items-center justify-between">
+                      <div className="text-sm font-medium text-[var(--on-surface)] mt-auto flex items-center justify-between">
                         <span>${item.price.toFixed(2)}</span>
-                        <div className="flex items-center border border-slate-200 rounded-lg bg-white shadow-sm">
-                          <button onClick={() => cart.updateQuantity(item.id, item.quantity - 1, item.variantId)} className="px-2 py-1 text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors" disabled={item.quantity <= 1}>
+                        <div className="flex items-center border border-[var(--outline-variant)]/30 rounded-lg bg-[var(--surface-container-lowest)] shadow-sm">
+                          <button onClick={() => cart.updateQuantity(item.id, item.quantity - 1, item.variantId)} className="px-2.5 py-1.5 text-[var(--on-surface-variant)] hover:text-[var(--on-surface)] hover:bg-[var(--surface-container-low)] transition-colors disabled:opacity-40" disabled={item.quantity <= 1}>
                             <Minus className="w-3 h-3" />
                           </button>
                           <span className="text-xs font-bold w-6 text-center">{item.quantity}</span>
-                          <button onClick={() => cart.updateQuantity(item.id, item.quantity + 1, item.variantId)} className="px-2 py-1 text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors">
+                          <button onClick={() => cart.updateQuantity(item.id, item.quantity + 1, item.variantId)} className="px-2.5 py-1.5 text-[var(--on-surface-variant)] hover:text-[var(--on-surface)] hover:bg-[var(--surface-container-low)] transition-colors">
                             <Plus className="w-3 h-3" />
                           </button>
                         </div>
@@ -205,24 +199,23 @@ export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
               </div>
             </ScrollArea>
             
-            <div className="py-6 mt-auto bg-white space-y-4">
-              {/* Coupon UI */}
-              <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase text-slate-400">Cupón de descuento</Label>
+            <div className="py-6 mt-auto bg-[var(--surface-container-lowest)] space-y-5">
+              <div className="space-y-2.5">
+                <Label className="text-xs font-bold uppercase text-[var(--on-surface-variant)]/60 tracking-wider">Cupón de descuento</Label>
                 <div className="flex gap-2">
                   <Input 
                     placeholder="Código" 
                     value={couponCode} 
                     onChange={e => setCouponCode(e.target.value.toUpperCase())}
                     disabled={!!appliedCoupon}
-                    className="h-10 font-bold uppercase"
+                    className="h-10 font-bold uppercase bg-[var(--surface-container-low)]"
                   />
                   {appliedCoupon ? (
                     <Button variant="outline" size="sm" onClick={() => {
                       setAppliedCoupon(null);
                       setDiscountAmount(0);
                       setCouponCode("");
-                    }} className="text-red-500 border-red-200 hover:bg-red-50">
+                    }} className="border-[var(--error)]/30 text-[var(--error)] hover:bg-[var(--error)]/5">
                       Quitar
                     </Button>
                   ) : (
@@ -240,31 +233,31 @@ export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
                         }
                         setAppliedCoupon(c);
                         setDiscountAmount(disc);
-                        toast.success("Cupón aplicado correctamente");
+                        toast.success("Cupón aplicado");
                       } else {
-                        toast.error(res.error);
+                        toast.error(res.error || "Cupón inválido");
                       }
-                    }} className="text-pink-600 border-pink-200 hover:bg-pink-50">
+                    }} className="border-[var(--primary)]/30 text-[var(--primary)] hover:bg-[var(--primary)]/5">
                       Aplicar
                     </Button>
                   )}
                 </div>
                 {appliedCoupon && (
-                  <p className="text-[10px] font-bold text-green-600 flex items-center gap-1">
+                  <p className="text-[11px] font-bold text-[var(--primary)] flex items-center gap-1">
                     <CheckCircle2 className="w-3 h-3" /> {appliedCoupon.code} aplicado (-${discountAmount.toFixed(2)})
                   </p>
                 )}
               </div>
 
               <Separator />
-              <div className="flex justify-between font-bold text-lg">
+              <div className="flex justify-between font-heading text-lg">
                 <span>Total estimado</span>
                 <div className="text-right">
-                  {discountAmount > 0 && <p className="text-xs text-slate-400 line-through font-normal">${cart.totalPrice().toFixed(2)}</p>}
-                  <p className="text-pink-600">${(cart.totalPrice() - discountAmount).toFixed(2)}</p>
+                  {discountAmount > 0 && <p className="text-xs text-[var(--on-surface-variant)] line-through font-normal">${cart.totalPrice().toFixed(2)}</p>}
+                  <p className="text-[var(--primary)]">${(cart.totalPrice() - discountAmount).toFixed(2)}</p>
                 </div>
               </div>
-              <Button onClick={() => setIsCheckoutForm(true)} className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-full py-6 text-lg transition-all active:scale-95 shadow-xl shadow-slate-200">
+              <Button onClick={() => setIsCheckoutForm(true)} className="w-full bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--on-primary)] rounded-full py-5 text-base transition-all shadow-md">
                 Proceder al Checkout
               </Button>
             </div>
