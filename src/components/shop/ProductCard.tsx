@@ -81,7 +81,7 @@ export function ProductCard({ product }: ProductCardProps) {
       </Link>
       <div className="p-5 flex flex-col flex-grow">
         <div className="text-[11px] text-[var(--primary)] font-semibold uppercase tracking-widest mb-1.5">
-          {product.category?.name || "Catálogo"}
+          {product.category?.name || "COLLECTION"}
         </div>
         <Link href={`/producto/${product.slug}`} className="block mb-2">
           <h3 className="font-heading text-lg text-[var(--on-surface)] line-clamp-2 group-hover:text-[var(--primary)] transition-colors leading-tight">

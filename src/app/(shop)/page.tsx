@@ -5,8 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { ProductCard } from "@/components/shop/ProductCard";
 
 export const metadata = {
-  title: "Cosmetics Shop | Belleza y Skincare de Lujo",
-  description: "Tu boutique de cosméticos online con los mejores productos de belleza premium.",
+  title: "LUXE BEAUTÉ | Premium Beauty & Skincare",
+  description: "Discover luxury beauty products curated for the discerning clientele. Radiance reimagined.",
 };
 
 export default async function HomePage() {
@@ -29,37 +29,36 @@ export default async function HomePage() {
   }));
 
   return (
-    <div className="bg-[var(--surface)]">
-      <section className="relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-[var(--secondary-container)] to-transparent rounded-full blur-3xl opacity-60 -z-10" />
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+    <div className="bg-[#fcf9f8]">
+      {/* Hero Section - Editorial Style */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-[#e8f0f0] via-[#f5f0e6] to-[#fcf9f8]">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <div className="max-w-xl">
-              <span className="inline-block py-1.5 px-4 rounded-full chip text-xs tracking-widest mb-8 animate-fade-up">
-                Nueva Colección Primavera
+              <span className="inline-block py-2 px-4 rounded-full chip text-[10px] tracking-[0.2em] mb-6 animate-fade-up">
+                THE 9TH STANDARD
               </span>
-              <h1 className="text-5xl md:text-6xl lg:text-[72px] font-heading text-[var(--on-surface)] leading-[1.1] mb-8 text-balance animate-fade-up animate-stagger-1">
-                Descubre tu belleza <span className="text-[var(--primary)] italic">natural</span>
+              <h1 className="text-5xl md:text-6xl lg:text-[68px] font-heading text-[#1b1c1c] leading-[1.1] mb-6 text-balance animate-fade-up animate-stagger-1">
+                Radiance <span className="text-[#7a5646] italic">Reimagined</span>
               </h1>
-              <p className="text-lg text-[var(--on-surface-variant)] mb-10 max-w-md animate-fade-up animate-stagger-2">
-                Los mejores productos de skincare y maquillaje seleccionados por expertos para resaltar lo mejor de ti.
+              <p className="text-lg text-[#50443f] mb-10 max-w-md leading-relaxed animate-fade-up animate-stagger-2">
+                Discover our curated collection of premium beauty essentials designed to enhance your natural radiance.
               </p>
               <div className="flex flex-wrap gap-4 animate-fade-up animate-stagger-3">
-                <Button size="lg" className="rounded-full px-8 bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--on-primary)] shadow-md hover:shadow-lg" asChild>
-                  <Link href="/tienda">Comprar Ahora</Link>
+                <Button size="lg" className="rounded-full px-10 bg-[#7a5646] hover:bg-[#603f30] text-white shadow-md hover:shadow-lg transition-all" asChild>
+                  <Link href="/tienda">SHOP NOW</Link>
                 </Button>
-                <Button size="lg" variant="outline" className="rounded-full px-8 border-[var(--outline-variant)] text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)]" asChild>
-                  <Link href="/tienda?category=skincare">Ver Skincare</Link>
+                <Button size="lg" variant="outline" className="rounded-full px-10 border-[#7a5646] text-[#7a5646] hover:bg-[#7a5646] hover:text-white transition-all" asChild>
+                  <Link href="/tienda?category=skincare">DISCOVER</Link>
                 </Button>
               </div>
             </div>
             <div className="relative hidden lg:block">
-              <div className="absolute inset-0 bg-gradient-to-tr from-[var(--secondary-container)] via-[var(--primary-container)]/30 to-[var(--surface)] rounded-full blur-3xl opacity-80 transform scale-110 -z-10" />
-              <div className="aspect-[4/5] rounded-2xl overflow-hidden shadow-[var(--shadow-ambient)] border border-[var(--surface-container-lowest)] relative bg-[var(--surface-container-low)] flex items-center justify-center">
-                <div className="absolute inset-0 bg-gradient-to-t from-[var(--primary)]/5 to-transparent z-10 pointer-events-none" />
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-[var(--outline-variant)]/50">
-                   <span className="text-[120px] mb-4 select-none" aria-hidden="true">✦</span>
-                   <p className="text-[var(--primary)] font-heading tracking-[0.3em] uppercase text-sm">Luminous</p>
+              <div className="aspect-[4/5] rounded-3xl overflow-hidden shadow-[0_8px_32px_rgba(44,44,44,0.12)] border border-white/50 relative bg-gradient-to-br from-[#f5f0e6] to-[#e8f0f0] flex items-center justify-center">
+                <div className="absolute inset-0 bg-gradient-to-t from-[#7a5646]/10 to-transparent z-10 pointer-events-none" />
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-[#82746e]/40">
+                   <span className="text-[100px] mb-4 select-none" aria-hidden="true">✦</span>
+                   <p className="text-[#7a5646] font-heading tracking-[0.3em] uppercase text-sm">LUXE BEAUTÉ</p>
                 </div>
               </div>
             </div>
@@ -67,42 +66,48 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="py-20 lg:py-28 bg-[var(--surface-container-lowest)]">
+      {/* Curated Collections - Circular */}
+      <section className="py-20 lg:py-28 bg-[#fcf9f8]">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-heading text-[var(--on-surface)]">Compra por Categoría</h2>
-            <p className="text-[var(--on-surface-variant)] mt-3">Encuentra exactamente lo que necesitas</p>
+            <h2 className="text-3xl md:text-4xl font-heading text-[#1b1c1c]">Curated Collections</h2>
+            <p className="text-[#82746e] mt-3">Explore our carefully selected categories</p>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 justify-items-center">
             {[
-              { name: "Maquillaje", slug: "maquillaje", color: "bg-[#f5e6e0]" },
-              { name: "Skincare", slug: "skincare", color: "bg-[#e8f0e8]" },
-              { name: "Perfumes", slug: "perfumes", color: "bg-[#f0e8f5]" },
-              { name: "Cabello", slug: "cabello", color: "bg-[#f5f0e6]" },
+              { name: "SKINCARE", slug: "skincare", color: "bg-[#e8f0e8]" },
+              { name: "MAKEUP", slug: "maquillaje", color: "bg-[#f5e6e0]" },
+              { name: "FRAGRANCE", slug: "perfumes", color: "bg-[#f0e8f5]" },
+              { name: "HAIRCARE", slug: "cabello", color: "bg-[#f5f0e6]" },
             ].map((cat, i) => (
               <Link 
                 key={cat.name} 
                 href={`/tienda?category=${cat.slug}`} 
-                className={`group relative rounded-2xl overflow-hidden aspect-[4/5] flex items-center justify-center ${cat.color} border border-[var(--outline-variant)]/30 hover:shadow-[var(--shadow-ambient-hover)] transition-all duration-300 hover:-translate-y-1`}
+                className="group flex flex-col items-center"
               >
-                <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${cat.color}`} />
-                <h3 className="relative z-10 text-xl font-heading text-[var(--on-surface)] group-hover:scale-105 transition-transform duration-300">{cat.name}</h3>
+                <div 
+                  className={`w-32 h-32 md:w-40 md:h-40 rounded-full flex items-center justify-center ${cat.color} border border-[#d4c3bc]/30 hover:shadow-[0_8px_24px_rgba(44,44,44,0.1)] transition-all duration-300 hover:scale-105`}
+                >
+                  <span className="text-3xl md:text-4xl" aria-hidden="true">✦</span>
+                </div>
+                <h3 className="label-editorial text-[#7a5646] mt-4 group-hover:text-[#603f30] transition-colors">{cat.name}</h3>
               </Link>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="py-20 lg:py-28">
+      {/* Best Sellers */}
+      <section className="py-20 lg:py-28 bg-[#f6f3f2]">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-end justify-between mb-12">
             <div>
-              <h2 className="text-3xl md:text-4xl font-heading text-[var(--on-surface)]">Novedades</h2>
-              <p className="text-[var(--on-surface-variant)] mt-2">Los últimos productos agregados a nuestra colección</p>
+              <span className="label-editorial text-[#7a5646] block mb-2">ICONIC ESSENTIALS</span>
+              <h2 className="text-3xl md:text-4xl font-heading text-[#1b1c1c]">Best Sellers</h2>
             </div>
-            <Link href="/tienda" className="hidden md:flex items-center gap-2 text-sm font-medium text-[var(--primary)] hover:text-[var(--on-primary-container)] transition-colors">
-              Ver todo <ArrowRight className="w-4 h-4" />
+            <Link href="/tienda" className="hidden md:flex items-center gap-2 text-sm font-medium text-[#7a5646] hover:text-[#603f30] transition-colors">
+              VIEW ALL <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
 
@@ -112,35 +117,72 @@ export default async function HomePage() {
                 <ProductCard key={product.id} product={product} />
               ))
             ) : (
-              <div className="col-span-full flex flex-col items-center justify-center py-20 bg-[var(--surface-container-low)] rounded-2xl border border-dashed border-[var(--outline-variant)]">
-                <span className="text-5xl mb-4 text-[var(--outline-variant)]/50">✦</span>
-                <p className="text-[var(--on-surface-variant)] font-medium text-lg">Aún no hay productos en la tienda.</p>
-                <p className="text-sm text-[var(--on-surface-variant)]/70 mt-1">Visita el panel de administración para empezar a vender.</p>
+              <div className="col-span-full flex flex-col items-center justify-center py-20 bg-[#fcf9f8] rounded-2xl border border-dashed border-[#d4c3bc]/30">
+                <span className="text-5xl mb-4 text-[#82746e]/40">✦</span>
+                <p className="text-[#82746e] font-medium text-lg">No products yet.</p>
+                <p className="text-sm text-[#82746e]/70 mt-1">Visit the admin panel to start selling.</p>
               </div>
             )}
           </div>
           <div className="mt-12 text-center md:hidden">
-            <Button variant="outline" size="lg" className="w-full rounded-full border-[var(--outline-variant)] text-[var(--on-surface-variant)]" asChild>
-              <Link href="/tienda">Ver todos los productos</Link>
+            <Button variant="outline" size="lg" className="w-full rounded-full border-[#7a5646] text-[#7a5646]" asChild>
+              <Link href="/tienda">VIEW ALL PRODUCTS</Link>
             </Button>
           </div>
         </div>
       </section>
+
+      {/* Brand Story */}
+      <section className="py-20 lg:py-28 bg-[#fcf9f8]">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+            <div className="relative hidden lg:block">
+              <div className="aspect-square rounded-3xl overflow-hidden shadow-[0_8px_32px_rgba(44,44,44,0.12)] bg-gradient-to-br from-[#b78d7a]/20 to-[#7a5646]/10 flex items-center justify-center">
+                <div className="text-center">
+                  <span className="text-[80px] text-[#7a5646]/30" aria-hidden="true">✦</span>
+                  <p className="text-[#7a5646] font-heading tracking-[0.3em] uppercase text-sm mt-4">OUR PHILOSOPHY</p>
+                </div>
+              </div>
+            </div>
+            <div>
+              <span className="label-editorial text-[#7a5646] block mb-4">OUR PHILOSOPHY</span>
+              <h2 className="text-3xl md:text-4xl font-heading text-[#1b1c1c] mb-6">Purity Without Compromise</h2>
+              <p className="text-lg text-[#50443f] mb-8 leading-relaxed">
+                "We believe that true beauty comes from ingredients that are as pure as they are powerful. Our formulas are crafted with intention, blending nature's finest elements with scientific innovation."
+              </p>
+              <div className="grid grid-cols-2 gap-8 mb-8">
+                <div>
+                  <p className="text-4xl font-heading text-[#7a5646] mb-2">100%</p>
+                  <p className="label-editorial text-[#82746e]">VEGAN FORMULAS</p>
+                </div>
+                <div>
+                  <p className="text-4xl font-heading text-[#7a5646] mb-2">0%</p>
+                  <p className="label-editorial text-[#82746e]">SYNTHETIC FILLERS</p>
+                </div>
+              </div>
+              <Link href="#" className="inline-flex items-center gap-2 text-sm font-medium text-[#7a5646] hover:text-[#603f30] transition-colors">
+                READ OUR STORY <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
       
-      <section className="py-20 lg:py-28 bg-[var(--primary-container)]">
+      {/* Newsletter */}
+      <section className="py-20 lg:py-28 bg-[#b78d7a]">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center max-w-2xl">
-          <h2 className="text-3xl md:text-4xl font-heading text-[var(--on-primary-container)] mb-4">¿Quieres un 15% de descuento?</h2>
-          <p className="text-[var(--on-primary-container)]/80 mb-10">Suscríbete a nuestro boletín y recibe consejos de belleza y ofertas exclusivas antes que nadie.</p>
-          <form className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto" aria-label="Formulario de suscripción">
-            <label htmlFor="hero-email" className="sr-only">Correo electrónico</label>
+          <h2 className="text-3xl md:text-4xl font-heading text-[#44281a] mb-4">Join the Atelier</h2>
+          <p className="text-[#44281a]/80 mb-10">Subscribe to receive exclusive offers, beauty tips, and early access to new collections.</p>
+          <form className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto" aria-label="Newsletter subscription">
+            <label htmlFor="newsletter-email" className="sr-only">Email address</label>
             <input 
-              id="hero-email" 
+              id="newsletter-email" 
               type="email" 
-              placeholder="Ingresa tu email" 
-              className="flex-1 px-5 py-3.5 rounded-full bg-[var(--surface-container-lowest)] text-[var(--on-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 border-0" 
+              placeholder="Email Address" 
+              className="flex-1 px-5 py-3.5 rounded-full bg-white text-[#1b1c1c] focus:outline-none focus:ring-2 focus:ring-[#44281a]/50 border-0" 
               required 
             />
-            <Button type="submit" size="lg" className="rounded-full px-8 bg-[var(--on-primary-container)] text-[var(--primary-container)] hover:bg-[var(--on-primary-container)]/90">Suscribirme</Button>
+            <Button type="submit" size="lg" className="rounded-full px-8 bg-[#44281a] text-white hover:bg-[#2e1508] transition-colors">SUBSCRIBE</Button>
           </form>
         </div>
       </section>

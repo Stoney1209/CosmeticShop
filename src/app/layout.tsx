@@ -16,8 +16,8 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: "Cosmetics Shop | Premium Beauty & Skincare",
-  description: "Luminous Editorial - Tu destino de belleza de lujo.",
+  title: "LUXE BEAUTÉ | Premium Beauty & Skincare",
+  description: "Discover luxury beauty products curated for the discerning clientele. Radiance reimagined.",
 };
 
 export default function RootLayout({

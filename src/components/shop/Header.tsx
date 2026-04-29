@@ -22,9 +22,9 @@ export async function Header() {
             <Button variant="ghost" size="icon" className="md:hidden text-[var(--on-surface-variant)]" aria-label="Abrir menú de navegación">
               <Menu className="h-5 w-5" aria-hidden="true" />
             </Button>
-            <Link href="/" className="flex items-center gap-2.5" aria-label="Cosmetics Shop - Inicio">
+            <Link href="/" className="flex items-center gap-2.5" aria-label="LUXE BEAUTÉ - Home">
               <span className="text-[var(--primary)] text-2xl font-heading select-none" aria-hidden="true">✦</span>
-              <span className="text-lg font-heading tracking-tight text-[var(--on-surface)] hidden sm:block">Luminous</span>
+              <span className="text-lg font-heading tracking-tight text-[var(--on-surface)] hidden sm:block">LUXE BEAUTÉ</span>
             </Link>
           </div>
 
