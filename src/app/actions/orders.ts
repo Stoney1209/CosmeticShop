@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { getCustomerSession } from "@/lib/customer-session";
 import { sendEmail, generateOrderConfirmationEmail, generateAdminOrderNotificationEmail, generateOrderStatusUpdateEmail } from "@/lib/email";
+import { generateWhatsAppMessage, markWhatsAppSent } from "@/lib/whatsapp";
 
 export async function getOrders() {
   try {
@@ -202,6 +203,13 @@ export async function createOrder(data: {
     } catch (emailError) {
       console.error("Error sending order emails:", emailError);
       // Don't fail the order if email fails
+    }
+
+    // Mark WhatsApp as sent (non-blocking)
+    try {
+      await markWhatsAppSent(order.id);
+    } catch (whatsappError) {
+      console.error("Error marking WhatsApp as sent:", whatsappError);
     }
 
     return { success: true, order };

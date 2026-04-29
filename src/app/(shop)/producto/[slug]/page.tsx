@@ -7,6 +7,8 @@ import { getCustomerSession } from "@/lib/customer-session";
 import { WishlistToggle } from "@/components/shop/WishlistToggle";
 import { ReviewsSection } from "@/components/shop/ReviewsSection";
 import { Metadata } from "next";
+import { Breadcrumbs } from "@/components/seo/Breadcrumbs";
+import { StructuredData, generateProductStructuredData, generateBreadcrumbStructuredData } from "@/components/seo/StructuredData";
 
 export async function generateMetadata({
   params,
@@ -128,22 +130,36 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+      {/* Structured Data */}
+      <StructuredData 
+        data={generateProductStructuredData({
+          name: product.name,
+          description: product.description || "Producto de alta calidad",
+          image: product.mainImage || "/og-image.jpg",
+          price: Number(product.price),
+          sku: product.sku,
+          brand: product.brand || undefined,
+          category: product.category?.name || undefined,
+          url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/producto/${product.slug}`,
+          availability: product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
+        })}
+      />
+      <StructuredData 
+        data={generateBreadcrumbStructuredData([
+          { name: "Inicio", item: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/tienda` },
+          ...(product.category ? [{ name: product.category.name, item: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/tienda?category=${product.category.slug}` }] : []),
+          { name: product.name, item: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/producto/${product.slug}` }
+        ])}
+      />
+
       {/* Breadcrumbs */}
-      <nav className="flex items-center text-sm text-slate-500 mb-8">
-        <Link href="/" className="hover:text-pink-600">Inicio</Link>
-        <ChevronRight className="w-4 h-4 mx-2" />
-        <Link href="/tienda" className="hover:text-pink-600">Tienda</Link>
-        {product.category && (
-          <>
-            <ChevronRight className="w-4 h-4 mx-2" />
-            <Link href={`/tienda?category=${product.category.slug}`} className="hover:text-pink-600">
-              {product.category.name}
-            </Link>
-          </>
-        )}
-        <ChevronRight className="w-4 h-4 mx-2" />
-        <span className="text-slate-900 font-medium truncate">{product.name}</span>
-      </nav>
+      <Breadcrumbs 
+        items={[
+          ...(product.category ? [{ label: product.category.name, href: `/tienda?category=${product.category.slug}` }] : []),
+          { label: product.name }
+        ]}
+        className="mb-8"
+      />
 
       {/* Product Area */}
       <div className="grid md:grid-cols-2 gap-10 lg:gap-16 items-start">

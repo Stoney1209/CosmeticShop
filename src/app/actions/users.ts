@@ -4,8 +4,17 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 
-export async function getUsers() {
+export async function getUsers(search?: string) {
+  const where = search ? {
+    OR: [
+      { username: { contains: search, mode: "insensitive" as const } },
+      { fullName: { contains: search, mode: "insensitive" as const } },
+      { email: { contains: search, mode: "insensitive" as const } },
+    ]
+  } : undefined;
+
   return await prisma.user.findMany({
+    where,
     orderBy: { createdAt: "desc" },
     select: { id: true, username: true, fullName: true, email: true, role: true, isActive: true, createdAt: true }
   });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Pencil, Trash2, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +31,8 @@ type Category = {
 
 export function CategoriesClient({ initialCategories }: { initialCategories: Category[] }) {
   const [categories, setCategories] = useState<Category[]>(initialCategories);
+  const [filteredCategories, setFilteredCategories] = useState<Category[]>(initialCategories);
+  const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -42,6 +44,20 @@ export function CategoriesClient({ initialCategories }: { initialCategories: Cat
   const [parentId, setParentId] = useState<string>("none");
   const [displayOrder, setDisplayOrder] = useState(0);
   const [isActive, setIsActive] = useState(true);
+
+  // Filter categories based on search term
+  useEffect(() => {
+    if (!searchTerm) {
+      setFilteredCategories(categories);
+    } else {
+      const lowerSearch = searchTerm.toLowerCase();
+      const filtered = categories.filter(c =>
+        c.name.toLowerCase().includes(lowerSearch) ||
+        c.slug.toLowerCase().includes(lowerSearch)
+      );
+      setFilteredCategories(filtered);
+    }
+  }, [searchTerm, categories]);
 
   const resetForm = () => {
     setEditingCategory(null);
@@ -134,7 +150,12 @@ export function CategoriesClient({ initialCategories }: { initialCategories: Cat
   return (
     <div>
       <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 rounded-t-lg">
-        <Input placeholder="Buscar categoría..." className="max-w-xs bg-white" />
+        <Input 
+          placeholder="Buscar categoría..." 
+          className="max-w-xs bg-white"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
         <Dialog open={isDialogOpen} onOpenChange={(open) => {
           setIsDialogOpen(open);
           if (!open) resetForm();
@@ -224,14 +245,14 @@ export function CategoriesClient({ initialCategories }: { initialCategories: Cat
           </TableRow>
         </TableHeader>
         <TableBody>
-          {categories.length === 0 ? (
+          {filteredCategories.length === 0 ? (
             <TableRow>
               <TableCell colSpan={6} className="h-24 text-center text-slate-500">
                 No hay categorías registradas.
               </TableCell>
             </TableRow>
           ) : (
-            categories.map((category) => (
+            filteredCategories.map((category) => (
               <TableRow key={category.id} className="group">
                 <TableCell className="font-medium text-slate-900">{category.name}</TableCell>
                 <TableCell className="text-slate-500 font-mono text-xs">{category.slug}</TableCell>

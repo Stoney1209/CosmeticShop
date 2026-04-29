@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,10 +14,27 @@ import { createUser, updateUser, deleteUser } from "@/app/actions/users";
 
 export function UsersClient({ initialUsers }: { initialUsers: any[] }) {
   const [users, setUsers] = useState(initialUsers);
+  const [filteredUsers, setFilteredUsers] = useState(initialUsers);
+  const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   
   const [form, setForm] = useState({ username: "", fullName: "", email: "", password: "", role: "OPERATOR", isActive: true });
+
+  // Filter users based on search term
+  useEffect(() => {
+    if (!searchTerm) {
+      setFilteredUsers(users);
+    } else {
+      const lowerSearch = searchTerm.toLowerCase();
+      const filtered = users.filter(u =>
+        u.username.toLowerCase().includes(lowerSearch) ||
+        u.fullName.toLowerCase().includes(lowerSearch) ||
+        (u.email && u.email.toLowerCase().includes(lowerSearch))
+      );
+      setFilteredUsers(filtered);
+    }
+  }, [searchTerm, users]);
 
   const handleEdit = (u: any) => {
     setEditing(u);
@@ -49,7 +66,12 @@ export function UsersClient({ initialUsers }: { initialUsers: any[] }) {
   return (
     <div>
       <div className="p-4 border-b flex justify-between bg-slate-50">
-        <Input placeholder="Buscar..." className="max-w-xs bg-white" />
+        <Input 
+          placeholder="Buscar..." 
+          className="max-w-xs bg-white"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild><Button onClick={() => {setEditing(null); setForm({username:"", fullName:"", email:"", password:"", role:"OPERATOR", isActive:true})}}><Plus className="w-4 h-4 mr-2"/> Nuevo Usuario</Button></DialogTrigger>
           <DialogContent>
@@ -87,7 +109,7 @@ export function UsersClient({ initialUsers }: { initialUsers: any[] }) {
       <Table>
         <TableHeader><TableRow><TableHead>Usuario</TableHead><TableHead>Nombre</TableHead><TableHead>Rol</TableHead><TableHead>Estado</TableHead><TableHead></TableHead></TableRow></TableHeader>
         <TableBody>
-          {users.map(u => (
+          {filteredUsers.map(u => (
             <TableRow key={u.id}>
               <TableCell className="font-bold">{u.username}</TableCell>
               <TableCell>{u.fullName}<br/><span className="text-xs text-slate-500">{u.email ?? ""}</span></TableCell>

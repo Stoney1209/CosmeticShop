@@ -3,9 +3,18 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
-export async function getProducts() {
+export async function getProducts(search?: string) {
   try {
+    const where = search ? {
+      OR: [
+        { name: { contains: search, mode: "insensitive" as const } },
+        { sku: { contains: search, mode: "insensitive" as const } },
+        { brand: { contains: search, mode: "insensitive" as const } },
+      ]
+    } : undefined;
+
     return await prisma.product.findMany({
+      where,
       orderBy: { createdAt: "desc" },
       include: {
         category: true,

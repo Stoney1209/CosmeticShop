@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Pencil, Trash2, Image as ImageIcon, CheckCircle2, XCircle, Boxes, Tag, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,11 +12,14 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { createProduct, updateProduct, deleteProduct } from "@/app/actions/products";
+import { addProductImage, deleteProductImage, reorderProductImages } from "@/app/actions/product-images";
 import { CldUploadWidget } from 'next-cloudinary';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export function ProductsClient({ initialProducts, categories, variantTypes }: { initialProducts: any[], categories: any[], variantTypes: any[] }) {
   const [products, setProducts] = useState(initialProducts);
+  const [filteredProducts, setFilteredProducts] = useState(initialProducts);
+  const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -38,6 +41,9 @@ export function ProductsClient({ initialProducts, categories, variantTypes }: { 
   const [selectedVariantTypes, setSelectedVariantTypes] = useState<number[]>([]);
   const [variants, setVariants] = useState<any[]>([]);
 
+  // Images State
+  const [productImages, setProductImages] = useState<any[]>([]);
+
   const resetForm = () => {
     setEditingProduct(null);
     setSku("");
@@ -53,7 +59,23 @@ export function ProductsClient({ initialProducts, categories, variantTypes }: { 
     setHasVariants(false);
     setSelectedVariantTypes([]);
     setVariants([]);
+    setProductImages([]);
   };
+
+  // Filter products based on search term
+  useEffect(() => {
+    if (!searchTerm) {
+      setFilteredProducts(products);
+    } else {
+      const lowerSearch = searchTerm.toLowerCase();
+      const filtered = products.filter(p =>
+        p.name.toLowerCase().includes(lowerSearch) ||
+        p.sku.toLowerCase().includes(lowerSearch) ||
+        (p.brand && p.brand.toLowerCase().includes(lowerSearch))
+      );
+      setFilteredProducts(filtered);
+    }
+  }, [searchTerm, products]);
 
   const handleEdit = (prod: any) => {
     setEditingProduct(prod);
@@ -160,19 +182,41 @@ export function ProductsClient({ initialProducts, categories, variantTypes }: { 
     };
 
     try {
+      let productId: number;
+      
       if (editingProduct) {
         const result = await updateProduct(editingProduct.id, data);
         if (result.success) {
+          productId = editingProduct.id;
           toast.success("Producto actualizado");
-          window.location.reload(); // Revalidación simple
-        } else toast.error(result.error);
+        } else {
+          toast.error(result.error);
+          setIsSubmitting(false);
+          return;
+        }
       } else {
         const result = await createProduct(data);
-        if (result.success) {
+        if (result.success && result.product) {
+          productId = result.product.id;
           toast.success("Producto creado");
-          window.location.reload();
-        } else toast.error(result.error);
+        } else {
+          toast.error(result.error || "Error al crear producto");
+          setIsSubmitting(false);
+          return;
+        }
       }
+
+      // Save additional images
+      for (const img of productImages) {
+        await addProductImage({
+          productId,
+          imagePath: img.imagePath,
+          displayOrder: 0,
+          isMain: img.isMain
+        });
+      }
+
+      window.location.reload();
     } catch (error) {
       toast.error("Error inesperado");
     } finally {
@@ -184,7 +228,12 @@ export function ProductsClient({ initialProducts, categories, variantTypes }: { 
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
       <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
         <div className="relative max-w-xs w-full">
-          <Input placeholder="Buscar por SKU o Nombre..." className="bg-white pl-10" />
+          <Input 
+            placeholder="Buscar por SKU o Nombre..." 
+            className="bg-white pl-10"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
           <ImageIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
         </div>
         <Dialog open={isDialogOpen} onOpenChange={(open) => {
@@ -209,6 +258,7 @@ export function ProductsClient({ initialProducts, categories, variantTypes }: { 
                 <TabsList className="mx-6 mt-4 w-fit bg-slate-100 p-1 rounded-full">
                   <TabsTrigger value="basic" className="rounded-full data-[state=active]:bg-white data-[state=active]:shadow-sm">Información Básica</TabsTrigger>
                   <TabsTrigger value="variants" className="rounded-full data-[state=active]:bg-white data-[state=active]:shadow-sm">Variantes e Inventario</TabsTrigger>
+                  <TabsTrigger value="images" className="rounded-full data-[state=active]:bg-white data-[state=active]:shadow-sm">Imágenes</TabsTrigger>
                 </TabsList>
 
                 <div className="p-6 overflow-y-auto max-h-[60vh]">
@@ -420,6 +470,82 @@ export function ProductsClient({ initialProducts, categories, variantTypes }: { 
                       </div>
                     )}
                   </TabsContent>
+
+                  <TabsContent value="images" className="m-0 space-y-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-bold flex items-center gap-2"><ImageIcon className="w-4 h-4" /> Galería de Imágenes</h4>
+                        <CldUploadWidget 
+                          uploadPreset="cosmetics_unsigned" 
+                          onSuccess={(result: any) => {
+                            setProductImages([...productImages, { 
+                              id: Date.now(), 
+                              imagePath: result.info.secure_url, 
+                              isMain: productImages.length === 0 
+                            }]);
+                          }}
+                        >
+                          {({ open }) => (
+                            <Button type="button" variant="outline" size="sm" onClick={() => open()}>
+                              <Plus className="w-4 h-4 mr-2" /> Agregar Imagen
+                            </Button>
+                          )}
+                        </CldUploadWidget>
+                      </div>
+
+                      {productImages.length === 0 ? (
+                        <div className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center">
+                          <ImageIcon className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                          <p className="text-slate-500">No hay imágenes adicionales</p>
+                          <p className="text-sm text-slate-400">Sube imágenes para mostrar el producto desde diferentes ángulos</p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-4 gap-4">
+                          {productImages.map((img, index) => (
+                            <div key={img.id} className="relative group">
+                              <img 
+                                src={img.imagePath} 
+                                className="w-full h-32 object-cover rounded-lg border shadow-sm" 
+                              />
+                              {img.isMain && (
+                                <Badge className="absolute top-2 left-2 bg-pink-600">Principal</Badge>
+                              )}
+                              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
+                                {!img.isMain && (
+                                  <Button
+                                    type="button"
+                                    size="icon"
+                                    variant="secondary"
+                                    className="h-8 w-8"
+                                    onClick={() => {
+                                      const updated = productImages.map((p: any, i: number) => ({
+                                        ...p,
+                                        isMain: i === index
+                                      }));
+                                      setProductImages(updated);
+                                    }}
+                                  >
+                                    <CheckCircle2 className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                <Button
+                                  type="button"
+                                  size="icon"
+                                  variant="destructive"
+                                  className="h-8 w-8"
+                                  onClick={() => {
+                                    setProductImages(productImages.filter((_: any, i: number) => i !== index));
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
                 </div>
               </Tabs>
 
@@ -448,7 +574,7 @@ export function ProductsClient({ initialProducts, categories, variantTypes }: { 
             </TableRow>
           </TableHeader>
           <TableBody>
-            {products.map((product) => (
+            {filteredProducts.map((product) => (
               <TableRow key={product.id} className="group hover:bg-slate-50/50 transition-colors">
                 <TableCell className="pl-6">
                   {product.mainImage ? (

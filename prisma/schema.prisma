@@ -173,6 +173,27 @@ model Coupon {
   usageCount    Int       @default(0)
   isActive      Boolean   @default(true)
   createdAt     DateTime  @default(now())
+
+  uses          CouponUse[]
+}
+
+// Coupon Usage Tracking
+model CouponUse {
+  id        Int      @id @default(autoincrement())
+  couponId  Int
+  userId    Int?
+  orderId   Int?
+  createdAt DateTime @default(now())
+
+  coupon    Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+}
+
+// Newsletter Subscribers
+model NewsletterSubscriber {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
 }
 
 enum OrderStatus {
@@ -204,6 +225,7 @@ model Order {
   paymentMethod   PaymentMethod @default(TRANSFER)
   notes           String?
   whatsappSent    Boolean       @default(false)
+  whatsappSentAt  DateTime?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 

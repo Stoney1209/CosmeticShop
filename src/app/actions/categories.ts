@@ -3,9 +3,17 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
-export async function getCategories() {
+export async function getCategories(search?: string) {
   try {
+    const where = search ? {
+      OR: [
+        { name: { contains: search, mode: "insensitive" as const } },
+        { slug: { contains: search, mode: "insensitive" as const } },
+      ]
+    } : undefined;
+
     return await prisma.category.findMany({
+      where,
       orderBy: { displayOrder: "asc" },
       include: {
         parent: true,
