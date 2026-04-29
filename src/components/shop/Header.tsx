@@ -19,7 +19,7 @@ export async function Header() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 lg:h-20 items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" className="md:hidden text-[var(--on-surface-variant)]" aria-label="Abrir menú">
+            <Button variant="ghost" size="icon" className="md:hidden text-[var(--on-surface-variant)]" aria-label="Abrir menú de navegación">
               <Menu className="h-5 w-5" aria-hidden="true" />
             </Button>
             <Link href="/" className="flex items-center gap-2.5" aria-label="Cosmetics Shop - Inicio">

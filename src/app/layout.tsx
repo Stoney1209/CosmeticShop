@@ -29,7 +29,15 @@ export default function RootLayout({
       lang="es"
       className={`${manrope.variable} ${notoSerif.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-sans">{children}</body>
+      <body className="min-h-full flex flex-col font-sans">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-[var(--primary)] text-[var(--on-primary)] px-4 py-2 rounded-lg z-50 focus:outline-none focus:ring-2 focus:ring-[var(--primary-container)]"
+        >
+          Saltar al contenido principal
+        </a>
+        {children}
+      </body>
     </html>
   );
 }

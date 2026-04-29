@@ -58,27 +58,29 @@ export function CustomerAuthForm({ mode }: { mode: Mode }) {
           {isRegister && (
             <>
               <div className="space-y-2">
-                <Label htmlFor="fullName">Nombre completo</Label>
-                <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+                <Label htmlFor="fullName">Nombre completo *</Label>
+                <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} required className="h-11" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Teléfono</Label>
-                <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className="h-11" />
               </div>
             </>
           )}
           <div className="space-y-2">
-            <Label htmlFor="email">Correo</Label>
-            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <Label htmlFor="email">Correo electrónico *</Label>
+            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="h-11" />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Contraseña</Label>
+            <Label htmlFor="password">Contraseña *</Label>
             <Input
               id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              className="h-11"
+              autoocomplete={isRegister ? "new-password" : "current-password"}
             />
           </div>
           <Button type="submit" disabled={isSubmitting} className="w-full bg-pink-600 text-white hover:bg-pink-700">

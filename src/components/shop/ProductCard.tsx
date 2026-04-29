@@ -45,12 +45,12 @@ export function ProductCard({ product }: ProductCardProps) {
         {product.mainImage ? (
           <img
             src={product.mainImage}
-            alt={product.name}
+            alt={`Imagen de ${product.name}, producto de ${product.category?.name || 'cosméticos'}`}
             className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-700"
           />
         ) : (
-          <div className="text-[var(--outline-variant)]/40 flex flex-col items-center group-hover:scale-110 transition-transform duration-700">
-            <span className="text-5xl">✦</span>
+          <div className="text-[var(--outline-variant)]/40 flex flex-col items-center group-hover:scale-110 transition-transform duration-700" aria-label="Sin imagen disponible">
+            <span className="text-5xl" aria-hidden="true">✦</span>
           </div>
         )}
         {product.stock < product.minStock && product.stock > 0 && (
@@ -72,6 +72,7 @@ export function ProductCard({ product }: ProductCardProps) {
             }}
             className="rounded-full bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--on-primary)] shadow-md"
             disabled={product.stock <= 0}
+            aria-label={product.stock <= 0 ? "Producto agotado" : `Agregar ${product.name} al carrito`}
           >
             <ShoppingBag className="w-3.5 h-3.5 mr-1.5" />
             {product.stock <= 0 ? "Agotado" : "Agregar"}
@@ -101,10 +102,11 @@ export function ProductCard({ product }: ProductCardProps) {
             size="sm"
             onClick={handleAddToCart}
             variant="ghost"
-            className="text-[var(--primary)] hover:bg-[var(--secondary-container)] rounded-full px-4"
+            className="text-[var(--primary)] hover:bg-[var(--secondary-container)] rounded-full px-4 min-w-[24px] min-h-[24px]"
             disabled={product.stock <= 0}
+            aria-label={product.stock <= 0 ? "Producto agotado" : `Agregar ${product.name} al carrito`}
           >
-             <ShoppingBag className="w-3.5 h-3.5 mr-1" />
+             <ShoppingBag className="w-3.5 h-3.5" />
           </Button>
         </div>
       </div>

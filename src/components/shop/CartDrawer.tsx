@@ -177,9 +177,9 @@ export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
                             </span>
                           )}
                         </div>
-                        <button onClick={() => cart.removeItem(item.id, item.variantId)} className="text-[var(--on-surface-variant)]/40 hover:text-[var(--error)] self-start transition-colors">
-                          <X className="w-4 h-4" />
-                        </button>
+                  <button onClick={() => cart.removeItem(item.id, item.variantId)} className="text-[var(--on-surface-variant)]/40 hover:text-[var(--error)] self-start transition-colors min-w-[24px] min-h-[24px] flex items-center justify-center" aria-label="Eliminar producto del carrito">
+                    <X className="w-4 h-4" />
+                  </button>
                       </div>
                       <div className="text-sm font-medium text-[var(--on-surface)] mt-auto flex items-center justify-between">
                         <span>${item.price.toFixed(2)}</span>
