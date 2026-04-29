@@ -80,7 +80,7 @@ export function CustomerAuthForm({ mode }: { mode: Mode }) {
               onChange={(e) => setPassword(e.target.value)}
               required
               className="h-11"
-              autoocomplete={isRegister ? "new-password" : "current-password"}
+              autoComplete={isRegister ? "new-password" : "current-password"}
             />
           </div>
           <Button type="submit" disabled={isSubmitting} className="w-full bg-pink-600 text-white hover:bg-pink-700">
