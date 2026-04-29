@@ -13,7 +13,7 @@ export async function Header() {
   });
   const customerSession = await getCustomerSession();
 
-  const whatsappNumber = whatsappSetting?.settingValue || "521234567890";
+  const whatsappNumber = whatsappSetting?.settingValue || "5219212724532";
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/80 backdrop-blur-md">
