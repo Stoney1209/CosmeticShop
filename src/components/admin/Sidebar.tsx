@@ -20,9 +20,13 @@ import {
 
 const navItems = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Products", href: "/productos", icon: ShoppingBag },
+  { name: "Categories", href: "/categorias", icon: Tags },
   { name: "Inventory", href: "/inventario", icon: PackageOpen },
   { name: "Orders", href: "/pedidos", icon: FileText },
   { name: "Customers", href: "/clientes", icon: UserCircle },
+  { name: "Users", href: "/usuarios", icon: Users },
+  { name: "Coupons", href: "/cupones", icon: Ticket },
   { name: "Analytics", href: "/reportes", icon: BarChart3 },
 ];
 

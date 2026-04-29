@@ -23,8 +23,10 @@ export function Footer() {
             <h3 className="label-editorial text-[#1b1c1c] mb-5">SHOP</h3>
             <ul className="space-y-3 text-sm">
               <li><Link href="/tienda" className="hover:text-[#7a5646] transition-colors">All Products</Link></li>
-              <li><Link href="/tienda?sort=newest" className="hover:text-[#7a5646] transition-colors">Best Sellers</Link></li>
-              <li><Link href="/tienda?sort=newest" className="hover:text-[#7a5646] transition-colors">New Arrivals</Link></li>
+              <li><Link href="/tienda?category=maquillaje" className="hover:text-[#7a5646] transition-colors">Makeup</Link></li>
+              <li><Link href="/tienda?category=skincare" className="hover:text-[#7a5646] transition-colors">Skincare</Link></li>
+              <li><Link href="/tienda?category=perfumes" className="hover:text-[#7a5646] transition-colors">Fragrance</Link></li>
+              <li><Link href="/tienda?category=cabello" className="hover:text-[#7a5646] transition-colors">Haircare</Link></li>
             </ul>
           </div>
           
