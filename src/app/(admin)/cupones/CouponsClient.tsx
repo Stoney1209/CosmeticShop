@@ -11,7 +11,20 @@ import { createCoupon, deleteCoupon, toggleCouponStatus } from "@/app/actions/co
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
-export function CouponsClient({ initialCoupons }: { initialCoupons: any[] }) {
+interface Coupon {
+  id: number;
+  code: string;
+  discountType: string;
+  value: number;
+  minAmount: number | null;
+  maxDiscount: number | null;
+  expiryDate: Date | null;
+  usageLimit: number | null;
+  usageCount: number;
+  isActive: boolean;
+}
+
+export function CouponsClient({ initialCoupons }: { initialCoupons: Coupon[] }) {
   const [coupons, setCoupons] = useState(initialCoupons);
   const [isOpen, setIsOpen] = useState(false);
 

@@ -7,9 +7,9 @@ export const metadata = { title: "Clientes | Admin" };
 export default async function CustomersPage() {
   const customers = await getCustomers();
   // Serialize dates for client components
-  const serializedCustomers = customers.map(c => ({
-    ...c,
-    createdAt: c.createdAt.toISOString(),
+  const serializedCustomers = customers.map((customer: any) => ({
+    ...customer,
+    createdAt: customer.createdAt.toISOString(),
   }));
   return (
     <div className="space-y-6">

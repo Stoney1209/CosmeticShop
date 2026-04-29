@@ -121,7 +121,7 @@ export async function createOrder(data: {
     const count = await prisma.order.count({ where: { createdAt: { gte: new Date(new Date().setHours(0,0,0,0)) } } });
     const orderNumber = `ORD-${dateStr}-${(count + 1).toString().padStart(4, '0')}`;
 
-    const order = await prisma.$transaction(async (tx) => {
+    const order = await prisma.$transaction(async (tx: any) => {
       // Create order
       const newOrder = await tx.order.create({
         data: {
@@ -189,7 +189,7 @@ export async function createOrder(data: {
 
 export async function updateOrderStatus(id: number, status: "PENDING" | "CONFIRMED" | "PROCESSING" | "COMPLETED" | "CANCELLED") {
   try {
-    const order = await prisma.$transaction(async (tx) => {
+    const order = await prisma.$transaction(async (tx: any) => {
       const currentOrder = await tx.order.findUnique({ where: { id }, include: { items: true } });
       if (!currentOrder) throw new Error("Order not found");
 

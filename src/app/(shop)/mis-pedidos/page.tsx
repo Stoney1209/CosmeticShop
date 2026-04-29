@@ -39,7 +39,7 @@ export default async function MyOrdersPage() {
 
       <div className="space-y-6">
         {orders.length > 0 ? (
-          orders.map((order) => (
+          orders.map((order: any) => (
             <Card key={order.id}>
               <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-4">
                 <div>
@@ -54,7 +54,7 @@ export default async function MyOrdersPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
-                {order.items.map((item) => (
+                {order.items.map((item: any) => (
                   <div key={item.id} className="flex items-center justify-between rounded-xl border border-slate-100 px-4 py-3 text-sm">
                     <div>
                       <p className="font-medium text-slate-900">{item.productName}</p>

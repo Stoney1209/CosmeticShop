@@ -18,7 +18,7 @@ export async function getInventory() {
 
 export async function adjustStock(productId: number, newStock: number, notes: string) {
   try {
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       const product = await tx.product.findUnique({ where: { id: productId } });
       if(!product) throw new Error("Product not found");
       const diff = newStock - product.stock;

@@ -120,7 +120,7 @@ export default async function StorePage({
 
   const skip = (page - 1) * limit;
 
-  const [products, total] = await Promise.all([
+  const [productsRaw, total] = await Promise.all([
     prisma.product.findMany({
       where: whereClause,
       orderBy: orderBy,
@@ -130,6 +130,12 @@ export default async function StorePage({
     }),
     prisma.product.count({ where: whereClause }),
   ]);
+
+  // Serialize products for client components
+  const products = productsRaw.map((product: any) => ({
+    ...product,
+    price: Number(product.price),
+  }));
 
   const totalPages = Math.ceil(total / limit);
 
@@ -171,10 +177,10 @@ export default async function StorePage({
                     Todas las categorías
                   </Link>
                 </li>
-                {categories.map(c => (
-                  <li key={c.id}>
-                    <Link href={`/tienda?category=${c.slug}${brand ? `&brand=${brand}` : ""}`} className={`text-sm block py-1 transition-colors ${categorySlug === c.slug ? "text-pink-600 font-bold" : "text-slate-600 hover:text-pink-600"}`}>
-                      {c.name}
+                {categories.map((category: any) => (
+                  <li key={category.id}>
+                    <Link href={`/tienda?category=${category.slug}${brand ? `&brand=${brand}` : ""}`} className={`text-sm block py-1 transition-colors ${categorySlug === category.slug ? "text-pink-600 font-bold" : "text-slate-600 hover:text-pink-600"}`}>
+                      {category.name}
                     </Link>
                   </li>
                 ))}
@@ -192,13 +198,13 @@ export default async function StorePage({
                   >
                     Todas
                   </Link>
-                  {brands.map(b => (
+                  {brands.map((brandItem: any) => (
                     <Link 
-                      key={b.brand} 
-                      href={`/tienda?brand=${encodeURIComponent(b.brand!)}${categorySlug ? `&category=${categorySlug}` : ""}`}
-                      className={`text-xs px-3 py-1.5 rounded-full border transition-all ${brand === b.brand ? "bg-pink-600 text-white border-pink-600 shadow-md shadow-pink-100" : "bg-white text-slate-600 border-slate-200 hover:border-pink-300"}`}
+                      key={brandItem.brand} 
+                      href={`/tienda?brand=${encodeURIComponent(brandItem.brand!)}${categorySlug ? `&category=${categorySlug}` : ""}`}
+                      className={`text-xs px-3 py-1.5 rounded-full border transition-all ${brand === brandItem.brand ? "bg-pink-600 text-white border-pink-600 shadow-md shadow-pink-100" : "bg-white text-slate-600 border-slate-200 hover:border-pink-300"}`}
                     >
-                      {b.brand}
+                      {brandItem.brand}
                     </Link>
                   ))}
                 </div>
@@ -272,7 +278,7 @@ export default async function StorePage({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
               {products.length > 0 ? (
-                products.map((product) => (
+                products.map((product: any) => (
                   <div key={product.id} className="group bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-xl hover:border-pink-200 transition-all duration-300 flex flex-col">
                     <div className="aspect-[4/5] bg-slate-100 relative overflow-hidden flex items-center justify-center">
                       {product.mainImage ? (

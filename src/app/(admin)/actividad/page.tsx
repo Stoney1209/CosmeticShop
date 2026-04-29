@@ -7,9 +7,9 @@ export const metadata = { title: "Actividad | Admin" };
 export default async function ActivityPage() {
   const logs = await getActivityLogs(200);
   // Serialize dates for client components
-  const serializedLogs = logs.map(l => ({
-    ...l,
-    createdAt: l.createdAt.toISOString(),
+  const serializedLogs = logs.map((log: any) => ({
+    ...log,
+    createdAt: log.createdAt.toISOString(),
   }));
   return (
     <div className="space-y-6">

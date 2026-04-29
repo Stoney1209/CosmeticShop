@@ -19,15 +19,15 @@ export default async function HomePage() {
   });
 
   // Serialize products for client component
-  const featuredProducts = featuredProductsRaw.map(p => ({
-    id: p.id,
-    name: p.name,
-    slug: p.slug,
-    price: Number(p.price),
-    stock: p.stock,
-    minStock: p.minStock,
-    mainImage: p.mainImage,
-    category: p.category ? { name: p.category.name } : null
+  const featuredProducts = featuredProductsRaw.map((product: any) => ({
+    id: product.id,
+    name: product.name,
+    slug: product.slug,
+    price: Number(product.price),
+    stock: product.stock,
+    minStock: product.minStock,
+    mainImage: product.mainImage,
+    category: product.category ? { name: product.category.name } : null
   }));
 
   return (
@@ -60,7 +60,7 @@ export default async function HomePage() {
               <div className="aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl border-4 border-white relative bg-white flex items-center justify-center">
                 <div className="absolute inset-0 bg-gradient-to-t from-pink-500/20 to-transparent z-10 pointer-events-none"></div>
                 <div className="absolute inset-0 bg-pink-100/50 flex flex-col items-center justify-center text-pink-400">
-                   <span className="text-9xl mb-4">✦</span>
+                   <span className="text-9xl mb-4" aria-hidden="true">✦</span>
                    <p className="text-pink-500 font-medium tracking-widest uppercase text-sm">Glamour</p>
                 </div>
               </div>
@@ -108,7 +108,7 @@ export default async function HomePage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {featuredProducts.length > 0 ? (
-              featuredProducts.map((product) => (
+              featuredProducts.map((product: any) => (
                 <ProductCard key={product.id} product={product} />
               ))
             ) : (
@@ -132,8 +132,9 @@ export default async function HomePage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center max-w-2xl">
           <h2 className="text-3xl font-bold mb-4">¿Quieres un 15% de descuento?</h2>
           <p className="text-pink-100 mb-8">Suscríbete a nuestro boletín y recibe consejos de belleza y ofertas exclusivas antes que nadie.</p>
-          <form className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
-            <input type="email" placeholder="Ingresa tu email" className="flex-1 px-4 py-3 rounded-full text-slate-900 focus:outline-none focus:ring-2 focus:ring-white" required />
+          <form className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto" aria-label="Formulario de suscripción">
+            <label htmlFor="hero-email" className="sr-only">Correo electrónico</label>
+            <input id="hero-email" type="email" placeholder="Ingresa tu email" className="flex-1 px-4 py-3 rounded-full text-slate-900 focus:outline-none focus:ring-2 focus:ring-white" required />
             <Button type="submit" size="lg" className="bg-slate-900 hover:bg-slate-800 text-white rounded-full">Suscribirme</Button>
           </form>
         </div>

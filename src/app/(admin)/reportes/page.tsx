@@ -9,15 +9,15 @@ export default async function ReportsPage() {
   
   // Serialize all data for client component
   const sData = {
-    recentOrders: data.recentOrders.map(o => ({ ...o, totalAmount: Number(o.totalAmount) })),
-    bestSellers: data.bestSellers.map(b => ({ 
-      ...b, 
+    recentOrders: data.recentOrders.map((order: any) => ({ ...order, totalAmount: Number(order.totalAmount) })),
+    bestSellers: data.bestSellers.map((bestSeller: any) => ({ 
+      ...bestSeller, 
       _sum: {
-        quantity: b._sum.quantity || 0,
-        subtotal: Number(b._sum.subtotal || 0)
+        quantity: bestSeller._sum.quantity || 0,
+        subtotal: Number(bestSeller._sum.subtotal || 0)
       },
-      productId: b.productId, 
-      productName: b.productName 
+      productId: bestSeller.productId, 
+      productName: bestSeller.productName 
     })),
     today: {
       orders: data.today.orders,
@@ -34,9 +34,9 @@ export default async function ReportsPage() {
         totalAmount: Number(item._sum.totalAmount || 0)
       }
     })),
-    recentCustomers: data.recentCustomers.map(c => ({
-      ...c,
-      createdAt: c.createdAt.toISOString()
+    recentCustomers: data.recentCustomers.map((customer: any) => ({
+      ...customer,
+      createdAt: customer.createdAt.toISOString()
     }))
   };
 

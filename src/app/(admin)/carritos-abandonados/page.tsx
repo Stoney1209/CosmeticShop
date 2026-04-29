@@ -9,9 +9,9 @@ export const metadata = { title: "Carritos Abandonados | Admin" };
 export default async function AbandonedCartsPage() {
   const carts = await getAbandonedCarts();
   // Serialize Decimal to string for client component
-  const serializedCarts = carts.map(c => ({
-    ...c,
-    totalAmount: c.totalAmount.toString(),
+  const serializedCarts = carts.map((cart: any) => ({
+    ...cart,
+    totalAmount: cart.totalAmount.toString(),
   }));
   return (
     <div className="space-y-6">

@@ -68,7 +68,7 @@ export async function createInvoice(orderId: number) {
     }
 
     // Calculate subtotal from items
-    const subtotal = order.items.reduce((sum, item) => sum + Number(item.subtotal), 0);
+    const subtotal = order.items.reduce((sum: number, item: any) => sum + Number(item.subtotal), 0);
     const taxRate = 0.16;
     const taxAmount = subtotal * taxRate;
     const total = subtotal + taxAmount;

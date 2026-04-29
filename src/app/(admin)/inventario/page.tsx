@@ -8,7 +8,7 @@ export default async function InventoryPage() {
   const { products, movements } = await getInventory();
   
   // Serialize
-  const sProducts = products.map(p => ({ ...p, price: Number(p.price), costPrice: Number(p.costPrice || 0) }));
+  const sProducts = products.map((product: any) => ({ ...product, price: Number(product.price), costPrice: Number(product.costPrice || 0) }));
   
   return (
     <div className="space-y-6">

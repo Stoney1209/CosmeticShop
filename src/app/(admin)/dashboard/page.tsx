@@ -103,7 +103,7 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              {recentOrders.length > 0 ? recentOrders.map((order) => (
+              {recentOrders.length > 0 ? recentOrders.map((order: any) => (
                 <div key={order.id} className="flex items-center justify-between group cursor-default">
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 font-medium transition-colors">

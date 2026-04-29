@@ -100,8 +100,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
   // Group variant values by type for the selector
   const variantOptions: {[key: string]: any[]} = {};
-  product.variants.forEach(variant => {
-    variant.values.forEach(val => {
+  product.variants.forEach((variant: any) => {
+    variant.values.forEach((val: any) => {
       if (!variantOptions[val.type.name]) {
         variantOptions[val.type.name] = [];
       }
@@ -123,7 +123,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     : false;
 
   const hasReviewed = customerSession
-    ? product.reviews.some((review) => review.customerId === customerSession.id)
+    ? product.reviews.some((review: any) => review.customerId === customerSession.id)
     : false;
 
   return (
@@ -220,7 +220,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         <div className="mt-24">
           <h2 className="text-2xl font-bold text-slate-900 mb-8 font-heading">También te podría gustar</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {related.map(item => (
+            {related.map((item: any) => (
               <Link key={item.id} href={`/producto/${item.slug}`} className="group">
                 <div className="aspect-[4/5] bg-slate-100 rounded-xl mb-4 overflow-hidden">
                   {item.mainImage ? (
@@ -239,7 +239,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
       <ReviewsSection
         productId={product.id}
-        reviews={product.reviews.map((review) => ({
+        reviews={product.reviews.map((review: any) => ({
           id: review.id,
           rating: review.rating,
           title: review.title,

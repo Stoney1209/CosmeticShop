@@ -10,13 +10,13 @@ export default async function OrdersPage() {
   const orders = await getOrders();
   
   // Serialize Decimals
-  const serializedOrders = orders.map(o => ({
-    ...o,
-    totalAmount: Number(o.totalAmount),
-    items: o.items.map(i => ({
-      ...i,
-      unitPrice: Number(i.unitPrice),
-      subtotal: Number(i.subtotal)
+  const serializedOrders = orders.map((order: any) => ({
+    ...order,
+    totalAmount: Number(order.totalAmount),
+    items: order.items.map((item: any) => ({
+      ...item,
+      unitPrice: Number(item.unitPrice),
+      subtotal: Number(item.subtotal)
     }))
   }));
 

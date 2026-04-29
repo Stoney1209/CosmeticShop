@@ -32,7 +32,9 @@ export default async function WishlistPage() {
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {wishlist.length > 0 ? (
-          wishlist.map(({ id, product }) => (
+          wishlist.map((item: any) => {
+            const { id, product } = item;
+            return (
             <Card key={id} className="overflow-hidden">
               <div className="aspect-[4/5] bg-slate-100">
                 {product.mainImage ? (
@@ -54,7 +56,8 @@ export default async function WishlistPage() {
                 </Link>
               </CardContent>
             </Card>
-          ))
+            );
+          })
         ) : (
           <Card className="sm:col-span-2 lg:col-span-3">
             <CardContent className="py-10 text-center text-slate-500">

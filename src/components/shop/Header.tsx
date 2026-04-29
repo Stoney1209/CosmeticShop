@@ -20,23 +20,24 @@ export async function Header() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" className="md:hidden">
-              <Menu className="h-5 w-5" />
+            <Button variant="ghost" size="icon" className="md:hidden" aria-label="Abrir menú">
+              <Menu className="h-5 w-5" aria-hidden="true" />
             </Button>
-            <Link href="/" className="flex items-center gap-2">
-              <span className="text-pink-500 text-2xl font-bold">✦</span>
+            <Link href="/" className="flex items-center gap-2" aria-label="Cosmetics Shop - Inicio">
+              <span className="text-pink-500 text-2xl font-bold" aria-hidden="true">✦</span>
               <span className="text-xl font-bold tracking-tight text-slate-900">Cosmetics</span>
             </Link>
           </div>
 
           <div className="hidden md:flex flex-1 items-center justify-center px-8">
             <div className="w-full max-w-lg relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" aria-hidden="true" />
               <form action="/tienda" method="GET">
                 <Input 
                   name="search"
                   type="search" 
                   placeholder="Buscar maquillaje, skincare..." 
+                  aria-label="Buscar productos"
                   className="w-full pl-10 bg-slate-50 border-slate-200 focus-visible:ring-pink-500 rounded-full"
                 />
               </form>
@@ -44,9 +45,9 @@ export async function Header() {
           </div>
 
           <div className="flex items-center gap-2 md:gap-4">
-            <Link href={customerSession ? "/mi-cuenta" : "/cuenta/ingresar"}>
+            <Link href={customerSession ? "/mi-cuenta" : "/cuenta/ingresar"} aria-label={customerSession ? "Mi cuenta" : "Iniciar sesión"}>
               <Button variant="ghost" size="icon" className="hidden md:flex text-slate-600 hover:text-pink-600">
-                <User className="h-5 w-5" />
+                <User className="h-5 w-5" aria-hidden="true" />
               </Button>
             </Link>
             {customerSession && (
