@@ -4,6 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getCustomerSession } from "@/lib/customer-session";
 import { prisma } from "@/lib/prisma";
+import { WishlistRemoveButton } from "@/components/shop/WishlistRemoveButton";
+import { Heart } from "lucide-react";
 
 export const metadata = {
   title: "Favoritos | Cosmetics Shop",
@@ -24,48 +26,55 @@ export default async function WishlistPage() {
   });
 
   return (
-    <div className="container mx-auto px-4 py-12 sm:px-6 lg:px-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900">Favoritos</h1>
-        <p className="mt-2 text-slate-500">Tus productos guardados para volver a verlos rápido.</p>
-      </div>
-
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {wishlist.length > 0 ? (
-          wishlist.map((item: any) => {
+    <div className="space-y-6">
+      {wishlist.length > 0 ? (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {wishlist.map((item: any) => {
             const { id, product } = item;
             return (
-            <Card key={id} className="overflow-hidden">
-              <div className="aspect-[4/5] bg-slate-100">
-                {product.mainImage ? (
-                  <img src={product.mainImage} alt={product.name} className="h-full w-full object-cover" />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-4xl text-slate-300">+</div>
-                )}
-              </div>
-              <CardContent className="space-y-4 p-5">
-                <div>
-                  <h2 className="font-semibold text-slate-900">{product.name}</h2>
-                  <p className="mt-1 text-sm text-slate-500">${Number(product.price).toFixed(2)}</p>
+              <Card key={id} className="overflow-hidden group">
+                <div className="relative aspect-[4/5] bg-slate-100">
+                  {product.mainImage ? (
+                    <img src={product.mainImage} alt={product.name} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-4xl text-slate-300">
+                      <Heart className="h-12 w-12" />
+                    </div>
+                  )}
+                  {/* Remove button overlay */}
+                  <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <WishlistRemoveButton wishlistId={id} productName={product.name} />
+                  </div>
                 </div>
-                <Link
-                  href={`/producto/${product.slug}`}
-                  className="inline-flex w-full items-center justify-center rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
-                >
-                  Ver producto
-                </Link>
-              </CardContent>
-            </Card>
+                <CardContent className="space-y-4 p-5">
+                  <div>
+                    <h2 className="font-semibold text-slate-900 line-clamp-1">{product.name}</h2>
+                    <p className="mt-1 text-lg font-bold text-pink-600">${Number(product.price).toFixed(2)}</p>
+                  </div>
+                  <Button
+                    asChild
+                    className="w-full bg-slate-900 hover:bg-slate-800"
+                  >
+                    <Link href={`/producto/${product.slug}`}>
+                      Ver producto
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
             );
-          })
-        ) : (
-          <Card className="sm:col-span-2 lg:col-span-3">
-            <CardContent className="py-10 text-center text-slate-500">
-              Aún no has guardado productos en favoritos.
-            </CardContent>
-          </Card>
-        )}
-      </div>
+          })}
+        </div>
+      ) : (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <Heart className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+            <p className="text-slate-500 mb-4">No tienes productos guardados en favoritos.</p>
+            <Button asChild className="bg-pink-600 hover:bg-pink-700">
+              <Link href="/tienda">Explorar productos</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

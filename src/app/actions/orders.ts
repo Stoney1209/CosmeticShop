@@ -25,6 +25,7 @@ export async function getOrders() {
 
 export async function createOrder(data: {
   customerName: string;
+  customerEmail?: string;
   customerPhone: string;
   customerAddress?: string;
   discountAmount?: number;
@@ -133,7 +134,7 @@ export async function createOrder(data: {
           orderNumber,
           customerId: session?.id,
           customerName: data.customerName,
-          customerEmail: session?.email,
+          customerEmail: data.customerEmail || session?.email,
           customerPhone: data.customerPhone,
           customerAddress: data.customerAddress,
           totalAmount: data.totalAmount,
@@ -222,7 +223,7 @@ export async function createOrder(data: {
   }
 }
 
-export async function updateOrderStatus(id: number, status: "PENDING" | "CONFIRMED" | "PROCESSING" | "COMPLETED" | "CANCELLED", changedBy?: string) {
+export async function updateOrderStatus(id: number, status: "PENDING" | "CONFIRMED" | "PROCESSING" | "COMPLETED" | "CANCELLED" | "SHIPPED", changedBy?: string, notes?: string) {
   try {
     const order = await prisma.$transaction(async (tx: any) => {
       const currentOrder = await tx.order.findUnique({ where: { id }, include: { items: true } });
@@ -235,7 +236,7 @@ export async function updateOrderStatus(id: number, status: "PENDING" | "CONFIRM
             orderId: id,
             status: status,
             changedBy: changedBy || "admin",
-            notes: `Changed from ${currentOrder.status} to ${status}`
+            notes: notes || `Changed from ${currentOrder.status} to ${status}`
           }
         });
       }

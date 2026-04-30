@@ -1,11 +1,13 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Star, ChevronRight } from "lucide-react";
+import { Star } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { AddToCartButton } from "./AddToCartButton";
 import { getCustomerSession } from "@/lib/customer-session";
 import { WishlistToggle } from "@/components/shop/WishlistToggle";
 import { ReviewsSection } from "@/components/shop/ReviewsSection";
+import { ProductImageZoom } from "@/components/shop/ProductImageZoom";
+import { DeliveryInfo } from "@/components/shop/DeliveryInfo";
 import { Metadata } from "next";
 import { Breadcrumbs } from "@/components/seo/Breadcrumbs";
 import { StructuredData, generateProductStructuredData, generateBreadcrumbStructuredData } from "@/components/seo/StructuredData";
@@ -128,6 +130,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     ? product.reviews.some((review: any) => review.customerId === customerSession.id)
     : false;
 
+  // Calculate review statistics
+  const reviewCount = product.reviews.length;
+  const averageRating = reviewCount > 0 
+    ? product.reviews.reduce((acc: number, r: any) => acc + r.rating, 0) / reviewCount 
+    : 0;
+
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
       {/* Structured Data */}
@@ -165,13 +173,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       <div className="grid md:grid-cols-2 gap-10 lg:gap-16 items-start">
         {/* Images */}
         <div className="space-y-4">
-          <div className="aspect-[4/5] bg-slate-50 rounded-2xl border border-slate-200 overflow-hidden flex items-center justify-center">
-            {product.mainImage ? (
-              <img src={product.mainImage} alt={product.name} className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-6xl text-slate-300">✦</span>
-            )}
-          </div>
+          <ProductImageZoom src={product.mainImage} alt={product.name} />
         </div>
 
         {/* Details */}
@@ -185,9 +187,17 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             </h1>
             <div className="flex items-center gap-4 mb-4">
               <div className="flex items-center">
-                {[1,2,3,4,5].map(star => <Star key={star} className="w-4 h-4 fill-amber-400 text-amber-400" />)}
+                {[1,2,3,4,5].map((star) => (
+                  <Star 
+                    key={star} 
+                    className={`w-4 h-4 ${star <= Math.round(averageRating) ? "fill-amber-400 text-amber-400" : "text-slate-300"}`} 
+                  />
+                ))}
               </div>
-              <span className="text-sm text-slate-500 underline cursor-pointer">12 Reseñas</span>
+              <span className="text-sm text-slate-600">
+                {averageRating > 0 ? `${averageRating.toFixed(1)}` : "Sin calificación"} 
+                <span className="text-slate-400">({reviewCount} {reviewCount === 1 ? "reseña" : "reseñas"})</span>
+              </span>
               <span className="text-slate-300">|</span>
               <span className="text-sm text-slate-500 font-mono">SKU: {product.sku}</span>
             </div>
@@ -198,6 +208,9 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               {product.description || "Un producto increíble que resaltará tu belleza natural. Fórmula exclusiva y de larga duración."}
             </p>
           </div>
+
+          {/* Delivery Info */}
+          <DeliveryInfo inStock={product.stock > 0} />
 
           <div className="border-t border-slate-200 pt-8">
             <AddToCartButton 

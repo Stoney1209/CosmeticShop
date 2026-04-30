@@ -43,9 +43,11 @@ export async function createProduct(data: {
   costPrice?: number;
   stock?: number;
   minStock?: number;
+  weight?: string;
   mainImage?: string;
   brand?: string;
   isActive?: boolean;
+  isFeatured?: boolean;
   variants?: {
     sku: string;
     price?: number;

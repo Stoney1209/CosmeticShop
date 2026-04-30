@@ -1,300 +1,382 @@
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package, TrendingUp, Users, DollarSign, AlertTriangle } from "lucide-react";
-import { prisma } from "@/lib/prisma";
+import { Package, TrendingUp, Users, DollarSign, AlertTriangle, ArrowUpRight, ArrowDownRight, Calendar, ShoppingBag, Edit3 } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
 
-export const metadata = {
-  title: "Dashboard | LUXE BEAUTÉ Admin",
-};
+interface DashboardData {
+  salesToday: { amount: number; orders: number };
+  salesMonth: { amount: number; orders: number };
+  avgTicket: number;
+  lowStockCount: number;
+  lowStockProducts: any[];
+  chartData: any[];
+  recentOrders: any[];
+  topProducts: any[];
+  comparison: {
+    revenueChange: number;
+    ordersChange: number;
+    currentMonthRevenue: number;
+    previousMonthRevenue: number;
+    currentMonthOrders: number;
+    previousMonthOrders: number;
+  };
+}
 
-export default async function DashboardPage() {
-  const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const startOfPreviousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const endOfPreviousMonth = new Date(now.getFullYear(), now.getMonth(), 0);
-  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+export default function DashboardPage() {
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const today = new Date().toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-  // Fetch real data
-  const [
-    totalOrders,
-    pendingOrders,
-    completedOrdersRaw,
-    recentOrders,
-    newCustomers,
-    lowStockProducts,
-    currentMonthOrders,
-    currentMonthRevenue,
-    previousMonthOrders,
-    previousMonthRevenue,
-    salesLast30Days,
-    topProducts
-  ] = await Promise.all([
-    prisma.order.count(),
-    prisma.order.count({ where: { status: "PENDING" } }),
-    prisma.order.aggregate({
-      where: { status: { in: ["COMPLETED", "CONFIRMED"] } },
-      _sum: { totalAmount: true }
-    }),
-    prisma.order.findMany({
-      take: 5,
-      orderBy: { createdAt: 'desc' }
-    }),
-    prisma.customer.count(),
-    prisma.product.count({
-      where: {
-        stock: { lte: 10 },
-        isActive: true
-      }
-    }),
-    prisma.order.count({ where: { createdAt: { gte: startOfMonth } } }),
-    prisma.order.aggregate({
-      where: { 
-        status: { in: ["COMPLETED", "CONFIRMED"] },
-        createdAt: { gte: startOfMonth }
-      },
-      _sum: { totalAmount: true }
-    }),
-    prisma.order.count({ 
-      where: { 
-        createdAt: { gte: startOfPreviousMonth, lte: endOfPreviousMonth }
-      } 
-    }),
-    prisma.order.aggregate({
-      where: { 
-        status: { in: ["COMPLETED", "CONFIRMED"] },
-        createdAt: { gte: startOfPreviousMonth, lte: endOfPreviousMonth }
-      },
-      _sum: { totalAmount: true }
-    }),
-    prisma.order.findMany({
-      where: {
-        status: { in: ["COMPLETED", "CONFIRMED"] },
-        createdAt: { gte: thirtyDaysAgo }
-      },
-      select: {
-        createdAt: true,
-        totalAmount: true
-      },
-      orderBy: { createdAt: 'asc' }
-    }),
-    prisma.orderItem.groupBy({
-      by: ['productId'],
-      _sum: {
-        quantity: true,
-        subtotal: true
-      },
-      orderBy: {
-        _sum: {
-          quantity: 'desc'
-        }
-      },
-      take: 5
-    })
-  ]);
-
-  const totalRevenue = Number(completedOrdersRaw._sum.totalAmount || 0);
-  const currentMonthRevenueNum = Number(currentMonthRevenue._sum.totalAmount || 0);
-  const previousMonthRevenueNum = Number(previousMonthRevenue._sum.totalAmount || 0);
-
-  // Calculate monthly comparison
-  const revenueChange = previousMonthRevenueNum > 0 
-    ? ((currentMonthRevenueNum - previousMonthRevenueNum) / previousMonthRevenueNum * 100).toFixed(1)
-    : "0";
-  const ordersChange = previousMonthOrders > 0
-    ? ((currentMonthOrders - previousMonthOrders) / previousMonthOrders * 100).toFixed(1)
-    : "0";
-
-  // Prepare chart data - group by day
-  const chartData = salesLast30Days.reduce((acc: any[], order) => {
-    const date = new Date(order.createdAt).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
-    const existing = acc.find(d => d.date === date);
-    if (existing) {
-      existing.sales += Number(order.totalAmount);
-    } else {
-      acc.push({ date, sales: Number(order.totalAmount) });
-    }
-    return acc;
+  useEffect(() => {
+    fetch('/api/admin/dashboard')
+      .then(res => res.json())
+      .then(setData)
+      .finally(() => setLoading(false));
   }, []);
 
-  // Get top products details
-  const topProductIds = topProducts.map(p => p.productId);
-  const topProductDetails = await prisma.product.findMany({
-    where: { id: { in: topProductIds } },
-    select: { id: true, name: true, mainImage: true }
-  });
+  if (loading || !data) {
+    return (
+      <div className="space-y-8 p-6">
+        <div className="h-8 w-64 bg-slate-200 animate-pulse rounded" />
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map(i => <div key={i} className="h-32 bg-slate-200 animate-pulse rounded-lg" />)}
+        </div>
+      </div>
+    );
+  }
 
-  const topProductsWithDetails = topProducts.map(tp => ({
-    ...tp,
-    product: topProductDetails.find(p => p.id === tp.productId)
-  }));
-
-  const stats = [
+  const statCards = [
     {
-      title: "TOTAL SALES",
-      value: `$${totalRevenue.toFixed(2)}`,
-      change: `${parseFloat(revenueChange) >= 0 ? '+' : ''}${revenueChange}% from last month`,
+      title: "Ventas Hoy",
+      value: `$${data.salesToday.amount.toFixed(2)}`,
+      subtitle: `${data.salesToday.orders} pedidos`,
+      date: today,
       icon: DollarSign,
-      trend: parseFloat(revenueChange) >= 0 ? "up" : "down",
-      color: "bg-[#7a5646]/10 text-[#7a5646]",
+      color: "bg-emerald-50 text-emerald-600",
+      trend: null as any,
     },
     {
-      title: "TOTAL ORDERS",
-      value: totalOrders.toString(),
-      change: `${parseFloat(ordersChange) >= 0 ? '+' : ''}${ordersChange}% from last month`,
-      icon: Package,
-      trend: parseFloat(ordersChange) >= 0 ? "up" : "down",
-      color: "bg-[#695b58]/10 text-[#695b58]",
+      title: "Ventas del Mes",
+      value: `$${data.salesMonth.amount.toFixed(2)}`,
+      subtitle: `${data.salesMonth.orders} pedidos`,
+      icon: ShoppingBag,
+      color: "bg-blue-50 text-blue-600",
+      trend: {
+        value: data.comparison.revenueChange,
+        label: "vs mes anterior",
+        positive: data.comparison.revenueChange >= 0,
+      },
     },
     {
-      title: "NEW CUSTOMERS",
-      value: newCustomers.toString(),
-      change: "This month",
-      icon: Users,
-      trend: "up",
-      color: "bg-[#5e5e5c]/10 text-[#5e5e5c]",
+      title: "Ticket Promedio",
+      value: `$${data.avgTicket.toFixed(2)}`,
+      subtitle: "por pedido",
+      icon: TrendingUp,
+      color: "bg-purple-50 text-purple-600",
+      trend: null,
     },
     {
-      title: "STOCK ALERTS",
-      value: lowStockProducts.toString(),
-      change: "Items below threshold",
+      title: "Stock Bajo",
+      value: data.lowStockCount.toString(),
+      subtitle: "productos críticos",
       icon: AlertTriangle,
-      trend: lowStockProducts > 0 ? "down" : "up",
-      color: lowStockProducts > 0 ? "bg-[#ba1a1a]/10 text-[#ba1a1a]" : "bg-[#5e5e5c]/10 text-[#5e5e5c]",
+      color: data.lowStockCount > 0 ? "bg-red-50 text-red-600" : "bg-slate-50 text-slate-600",
+      trend: null,
+      alert: data.lowStockCount > 0,
     },
   ];
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div>
-        <h2 className="text-3xl font-heading font-medium text-[#1b1c1c]">Dashboard Overview</h2>
-        <p className="text-[#82746e] mt-2">Welcome back! Here's what's happening with your store today.</p>
+    <div className="space-y-8 p-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold text-slate-900">Dashboard</h2>
+          <p className="text-slate-500 mt-1">Panel Principal - {today}</p>
+        </div>
       </div>
 
+      {/* Metric Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => {
+        {statCards.map((stat) => {
           const Icon = stat.icon;
           return (
-            <Card key={stat.title} className="card-luminous border-[#d4c3bc]/30">
+            <Card key={stat.title} className={`border-l-4 ${stat.alert ? 'border-l-red-500' : 'border-l-slate-200'}`}>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="label-editorial text-[#82746e]">
+                <CardTitle className="text-sm font-medium text-slate-600">
                   {stat.title}
                 </CardTitle>
-                <div className={`p-2 rounded-full ${stat.color}`}>
+                <div className={`p-2 rounded-lg ${stat.color}`}>
                   <Icon className="w-4 h-4" />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-heading font-medium text-[#1b1c1c]">{stat.value}</div>
-                <p className="text-xs text-[#82746e] mt-1">
-                  {stat.change}
-                </p>
+                <div className="text-2xl font-bold text-slate-900">{stat.value}</div>
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="text-xs text-slate-500">{stat.subtitle}</p>
+                  {stat.trend && (
+                    <span className={`text-xs flex items-center gap-0.5 ${stat.trend.positive ? 'text-emerald-600' : 'text-red-600'}`}>
+                      {stat.trend.positive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                      {Math.abs(stat.trend.value).toFixed(1)}% {stat.trend.label}
+                    </span>
+                  )}
+                </div>
               </CardContent>
             </Card>
           );
         })}
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="lg:col-span-4 card-luminous border-[#d4c3bc]/30">
+      {/* Charts & Comparison */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Sales Chart */}
+        <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg font-heading text-[#1b1c1c]">Sales Overview (Last 30 Days)</CardTitle>
+            <CardTitle className="text-lg font-semibold">Tendencia de Ventas - Últimos 30 días</CardTitle>
           </CardHeader>
-          <CardContent className="h-80 p-6">
-            {chartData.length > 0 ? (
-              <div className="h-full flex items-center justify-center bg-[#f6f3f2]/50 rounded-lg border border-dashed border-[#d4c3bc]/30">
-                <p className="text-[#82746e] text-sm flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4" /> Chart functionality temporarily disabled due to compatibility issues
-                </p>
-              </div>
-            ) : (
-              <div className="h-full flex items-center justify-center bg-[#f6f3f2]/50 rounded-lg border border-dashed border-[#d4c3bc]/30">
-                <p className="text-[#82746e] text-sm flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4" /> No sales data for the last 30 days
-                </p>
-              </div>
-            )}
+          <CardContent>
+            <div className="h-80">
+              {data.chartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={data.chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#94a3b8" />
+                    <YAxis tick={{ fontSize: 12 }} stroke="#94a3b8" tickFormatter={(value) => `$${value}`} />
+                    <Tooltip 
+                      formatter={(value) => [`$${Number(value).toFixed(2)}`, "Ventas"]}
+                      contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0' }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="sales" 
+                      stroke="#7a5646" 
+                      strokeWidth={2}
+                      dot={{ fill: '#7a5646', strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6, stroke: '#7a5646', strokeWidth: 2 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center bg-slate-50 rounded-lg">
+                  <p className="text-slate-400 flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4" /> No hay datos de ventas recientes
+                  </p>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-3 card-luminous border-[#d4c3bc]/30">
+        {/* Monthly Comparison */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold">Comparativo Mensual</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Revenue Comparison */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-600">Ingresos</span>
+                <span className={`font-medium ${data.comparison.revenueChange >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  {data.comparison.revenueChange >= 0 ? '+' : ''}{data.comparison.revenueChange.toFixed(1)}%
+                </span>
+              </div>
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs">
+                  <span className="text-slate-500">Mes actual</span>
+                  <span className="font-medium">${data.comparison.currentMonthRevenue.toFixed(2)}</span>
+                </div>
+                <div className="w-full bg-slate-100 rounded-full h-2">
+                  <div className="bg-emerald-500 h-2 rounded-full" style={{ width: '100%' }} />
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-slate-500">Mes anterior</span>
+                  <span className="font-medium">${data.comparison.previousMonthRevenue.toFixed(2)}</span>
+                </div>
+                <div className="w-full bg-slate-100 rounded-full h-2">
+                  <div 
+                    className="bg-slate-400 h-2 rounded-full" 
+                    style={{ 
+                      width: `${data.comparison.previousMonthRevenue > 0 
+                        ? (data.comparison.previousMonthRevenue / data.comparison.currentMonthRevenue * 100) 
+                        : 0}%` 
+                    }} 
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Orders Comparison */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-600">Pedidos</span>
+                <span className={`font-medium ${data.comparison.ordersChange >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  {data.comparison.ordersChange >= 0 ? '+' : ''}{data.comparison.ordersChange.toFixed(1)}%
+                </span>
+              </div>
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs">
+                  <span className="text-slate-500">Mes actual</span>
+                  <span className="font-medium">{data.comparison.currentMonthOrders}</span>
+                </div>
+                <div className="w-full bg-slate-100 rounded-full h-2">
+                  <div className="bg-blue-500 h-2 rounded-full" style={{ width: '100%' }} />
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-slate-500">Mes anterior</span>
+                  <span className="font-medium">{data.comparison.previousMonthOrders}</span>
+                </div>
+                <div className="w-full bg-slate-100 rounded-full h-2">
+                  <div 
+                    className="bg-slate-400 h-2 rounded-full" 
+                    style={{ 
+                      width: `${data.comparison.currentMonthOrders > 0 
+                        ? (data.comparison.previousMonthOrders / data.comparison.currentMonthOrders * 100) 
+                        : 0}%` 
+                    }} 
+                  />
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent Orders & Top Products */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Recent Orders */}
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg font-heading text-[#1b1c1c]">Recent Orders</CardTitle>
-            <a href="/pedidos" className="text-sm text-[#7a5646] hover:text-[#603f30] font-medium">View All</a>
+            <CardTitle className="text-lg font-semibold">Pedidos Recientes</CardTitle>
+            <Link href="/pedidos">
+              <Button variant="ghost" size="sm" className="text-rose-600 hover:text-rose-700">Ver Todos</Button>
+            </Link>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {recentOrders.length > 0 ? recentOrders.map((order: any) => (
-                <div key={order.id} className="flex items-center justify-between group cursor-default py-2">
+            <div className="space-y-3">
+              {data.recentOrders.length > 0 ? data.recentOrders.map((order: any) => (
+                <div key={order.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[#f6f3f2] border border-[#d4c3bc]/30 flex items-center justify-center text-[#7a5646] font-medium transition-colors">
-                      {order.customerName.charAt(0).toUpperCase()}
+                    <div className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-600 font-medium">
+                      {order.customerName?.charAt(0).toUpperCase() || '?'}
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-[#1b1c1c]">{order.orderNumber}</p>
-                      <p className="text-xs text-[#82746e]">{order.customerName}</p>
+                      <p className="text-sm font-medium text-slate-900">{order.orderNumber}</p>
+                      <p className="text-xs text-slate-500">{order.customerName}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-medium text-[#1b1c1c]">${Number(order.totalAmount).toFixed(2)}</p>
-                    <p className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full inline-block mt-1 ${
-                      order.status === 'PENDING' ? 'bg-[#f59e0b]/10 text-[#f59e0b]' :
-                      order.status === 'COMPLETED' || order.status === 'CONFIRMED' ? 'bg-[#10b981]/10 text-[#10b981]' :
-                      order.status === 'CANCELLED' ? 'bg-[#ef4444]/10 text-[#ef4444]' :
-                      'bg-[#3b82f6]/10 text-[#3b82f6]'
+                    <p className="text-sm font-medium text-slate-900">${Number(order.totalAmount).toFixed(2)}</p>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                      order.status === 'PENDING' ? 'bg-amber-100 text-amber-700' :
+                      order.status === 'COMPLETED' || order.status === 'CONFIRMED' ? 'bg-emerald-100 text-emerald-700' :
+                      order.status === 'CANCELLED' ? 'bg-red-100 text-red-700' :
+                      'bg-blue-100 text-blue-700'
                     }`}>
                       {order.status}
-                    </p>
+                    </span>
                   </div>
                 </div>
               )) : (
-                <div className="text-center py-8 text-[#82746e] text-sm">
-                  No recent orders yet.
+                <div className="text-center py-8 text-slate-400">No hay pedidos recientes</div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Top Products */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-lg font-semibold">Top 5 Productos</CardTitle>
+            <Link href="/reportes">
+              <Button variant="ghost" size="sm" className="text-rose-600 hover:text-rose-700">Ver Reportes</Button>
+            </Link>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {data.topProducts.length > 0 ? data.topProducts.map((item: any, index: number) => (
+                <div key={item.productId} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 font-bold text-sm">
+                      #{index + 1}
+                    </div>
+                    {item.product?.mainImage ? (
+                      <img src={item.product.mainImage} alt="" className="w-10 h-10 rounded-lg object-cover" />
+                    ) : (
+                      <div className="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center">
+                        <Package className="w-5 h-5 text-slate-400" />
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-sm font-medium text-slate-900 truncate max-w-[150px]">{item.product?.name || 'Producto'}</p>
+                      <p className="text-xs text-slate-500">{item._sum.quantity} unidades vendidas</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-slate-900">${Number(item._sum.subtotal).toFixed(2)}</p>
+                    <p className="text-xs text-slate-500">Ingresos</p>
+                  </div>
                 </div>
+              )) : (
+                <div className="text-center py-8 text-slate-400">No hay datos de ventas</div>
               )}
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="card-luminous border-[#d4c3bc]/30">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-lg font-heading text-[#1b1c1c]">Top Products This Month</CardTitle>
-          <a href="/reportes" className="text-sm text-[#7a5646] hover:text-[#603f30] font-medium">View All Reports</a>
-        </CardHeader>
-        <CardContent>
-          {topProductsWithDetails.length > 0 ? (
-            <div className="space-y-4">
-              {topProductsWithDetails.map((item: any, index: number) => (
-                <div key={item.productId} className="flex items-center justify-between group cursor-default py-2">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[#f6f3f2] border border-[#d4c3bc]/30 flex items-center justify-center text-[#7a5646] font-bold">
-                      #{index + 1}
-                    </div>
-                    {item.product?.mainImage ? (
-                      <img src={item.product.mainImage} className="w-10 h-10 rounded-lg object-cover border border-[#d4c3bc]/30" />
+      {/* Stock Alerts Grid */}
+      {data.lowStockProducts.length > 0 && (
+        <Card className="border-red-200">
+          <CardHeader className="flex flex-row items-center justify-between bg-red-50/50">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-red-600" />
+              <CardTitle className="text-lg font-semibold text-red-700">Alertas de Stock Crítico</CardTitle>
+            </div>
+            <Link href="/inventario">
+              <Button variant="outline" size="sm" className="border-red-300 text-red-600 hover:bg-red-50">Ver Inventario</Button>
+            </Link>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {data.lowStockProducts.slice(0, 8).map((product: any) => (
+                <div key={product.id} className="p-4 border border-red-100 rounded-lg bg-red-50/30 hover:bg-red-50 transition-colors">
+                  <div className="flex items-start gap-3">
+                    {product.mainImage ? (
+                      <img src={product.mainImage} alt="" className="w-12 h-12 rounded-lg object-cover" />
                     ) : (
-                      <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center border border-slate-200">
-                        <Package className="w-5 h-5 text-slate-300" />
+                      <div className="w-12 h-12 bg-slate-200 rounded-lg flex items-center justify-center">
+                        <Package className="w-6 h-6 text-slate-400" />
                       </div>
                     )}
-                    <div>
-                      <p className="text-sm font-medium text-[#1b1c1c]">{item.product?.name || 'Unknown Product'}</p>
-                      <p className="text-xs text-[#82746e]">{item._sum.quantity} units sold</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-900 truncate">{product.name}</p>
+                      <p className="text-xs text-slate-500">SKU: {product.sku}</p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="text-xs font-medium text-red-600 bg-red-100 px-2 py-0.5 rounded">
+                          Stock: {product.stock}
+                        </span>
+                        <span className="text-xs text-slate-500">
+                          Mín: {product.minStock || 10}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-[#1b1c1c]">${Number(item._sum.subtotal).toFixed(2)}</p>
-                    <p className="text-xs text-[#82746e]">Revenue</p>
-                  </div>
+                  <Link href={`/productos?edit=${product.id}`}>
+                    <Button size="sm" variant="outline" className="w-full mt-3 text-xs">
+                      <Edit3 className="w-3 h-3 mr-1" /> Editar
+                    </Button>
+                  </Link>
                 </div>
               ))}
             </div>
-          ) : (
-            <div className="text-center py-8 text-[#82746e] text-sm">
-              No sales data yet.
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

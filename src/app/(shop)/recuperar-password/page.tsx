@@ -1,13 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { requestPasswordReset, resetPassword } from "@/app/actions/customer-auth";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CheckCircle, AlertCircle, ArrowLeft, Lock, Mail } from "lucide-react";
 
-export default function RecuperarPasswordPage() {
-  const [step, setStep] = useState<"request" | "reset">("request");
+function PasswordResetContent() {
+  const searchParams = useSearchParams();
+  const urlToken = searchParams.get("token");
+  
+  const [step, setStep] = useState<"request" | "reset">(urlToken ? "reset" : "request");
   const [email, setEmail] = useState("");
-  const [token, setToken] = useState("");
+  const [token, setToken] = useState(urlToken || "");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -60,129 +70,158 @@ export default function RecuperarPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            {step === "request" ? "Recuperar Contraseña" : "Restablecer Contraseña"}
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            {step === "request" 
-              ? "Ingresa tu correo para recibir el enlace de recuperación"
-              : "Ingresa tu nueva contraseña"
-            }
-          </p>
-        </div>
-
-        {message && (
-          <div
-            className={`p-4 rounded-md ${
-              message.type === "success" ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"
-            }`}
-          >
-            {message.text}
-          </div>
-        )}
-
-        {step === "request" ? (
-          <form className="mt-8 space-y-6" onSubmit={handleRequestReset}>
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Correo electrónico
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              />
+    <div className="container mx-auto px-4 py-16 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-md">
+        <Card className="border-slate-200 shadow-lg">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-pink-100">
+              <Lock className="h-6 w-6 text-pink-600" />
             </div>
+            <CardTitle className="text-2xl">
+              {step === "request" ? "Recuperar Contraseña" : "Restablecer Contraseña"}
+            </CardTitle>
+            <CardDescription>
+              {step === "request" 
+                ? "Ingresa tu correo para recibir el enlace de recuperación"
+                : "Crea una nueva contraseña segura"
+              }
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {message && (
+              <Alert className={`mb-6 ${message.type === "success" ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"}`}>
+                {message.type === "success" ? (
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                ) : (
+                  <AlertCircle className="h-4 w-4 text-red-600" />
+                )}
+                <AlertDescription className={message.type === "success" ? "text-green-800" : "text-red-800"}>
+                  {message.text}
+                </AlertDescription>
+              </Alert>
+            )}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-            >
-              {loading ? "Enviando..." : "Enviar enlace de recuperación"}
-            </button>
+            {step === "request" ? (
+              <form onSubmit={handleRequestReset} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Correo electrónico</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="tu@email.com"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="pl-10 h-11"
+                    />
+                  </div>
+                </div>
 
-            <div className="text-center">
-              <Link href="/cuenta/ingresar" className="text-indigo-600 hover:text-indigo-500">
-                Volver a iniciar sesión
-              </Link>
-            </div>
-          </form>
-        ) : (
-          <form className="mt-8 space-y-6" onSubmit={handleResetPassword}>
-            <div>
-              <label htmlFor="token" className="block text-sm font-medium text-gray-700">
-                Token de recuperación
-              </label>
-              <input
-                id="token"
-                name="token"
-                type="text"
-                required
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="Pega el token recibido"
-              />
-            </div>
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-pink-600 hover:bg-pink-700 h-11"
+                >
+                  {loading ? "Enviando..." : "Enviar enlace de recuperación"}
+                </Button>
 
-            <div>
-              <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">
-                Nueva contraseña
-              </label>
-              <input
-                id="newPassword"
-                name="newPassword"
-                type="password"
-                required
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              />
-            </div>
+                <Link 
+                  href="/cuenta/ingresar" 
+                  className="flex items-center justify-center gap-2 text-sm text-slate-500 hover:text-pink-600 transition-colors mt-4"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Volver a iniciar sesión
+                </Link>
+              </form>
+            ) : (
+              <form onSubmit={handleResetPassword} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="token">Token de recuperación</Label>
+                  <Input
+                    id="token"
+                    type="text"
+                    placeholder="Token del correo"
+                    required
+                    value={token}
+                    onChange={(e) => setToken(e.target.value)}
+                    className="h-11"
+                  />
+                  <p className="text-xs text-slate-500">
+                    El token se llena automáticamente desde el enlace del correo
+                  </p>
+                </div>
 
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                Confirmar contraseña
-              </label>
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              />
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="newPassword">Nueva contraseña</Label>
+                  <Input
+                    id="newPassword"
+                    type="password"
+                    placeholder="Mínimo 6 caracteres"
+                    required
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="h-11"
+                  />
+                </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-            >
-              {loading ? "Actualizando..." : "Restablecer contraseña"}
-            </button>
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    placeholder="Repite la contraseña"
+                    required
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="h-11"
+                  />
+                </div>
 
-            <div className="text-center">
-              <button
-                type="button"
-                onClick={() => setStep("request")}
-                className="text-indigo-600 hover:text-indigo-500"
-              >
-                Volver a solicitar token
-              </button>
-            </div>
-          </form>
-        )}
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-pink-600 hover:bg-pink-700 h-11"
+                >
+                  {loading ? "Actualizando..." : "Restablecer contraseña"}
+                </Button>
+
+                <button
+                  type="button"
+                  onClick={() => setStep("request")}
+                  className="w-full text-sm text-slate-500 hover:text-pink-600 transition-colors mt-4"
+                >
+                  ¿No recibiste el token? Solicitar de nuevo
+                </button>
+              </form>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
+  );
+}
+
+export default function RecuperarPasswordPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto px-4 py-16 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-md">
+          <Card className="border-slate-200 shadow-lg">
+            <CardHeader className="text-center">
+              <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-pink-100 animate-pulse" />
+              <div className="h-8 w-48 mx-auto bg-slate-200 rounded animate-pulse" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="h-20 bg-slate-200 rounded animate-pulse" />
+              <div className="h-11 bg-slate-200 rounded animate-pulse" />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    }>
+      <PasswordResetContent />
+    </Suspense>
   );
 }

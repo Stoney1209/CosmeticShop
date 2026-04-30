@@ -94,6 +94,16 @@ export function CustomerAuthForm({ mode }: { mode: Mode }) {
           </Button>
         </form>
 
+        {!isRegister && (
+          <p className="mt-3 text-sm">
+            <Link
+              href="/recuperar-password"
+              className="text-slate-500 hover:text-pink-600 transition-colors"
+            >
+              ¿Olvidaste tu contraseña?
+            </Link>
+          </p>
+        )}
         <p className="mt-4 text-sm text-slate-500">
           {isRegister ? "¿Ya tienes cuenta?" : "¿Aún no tienes cuenta?"}{" "}
           <Link

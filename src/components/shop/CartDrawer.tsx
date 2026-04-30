@@ -20,6 +20,7 @@ export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
   const [isCheckoutForm, setIsCheckoutForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
 
@@ -41,6 +42,7 @@ export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
 
     const orderData = {
       customerName: name,
+      customerEmail: email || undefined,
       customerPhone: phone,
       customerAddress: address,
       totalAmount: cart.totalPrice() - discountAmount,
@@ -72,7 +74,7 @@ export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
         
         message += `\n*Total a pagar: $${(cart.totalPrice() - discountAmount).toFixed(2)}*`;
         if (discountAmount > 0) message += ` _(Ahorraste $${discountAmount.toFixed(2)})_`;
-        message += `\n\nMis datos:\nNombre: ${name}\nTeléfono: ${phone}\nDirección: ${address || 'A convenir'}\n\n`;
+        message += `\n\nMis datos:\nNombre: ${name}\n${email ? `Email: ${email}\n` : ''}Teléfono: ${phone}\nDirección: ${address || 'A convenir'}\n\n`;
         message += `Por favor indíquenme los pasos para el pago y envío.`;
         
         const encodedMessage = encodeURIComponent(message);
@@ -129,6 +131,10 @@ export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
                 <div className="space-y-2.5">
                   <Label htmlFor="checkout-name">Nombre completo *</Label>
                   <Input id="checkout-name" required value={name} onChange={e => setName(e.target.value)} placeholder="Ej. Ana García" className="bg-[var(--surface-container-low)]" />
+                </div>
+                <div className="space-y-2.5">
+                  <Label htmlFor="checkout-email">Correo electrónico</Label>
+                  <Input id="checkout-email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="tu@email.com" className="bg-[var(--surface-container-low)]" />
                 </div>
                 <div className="space-y-2.5">
                   <Label htmlFor="checkout-phone">Teléfono (WhatsApp) *</Label>
