@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { updateOrderStatus } from "@/app/actions/orders";
 import { Card, CardContent } from "@/components/ui/card";
-import { STATUS_LABELS } from "@/app/actions/dashboard";
+import { STATUS_LABELS } from "@/app/actions/dashboard-types";
 
 const statusConfig = {
   PENDING: { label: "Pendiente", color: "bg-amber-100 text-amber-800", borderColor: "border-amber-500", icon: Clock },
