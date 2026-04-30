@@ -149,12 +149,19 @@ export function ProductsClient({ initialProducts, categories, variantTypes }: { 
     if (!confirm(`¿Activar ${selectedProducts.length} productos?`)) return;
 
     try {
-      for (const id of selectedProducts) {
-        await updateProduct(id, { isActive: true });
+      const response = await fetch("/api/admin/products/bulk-activate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selectedProducts }),
+      });
+
+      if (response.ok) {
+        toast.success(`${selectedProducts.length} productos activados`);
+        setSelectedProducts([]);
+        window.location.reload();
+      } else {
+        toast.error("Error al activar productos");
       }
-      toast.success(`${selectedProducts.length} productos activados`);
-      setSelectedProducts([]);
-      window.location.reload();
     } catch {
       toast.error("Error al activar productos");
     }
@@ -168,12 +175,19 @@ export function ProductsClient({ initialProducts, categories, variantTypes }: { 
     if (!confirm(`¿Desactivar ${selectedProducts.length} productos?`)) return;
 
     try {
-      for (const id of selectedProducts) {
-        await updateProduct(id, { isActive: false });
+      const response = await fetch("/api/admin/products/bulk-deactivate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selectedProducts }),
+      });
+
+      if (response.ok) {
+        toast.success(`${selectedProducts.length} productos desactivados`);
+        setSelectedProducts([]);
+        window.location.reload();
+      } else {
+        toast.error("Error al desactivar productos");
       }
-      toast.success(`${selectedProducts.length} productos desactivados`);
-      setSelectedProducts([]);
-      window.location.reload();
     } catch {
       toast.error("Error al desactivar productos");
     }
@@ -187,12 +201,19 @@ export function ProductsClient({ initialProducts, categories, variantTypes }: { 
     if (!confirm(`¿Eliminar ${selectedProducts.length} productos?`)) return;
 
     try {
-      for (const id of selectedProducts) {
-        await deleteProduct(id);
+      const response = await fetch("/api/admin/products/bulk-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selectedProducts }),
+      });
+
+      if (response.ok) {
+        toast.success(`${selectedProducts.length} productos eliminados`);
+        setSelectedProducts([]);
+        window.location.reload();
+      } else {
+        toast.error("Error al eliminar productos");
       }
-      toast.success(`${selectedProducts.length} productos eliminados`);
-      setSelectedProducts([]);
-      window.location.reload();
     } catch {
       toast.error("Error al eliminar productos");
     }
