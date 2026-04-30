@@ -149,11 +149,13 @@ export function CustomersClient({ initialCustomers }: CustomersClientProps) {
                 </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
+                    <DropdownMenuTrigger
+                      render={
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      }
+                    />
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => viewDetails(customer)}>
                         <Eye className="mr-2 h-4 w-4" />

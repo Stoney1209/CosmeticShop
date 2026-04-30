@@ -73,7 +73,11 @@ export function UsersClient({ initialUsers }: { initialUsers: any[] }) {
           onChange={(e) => setSearchTerm(e.target.value)}
         />
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild><Button onClick={() => {setEditing(null); setForm({username:"", fullName:"", email:"", password:"", role:"OPERATOR", isActive:true})}}><Plus className="w-4 h-4 mr-2"/> Nuevo Usuario</Button></DialogTrigger>
+          <DialogTrigger
+            render={
+              <Button onClick={() => {setEditing(null); setForm({username:"", fullName:"", email:"", password:"", role:"OPERATOR", isActive:true})}}><Plus className="w-4 h-4 mr-2"/> Nuevo Usuario</Button>
+            }
+          />
           <DialogContent>
             <DialogHeader><DialogTitle>{editing ? "Editar Usuario" : "Nuevo Usuario"}</DialogTitle></DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">

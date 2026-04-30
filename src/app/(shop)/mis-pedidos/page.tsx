@@ -63,17 +63,10 @@ export default async function MyOrdersPage() {
                   {statusLabels[order.status] ?? order.status}
                 </Badge>
                 <p className="mt-2 text-lg font-bold text-slate-900">${Number(order.totalAmount).toFixed(2)}</p>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="mt-3 rounded-full border-slate-300 hover:border-pink-400 hover:text-pink-600"
-                  asChild
-                >
-                  <Link href={`/pedidos/${order.id}`} className="flex items-center gap-1">
-                    <Eye className="h-3.5 w-3.5" />
-                    Ver Detalle
-                  </Link>
-                </Button>
+                <Link href={`/pedidos/${order.id}`} className="mt-3 inline-flex items-center justify-center rounded-lg border border-border bg-transparent hover:bg-surface-container-low hover:text-on-surface text-sm font-medium whitespace-nowrap transition-all h-9 gap-1.5 px-4 rounded-full border-slate-300 hover:border-pink-400 hover:text-pink-600 flex items-center gap-1">
+                  <Eye className="h-3.5 w-3.5" />
+                  Ver Detalle
+                </Link>
               </div>
             </CardHeader>
             <CardContent className="space-y-3 pt-4">
@@ -101,9 +94,9 @@ export default async function MyOrdersPage() {
         <Card>
           <CardContent className="py-12 text-center">
             <p className="text-slate-500 mb-4">Aún no tienes pedidos asociados a tu cuenta.</p>
-            <Button asChild className="bg-pink-600 hover:bg-pink-700">
-              <Link href="/tienda">Explorar productos</Link>
-            </Button>
+            <Link href="/tienda" className="inline-flex items-center justify-center rounded-lg border border-transparent bg-primary text-primary-foreground text-sm font-medium whitespace-nowrap transition-all hover:bg-primary/90 shadow-sm h-9 gap-1.5 px-4 bg-pink-600 hover:bg-pink-700">
+              Explorar productos
+            </Link>
           </CardContent>
         </Card>
       )}

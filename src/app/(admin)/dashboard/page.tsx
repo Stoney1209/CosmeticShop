@@ -195,9 +195,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg font-heading font-semibold">Pedidos Recientes</CardTitle>
-            <Button variant="ghost" size="sm" className="text-[var(--primary)] hover:text-[var(--primary)]/80" asChild>
-              <Link href="/pedidos">Ver Todos</Link>
-            </Button>
+            <Link href="/pedidos" className="inline-flex items-center justify-center rounded-lg border border-transparent bg-transparent hover:bg-surface-container-low hover:text-on-surface text-sm font-medium whitespace-nowrap transition-all h-9 gap-1.5 px-4 text-[var(--primary)] hover:text-[var(--primary)]/80">Ver Todos</Link>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -234,9 +232,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg font-heading font-semibold">Top 5 Productos</CardTitle>
-            <Button variant="ghost" size="sm" className="text-[var(--primary)] hover:text-[var(--primary)]/80" asChild>
-              <Link href="/reportes">Ver Reportes</Link>
-            </Button>
+            <Link href="/reportes" className="inline-flex items-center justify-center rounded-lg border border-transparent bg-transparent hover:bg-surface-container-low hover:text-on-surface text-sm font-medium whitespace-nowrap transition-all h-9 gap-1.5 px-4 text-[var(--primary)] hover:text-[var(--primary)]/80">Ver Reportes</Link>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -286,9 +282,7 @@ export default function DashboardPage() {
               <AlertTriangle className="w-5 h-5 text-[var(--error)]" />
               <CardTitle className="text-lg font-heading font-semibold text-[var(--error)]">Alertas de Stock Crítico</CardTitle>
             </div>
-            <Button variant="outline" size="sm" className="border-[var(--error)]/30 text-[var(--error)] hover:bg-[var(--error-container)]/20" asChild>
-              <Link href="/inventario">Ver Inventario</Link>
-            </Button>
+            <Link href="/inventario" className="inline-flex items-center justify-center rounded-lg border border-border bg-transparent hover:bg-surface-container-low hover:text-on-surface text-sm font-medium whitespace-nowrap transition-all h-9 gap-1.5 px-4 border-[var(--error)]/30 text-[var(--error)] hover:bg-[var(--error-container)]/20">Ver Inventario</Link>
           </CardHeader>
           <CardContent className="p-6">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -320,11 +314,9 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   </div>
-                  <Button size="sm" variant="outline" className="w-full mt-4 text-xs h-8 rounded-lg" asChild>
-                    <Link href={`/productos?edit=${product.id}`}>
-                      <Edit3 className="w-3 h-3 mr-1.5" /> Editar
-                    </Link>
-                  </Button>
+                  <Link href={`/productos?edit=${product.id}`} className="w-full inline-flex items-center justify-center rounded-lg border border-border bg-transparent hover:bg-surface-container-low hover:text-on-surface text-sm font-medium whitespace-nowrap transition-all h-9 gap-1.5 px-4 text-xs h-8 rounded-lg">
+                    <Edit3 className="w-3 h-3 mr-1.5" /> Editar
+                  </Link>
                 </div>
               ))}
             </div>

@@ -83,13 +83,9 @@ export default async function HomePage() {
                 Descubre nuestra colección curada de esenciales de belleza premium diseñados para realzar tu radiancia natural.
               </p>
               <div className="flex flex-wrap gap-4 animate-fade-up animate-stagger-3">
-                <Button size="lg" className="rounded-full px-10 bg-[var(--primary)] hover:bg-[var(--on-primary-container)] text-[var(--on-primary)] shadow-md hover:shadow-lg transition-all" asChild>
-                  <Link href="/tienda">COMPRAR AHORA</Link>
-                </Button>
+                <Link href="/tienda" className="inline-flex items-center justify-center rounded-lg border border-transparent bg-primary text-primary-foreground text-sm font-medium whitespace-nowrap transition-all hover:bg-primary/90 shadow-sm h-9 gap-1.5 px-4 rounded-full px-10 bg-[var(--primary)] hover:bg-[var(--on-primary-container)] text-[var(--on-primary)] shadow-md hover:shadow-lg transition-all h-11 gap-2 px-6">COMPRAR AHORA</Link>
                 {/* U3: Dynamic category link */}
-                <Button size="lg" variant="outline" className="rounded-full px-10 border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--on-primary)] transition-all" asChild>
-                  <Link href={discoverHref}>DESCUBRIR</Link>
-                </Button>
+                <Link href={discoverHref} className="inline-flex items-center justify-center rounded-lg border border-border bg-transparent hover:bg-surface-container-low hover:text-on-surface border-[var(--primary)] text-primary text-sm font-medium whitespace-nowrap transition-all h-9 gap-1.5 px-4 rounded-full px-10 border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--on-primary)] transition-all h-11 gap-2 px-6">DESCUBRIR</Link>
               </div>
             </div>
             <div className="relative hidden lg:block">
@@ -163,9 +159,7 @@ export default async function HomePage() {
             )}
           </div>
           <div className="mt-12 text-center md:hidden">
-            <Button variant="outline" size="lg" className="w-full rounded-full border-[var(--primary)] text-[var(--primary)]" asChild>
-              <Link href="/tienda">VER TODOS LOS PRODUCTOS</Link>
-            </Button>
+            <Link href="/tienda" className="inline-flex items-center justify-center rounded-lg border border-border bg-transparent hover:bg-surface-container-low hover:text-on-surface border-[var(--primary)] text-primary text-sm font-medium whitespace-nowrap transition-all h-9 gap-1.5 px-4 rounded-full border-[var(--primary)] text-[var(--primary)] w-full h-11 gap-2 px-6">VER TODOS LOS PRODUCTOS</Link>
           </div>
         </div>
       </section>

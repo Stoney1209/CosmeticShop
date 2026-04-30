@@ -95,25 +95,26 @@ export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
 
   return (
     <Sheet onOpenChange={(open) => !open && setIsCheckoutForm(false)}>
-      <SheetTrigger asChild>
-        {/* A1: Descriptive aria-label for cart trigger */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative text-[var(--on-surface-variant)] hover:text-[var(--primary)] hover:bg-[var(--secondary-container)]/50"
-          aria-label={itemCount > 0 ? `Carrito de compras, ${itemCount} artículos` : "Carrito de compras vacío"}
-        >
-          <ShoppingBag className="h-5 w-5" aria-hidden="true" />
-          {isMounted && cart.items.length > 0 && (
-            <span
-              className="absolute top-1 right-1 h-4 w-4 rounded-full bg-[var(--primary)] text-[10px] font-bold text-[var(--on-primary)] flex items-center justify-center border-2 border-[var(--surface)]"
-              aria-hidden="true"
-            >
-              {cart.totalItems()}
-            </span>
-          )}
-        </Button>
-      </SheetTrigger>
+      <SheetTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="icon"
+            className="relative text-[var(--on-surface-variant)] hover:text-[var(--primary)] hover:bg-[var(--secondary-container)]/50"
+            aria-label={itemCount > 0 ? `Carrito de compras, ${itemCount} artículos` : "Carrito de compras vacío"}
+          >
+            <ShoppingBag className="h-5 w-5" aria-hidden="true" />
+            {isMounted && cart.items.length > 0 && (
+              <span
+                className="absolute top-1 right-1 h-4 w-4 rounded-full bg-[var(--primary)] text-[10px] font-bold text-[var(--on-primary)] flex items-center justify-center border-2 border-[var(--surface)]"
+                aria-hidden="true"
+              >
+                {cart.totalItems()}
+              </span>
+            )}
+          </Button>
+        }
+      />
       <SheetContent className="w-full sm:max-w-md flex flex-col p-0">
         <SheetHeader className="px-6 py-5 border-b border-[var(--outline-variant)]/20">
           <SheetTitle className="text-xl font-heading flex items-center gap-2.5">

@@ -67,18 +67,20 @@ export function Header() {
         </Button>
         
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className="relative h-9 w-9 rounded-full ml-2 ring-2 ring-transparent hover:ring-[var(--primary)]/10 transition-all"
-              aria-label="Menú de usuario"
-            >
-              {/* P6: Removed external avatar dependency, using pure CSS fallback */}
-              <Avatar className="h-9 w-9">
-                <AvatarFallback className="bg-[var(--primary)] text-white text-sm font-medium">AD</AvatarFallback>
-              </Avatar>
-            </Button>
-          </DropdownMenuTrigger>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                variant="ghost"
+                className="relative h-9 w-9 rounded-full ml-2 ring-2 ring-transparent hover:ring-[var(--primary)]/10 transition-all"
+                aria-label="Menú de usuario"
+              >
+                {/* P6: Removed external avatar dependency, using pure CSS fallback */}
+                <Avatar className="h-9 w-9">
+                  <AvatarFallback className="bg-[var(--primary)] text-white text-sm font-medium">AD</AvatarFallback>
+                </Avatar>
+              </Button>
+            }
+          />
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">

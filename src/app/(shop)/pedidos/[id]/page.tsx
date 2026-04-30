@@ -133,12 +133,10 @@ export default async function OrderDetailPage({ params }: PageProps) {
     <div className="container mx-auto px-4 py-12 sm:px-6 lg:px-8">
       {/* Header */}
       <div className="mb-8">
-        <Button variant="ghost" className="mb-4 -ml-4" asChild>
-          <Link href="/mis-pedidos" className="flex items-center gap-2 text-slate-600 hover:text-slate-900">
-            <ArrowLeft className="h-4 w-4" />
-            Volver a mis pedidos
-          </Link>
-        </Button>
+        <Link href="/mis-pedidos" className="mb-4 -ml-4 inline-flex items-center justify-center rounded-lg border border-transparent bg-transparent hover:bg-surface-container-low hover:text-on-surface text-sm font-medium whitespace-nowrap transition-all h-9 gap-1.5 px-4 flex items-center gap-2 text-slate-600 hover:text-slate-900">
+          <ArrowLeft className="h-4 w-4" />
+          Volver a mis pedidos
+        </Link>
         
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -399,14 +397,9 @@ export default async function OrderDetailPage({ params }: PageProps) {
 
           {/* Actions */}
           <div className="flex gap-3">
-            <Button 
-              className="flex-1 bg-pink-600 hover:bg-pink-700" 
-              asChild
-            >
-              <Link href="/tienda">
-                Seguir comprando
-              </Link>
-            </Button>
+            <Link href="/tienda" className="flex-1 inline-flex items-center justify-center rounded-lg border border-transparent bg-primary text-primary-foreground text-sm font-medium whitespace-nowrap transition-all hover:bg-primary/90 shadow-sm h-9 gap-1.5 px-4 bg-pink-600 hover:bg-pink-700">
+              Seguir comprando
+            </Link>
           </div>
         </div>
       </div>

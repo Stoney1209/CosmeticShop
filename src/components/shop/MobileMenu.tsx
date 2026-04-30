@@ -29,16 +29,18 @@ export function MobileMenu({ categories }: MobileMenuProps) {
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="md:hidden text-[var(--on-surface-variant)]"
-          aria-label="Abrir menú de navegación"
-        >
-          <Menu className="h-5 w-5" aria-hidden="true" />
-        </Button>
-      </SheetTrigger>
+      <SheetTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden text-[var(--on-surface-variant)]"
+            aria-label="Abrir menú de navegación"
+          >
+            <Menu className="h-5 w-5" aria-hidden="true" />
+          </Button>
+        }
+      />
       <SheetContent side="left" className="w-[300px] sm:w-[350px] p-0 flex flex-col">
         <SheetHeader className="px-6 py-5 border-b border-[var(--outline-variant)]/20">
           <SheetTitle className="text-lg font-heading flex items-center gap-2.5">

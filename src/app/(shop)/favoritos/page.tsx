@@ -51,14 +51,9 @@ export default async function WishlistPage() {
                     <h2 className="font-semibold text-slate-900 line-clamp-1">{product.name}</h2>
                     <p className="mt-1 text-lg font-bold text-pink-600">${Number(product.price).toFixed(2)}</p>
                   </div>
-                  <Button
-                    asChild
-                    className="w-full bg-slate-900 hover:bg-slate-800"
-                  >
-                    <Link href={`/producto/${product.slug}`}>
-                      Ver producto
-                    </Link>
-                  </Button>
+                  <Link href={`/producto/${product.slug}`} className="w-full inline-flex items-center justify-center rounded-lg border border-transparent bg-primary text-primary-foreground text-sm font-medium whitespace-nowrap transition-all hover:bg-primary/90 shadow-sm h-9 gap-1.5 px-4 bg-slate-900 hover:bg-slate-800">
+                    Ver producto
+                  </Link>
                 </CardContent>
               </Card>
             );
@@ -69,9 +64,9 @@ export default async function WishlistPage() {
           <CardContent className="py-12 text-center">
             <Heart className="h-12 w-12 text-slate-300 mx-auto mb-4" />
             <p className="text-slate-500 mb-4">No tienes productos guardados en favoritos.</p>
-            <Button asChild className="bg-pink-600 hover:bg-pink-700">
-              <Link href="/tienda">Explorar productos</Link>
-            </Button>
+            <Link href="/tienda" className="inline-flex items-center justify-center rounded-lg border border-transparent bg-primary text-primary-foreground text-sm font-medium whitespace-nowrap transition-all hover:bg-primary/90 shadow-sm h-9 gap-1.5 px-4 bg-pink-600 hover:bg-pink-700">
+              Explorar productos
+            </Link>
           </CardContent>
         </Card>
       )}

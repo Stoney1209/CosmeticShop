@@ -325,9 +325,7 @@ export default async function StorePage({
                   <span className="text-6xl mb-4 text-[var(--outline-variant)]/40" aria-hidden="true">🔍</span>
                   <p className="text-[var(--outline)] font-heading text-xl">Sin resultados</p>
                   <p className="text-sm text-[var(--outline)]/70 mt-1">Prueba con otros filtros o términos de búsqueda.</p>
-                  <Button variant="outline" className="mt-6 rounded-full border-[var(--primary)] text-[var(--primary)]" asChild>
-                    <Link href="/tienda">Limpiar filtros</Link>
-                  </Button>
+                  <Link href="/tienda" className="mt-6 inline-flex items-center justify-center rounded-lg border border-border bg-transparent hover:bg-surface-container-low hover:text-on-surface border-[var(--primary)] text-primary text-sm font-medium whitespace-nowrap transition-all h-9 gap-1.5 px-4 rounded-full">Limpiar filtros</Link>
                 </div>
               )}
             </div>
@@ -335,39 +333,27 @@ export default async function StorePage({
             {/* U7/P5: Pagination using centralized buildTiendaUrl */}
             {totalPages > 1 && (
               <nav className="flex justify-center items-center gap-2 mt-12" aria-label="Paginación de productos">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page === 1}
-                  className="rounded-full border-[var(--outline-variant)] text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)]"
-                  asChild={page > 1}
-                >
-                  {page > 1 ? (
-                    <Link href={buildTiendaUrl(currentParams, { page: (page - 1).toString() })}>
-                      Anterior
-                    </Link>
-                  ) : (
-                    <span>Anterior</span>
-                  )}
-                </Button>
+                {page > 1 ? (
+                  <Link href={buildTiendaUrl(currentParams, { page: (page - 1).toString() })} className="inline-flex items-center justify-center rounded-lg border border-border bg-transparent hover:bg-surface-container-low hover:text-on-surface text-sm font-medium whitespace-nowrap transition-all h-9 gap-1.5 px-4 rounded-full border-[var(--outline-variant)] text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)]">
+                    Anterior
+                  </Link>
+                ) : (
+                  <button disabled className="inline-flex items-center justify-center rounded-lg border border-border bg-transparent text-sm font-medium whitespace-nowrap transition-all h-9 gap-1.5 px-4 rounded-full border-[var(--outline-variant)] text-[var(--on-surface-variant)] opacity-50 cursor-not-allowed">
+                    Anterior
+                  </button>
+                )}
                 
                 <span className="text-sm text-[var(--outline)]">Página {page} de {totalPages}</span>
 
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page === totalPages}
-                  className="rounded-full border-[var(--outline-variant)] text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)]"
-                  asChild={page < totalPages}
-                >
-                  {page < totalPages ? (
-                    <Link href={buildTiendaUrl(currentParams, { page: (page + 1).toString() })}>
-                      Siguiente
-                    </Link>
-                  ) : (
-                    <span>Siguiente</span>
-                  )}
-                </Button>
+                {page < totalPages ? (
+                  <Link href={buildTiendaUrl(currentParams, { page: (page + 1).toString() })} className="inline-flex items-center justify-center rounded-lg border border-border bg-transparent hover:bg-surface-container-low hover:text-on-surface text-sm font-medium whitespace-nowrap transition-all h-9 gap-1.5 px-4 rounded-full border-[var(--outline-variant)] text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)]">
+                    Siguiente
+                  </Link>
+                ) : (
+                  <button disabled className="inline-flex items-center justify-center rounded-lg border border-border bg-transparent text-sm font-medium whitespace-nowrap transition-all h-9 gap-1.5 px-4 rounded-full border-[var(--outline-variant)] text-[var(--on-surface-variant)] opacity-50 cursor-not-allowed">
+                    Siguiente
+                  </button>
+                )}
               </nav>
             )}
           </div>

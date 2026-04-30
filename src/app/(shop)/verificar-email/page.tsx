@@ -73,9 +73,7 @@ function VerificarEmailContent() {
                 </h3>
                 <p className="text-slate-600">{message}</p>
               </div>
-              <Button asChild className="w-full">
-                <Link href="/tienda">Ir a la Tienda</Link>
-              </Button>
+              <Link href="/tienda" className="w-full inline-flex items-center justify-center rounded-lg border border-transparent bg-primary text-primary-foreground text-sm font-medium whitespace-nowrap transition-all hover:bg-primary/90 shadow-sm h-9 gap-1.5 px-4">Ir a la Tienda</Link>
             </div>
           )}
 
@@ -91,12 +89,8 @@ function VerificarEmailContent() {
                 <p className="text-slate-600">{message}</p>
               </div>
               <div className="space-y-2 w-full">
-                <Button asChild variant="outline" className="w-full">
-                  <Link href="/tienda">Ir a la Tienda</Link>
-                </Button>
-                <Button asChild variant="ghost" className="w-full">
-                  <Link href="/recuperar-password">Reenviar verificación</Link>
-                </Button>
+                <Link href="/tienda" className="w-full inline-flex items-center justify-center rounded-lg border border-border bg-transparent hover:bg-surface-container-low hover:text-on-surface border-[var(--primary)] text-primary text-sm font-medium whitespace-nowrap transition-all h-9 gap-1.5 px-4">Ir a la Tienda</Link>
+                <Link href="/recuperar-password" className="w-full inline-flex items-center justify-center rounded-lg border border-transparent bg-transparent hover:bg-surface-container-low hover:text-on-surface text-sm font-medium whitespace-nowrap transition-all h-9 gap-1.5 px-4">Reenviar verificación</Link>
               </div>
             </div>
           )}

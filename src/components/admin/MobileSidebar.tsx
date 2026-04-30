@@ -19,16 +19,18 @@ export function MobileSidebar() {
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="md:hidden text-[var(--on-surface-variant)]"
-          aria-label="Abrir menú de navegación"
-        >
-          <Menu className="w-5 h-5" aria-hidden="true" />
-        </Button>
-      </SheetTrigger>
+      <SheetTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden text-[var(--on-surface-variant)]"
+            aria-label="Abrir menú de navegación"
+          >
+            <Menu className="w-5 h-5" aria-hidden="true" />
+          </Button>
+        }
+      />
       <SheetContent side="left" className="w-[280px] p-0 bg-[#2c2827] border-r border-[#3d3836] flex flex-col">
         <SheetHeader className="p-6 border-b border-[#3d3836]">
           <SheetTitle className="text-left">

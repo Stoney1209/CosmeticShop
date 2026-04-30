@@ -93,11 +93,13 @@ export function CouponsClient({ initialCoupons }: { initialCoupons: Coupon[] }) 
         </div>
         
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-pink-600 hover:bg-pink-700">
-              <Plus className="w-4 h-4 mr-2" /> Nuevo Cupón
-            </Button>
-          </DialogTrigger>
+          <DialogTrigger
+            render={
+              <Button className="bg-pink-600 hover:bg-pink-700">
+                <Plus className="w-4 h-4 mr-2" /> Nuevo Cupón
+              </Button>
+            }
+          />
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Crear Nuevo Cupón</DialogTitle>
