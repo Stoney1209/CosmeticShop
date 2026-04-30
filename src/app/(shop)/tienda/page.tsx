@@ -1,11 +1,14 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { Star, Search, Filter } from "lucide-react";
+import Image from "next/image";
+import { Search, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
 import { Input } from "@/components/ui/input";
 import { SortSelect } from "@/components/shop/SortSelect";
+import { ProductCard } from "@/components/shop/ProductCard";
 import { Metadata } from "next";
+import { buildTiendaUrl, type TiendaSearchParams, type CategoryNode, type BrandGroup } from "@/types/shop";
 
 export async function generateMetadata({
   searchParams,
@@ -20,7 +23,7 @@ export async function generateMetadata({
   const search = searchParams.search;
   const brand = searchParams.brand;
 
-  let title = "Catálogo | Luminous Cosmetics";
+  let title = "Catálogo | LUXE BEAUTÉ";
   let description = "Explora nuestra selección de los mejores productos de belleza premium.";
 
   if (categorySlug) {
@@ -28,19 +31,19 @@ export async function generateMetadata({
       where: { slug: categorySlug },
     });
     if (category) {
-      title = `${category.name} | Catálogo Luminous`;
+      title = `${category.name} | LUXE BEAUTÉ`;
       description = `Descubre nuestra colección de ${category.name.toLowerCase()}. Productos de alta calidad para tu cuidado personal.`;
     }
   }
 
   if (search) {
-    title = `Resultados: ${search} | Luminous`;
+    title = `Resultados: ${search} | LUXE BEAUTÉ`;
     description = `Resultados de búsqueda para "${search}". Encuentra los mejores productos de cosmética.`;
   }
 
   if (brand) {
-    title = `${brand} | Catálogo Luminous`;
-    description = `Productos de la marca ${brand}. Calidad garantizada en Luminous.`;
+    title = `${brand} | LUXE BEAUTÉ`;
+    description = `Productos de la marca ${brand}. Calidad garantizada en LUXE BEAUTÉ.`;
   }
 
   return {
@@ -58,16 +61,7 @@ export async function generateMetadata({
 export default async function StorePage({
   searchParams
 }: {
-  searchParams: { 
-    category?: string; 
-    search?: string;
-    minPrice?: string;
-    maxPrice?: string;
-    brand?: string;
-    sort?: string;
-    page?: string;
-    inStock?: string;
-  }
+  searchParams: TiendaSearchParams;
 }) {
   const categorySlug = searchParams.category;
   const search = searchParams.search;
@@ -79,6 +73,7 @@ export default async function StorePage({
   const limit = 12;
   const inStock = searchParams.inStock === "true";
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let whereClause: any = { isActive: true };
 
   if (categorySlug) {
@@ -107,6 +102,7 @@ export default async function StorePage({
     whereClause.stock = { gt: 0 };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let orderBy: any = { createdAt: "desc" };
   if (sort === "price_asc") orderBy = { price: "asc" };
   if (sort === "price_desc") orderBy = { price: "desc" };
@@ -114,7 +110,8 @@ export default async function StorePage({
 
   const skip = (page - 1) * limit;
 
-  const [productsRaw, total] = await Promise.all([
+  // P4: All 4 queries in a single Promise.all for maximum parallelism
+  const [productsRaw, total, categoriesRaw, brandsRaw] = await Promise.all([
     prisma.product.findMany({
       where: whereClause,
       orderBy: orderBy,
@@ -123,79 +120,117 @@ export default async function StorePage({
       take: limit,
     }),
     prisma.product.count({ where: whereClause }),
+    prisma.category.findMany({
+      where: { isActive: true },
+      orderBy: { displayOrder: "asc" },
+      include: {
+        children: {
+          where: { isActive: true },
+          orderBy: { displayOrder: "asc" }
+        }
+      }
+    }),
+    prisma.product.groupBy({
+      by: ['brand'],
+      where: { brand: { not: null } },
+      _count: { id: true }
+    }),
   ]);
 
-  const products = productsRaw.map((product: any) => ({
-    ...product,
+  const products = productsRaw.map((product) => ({
+    id: product.id,
+    name: product.name,
+    slug: product.slug,
     price: Number(product.price),
+    stock: product.stock,
+    minStock: product.minStock,
+    mainImage: product.mainImage,
+    brand: product.brand,
+    category: product.category ? { name: product.category.name } : null,
   }));
 
   const totalPages = Math.ceil(total / limit);
 
-  const categories = await prisma.category.findMany({
-    where: { isActive: true },
-    orderBy: { displayOrder: "asc" },
-    include: {
-      children: {
-        where: { isActive: true },
-        orderBy: { displayOrder: "asc" }
-      }
-    }
-  });
+  const categories: CategoryNode[] = categoriesRaw.map((c) => ({
+    id: c.id,
+    name: c.name,
+    slug: c.slug,
+    parentId: c.parentId,
+    displayOrder: c.displayOrder,
+    isActive: c.isActive,
+    children: c.children?.map((ch) => ({
+      id: ch.id,
+      name: ch.name,
+      slug: ch.slug,
+      parentId: ch.parentId,
+      displayOrder: ch.displayOrder,
+      isActive: ch.isActive,
+    })),
+  }));
 
-  const brands = await prisma.product.groupBy({
-    by: ['brand'],
-    where: { brand: { not: null } },
-    _count: { id: true }
-  });
+  const brands: BrandGroup[] = brandsRaw.map((b) => ({
+    brand: b.brand,
+    _count: b._count,
+  }));
+
+  // U9: Resolve category name from slug for breadcrumb
+  const currentCategoryName = categorySlug
+    ? categories.find((c) => c.slug === categorySlug)?.name
+      || categories.flatMap((c) => c.children || []).find((c) => c.slug === categorySlug)?.name
+      || categorySlug
+    : null;
+
+  // U7/P5: Helper to build URLs from current params
+  const currentParams: TiendaSearchParams = searchParams;
 
   return (
-    <div className="bg-[#fcf9f8] min-h-screen py-12 lg:py-16">
+    <div className="bg-[var(--surface)] min-h-screen py-12 lg:py-16">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <nav className="flex items-center gap-2 text-sm text-[#82746e] mb-4">
-            <Link href="/" className="hover:text-[#7a5646] transition-colors">Shop</Link>
-            <span className="text-[#d4c3bc]">/</span>
-            <span className="text-[#1b1c1c] font-medium">Collections</span>
-            {categorySlug && (
+          {/* U9: Breadcrumb with resolved category name */}
+          <nav className="flex items-center gap-2 text-sm text-[var(--outline)] mb-4" aria-label="Ruta de navegación">
+            <Link href="/" className="hover:text-[var(--primary)] transition-colors">Inicio</Link>
+            <span className="text-[var(--outline-variant)]" aria-hidden="true">/</span>
+            <Link href="/tienda" className="hover:text-[var(--primary)] transition-colors">Catálogo</Link>
+            {currentCategoryName && (
               <>
-                <span className="text-[#d4c3bc]">/</span>
-                <span className="text-[#1b1c1c] font-medium capitalize">{categorySlug}</span>
+                <span className="text-[var(--outline-variant)]" aria-hidden="true">/</span>
+                <span className="text-[var(--on-surface)] font-medium">{currentCategoryName}</span>
               </>
             )}
           </nav>
           <div className="mb-12 lg:mb-16 max-w-2xl">
-            <h1 className="text-4xl md:text-5xl font-heading text-[#1b1c1c] mb-4">
-              Our Collection
+            <h1 className="text-4xl md:text-5xl font-heading text-[var(--on-surface)] mb-4">
+              {currentCategoryName || "Nuestro Catálogo"}
             </h1>
-            <p className="text-[#82746e] text-lg">
-              {search ? `Results for "${search}"` : "Explore our curated selection of premium beauty products."}
+            <p className="text-[var(--outline)] text-lg">
+              {search ? `Resultados para "${search}"` : "Explora nuestra selección curada de productos de belleza premium."}
             </p>
           </div>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8 items-start">
-          <aside className="w-full lg:w-64 xl:w-72 flex-shrink-0 space-y-6">
-            <div className="bg-white p-6 rounded-xl border border-[#d4c3bc]/30 shadow-[0_2px_8px_rgba(44,44,44,0.06)]">
-              <h3 className="label-editorial text-[#1b1c1c] mb-5 flex items-center gap-2">
-                <Filter className="w-4 h-4" /> CATEGORY
+          <aside className="w-full lg:w-64 xl:w-72 flex-shrink-0 space-y-6" aria-label="Filtros de producto">
+            <div className="bg-[var(--surface-container-lowest)] p-6 rounded-xl border border-[var(--outline-variant)]/30 shadow-[var(--shadow-ambient)]">
+              <h3 className="label-editorial text-[var(--on-surface)] mb-5 flex items-center gap-2">
+                <Filter className="w-4 h-4" aria-hidden="true" /> CATEGORÍA
               </h3>
               <ul className="space-y-1.5">
                 <li>
-                  <Link href="/tienda" className={`text-sm block py-2 px-3 rounded-lg transition-all ${!categorySlug ? "bg-[#b78d7a] text-white font-medium" : "text-[#50443f] hover:bg-[#f6f3f2]"}`}>
-                    All
+                  <Link href="/tienda" className={`text-sm block py-2 px-3 rounded-lg transition-all ${!categorySlug ? "bg-[var(--primary-container)] text-[var(--on-primary-container)] font-medium" : "text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)]"}`}>
+                    Todos
                   </Link>
                 </li>
-                {categories.filter((cat: any) => !cat.parentId).map((category: any) => (
+                {categories.filter((cat) => !cat.parentId).map((category) => (
                   <li key={category.id}>
-                    <Link href={`/tienda?category=${category.slug}${brand ? `&brand=${brand}` : ""}`} className={`text-sm block py-2 px-3 rounded-lg transition-all ${categorySlug === category.slug ? "bg-[#b78d7a] text-white font-medium" : "text-[#50443f] hover:bg-[#f6f3f2]"}`}>
+                    <Link href={buildTiendaUrl(currentParams, { category: category.slug, page: undefined })} className={`text-sm block py-2 px-3 rounded-lg transition-all ${categorySlug === category.slug ? "bg-[var(--primary-container)] text-[var(--on-primary-container)] font-medium" : "text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)]"}`}>
                       {category.name}
                     </Link>
                     {category.children && category.children.length > 0 && (
                       <ul className="ml-4 mt-1 space-y-1">
-                        {category.children.map((child: any) => (
+                        {category.children.map((child) => (
                           <li key={child.id}>
-                            <Link href={`/tienda?category=${child.slug}${brand ? `&brand=${brand}` : ""}`} className={`text-xs block py-1.5 px-3 rounded-lg transition-all ${categorySlug === child.slug ? "bg-[#7a5646] text-white" : "text-[#82746e] hover:bg-[#f6f3f2]"}`}>
+                            <Link href={buildTiendaUrl(currentParams, { category: child.slug, page: undefined })} className={`text-xs block py-1.5 px-3 rounded-lg transition-all ${categorySlug === child.slug ? "bg-[var(--primary)] text-[var(--on-primary)]" : "text-[var(--outline)] hover:bg-[var(--surface-container-low)]"}`}>
                               {child.name}
                             </Link>
                           </li>
@@ -208,20 +243,20 @@ export default async function StorePage({
             </div>
 
             {brands.length > 0 && (
-              <div className="bg-white p-6 rounded-xl border border-[#d4c3bc]/30 shadow-[0_2px_8px_rgba(44,44,44,0.06)]">
-                <h3 className="label-editorial text-[#1b1c1c] mb-5">BRAND</h3>
+              <div className="bg-[var(--surface-container-lowest)] p-6 rounded-xl border border-[var(--outline-variant)]/30 shadow-[var(--shadow-ambient)]">
+                <h3 className="label-editorial text-[var(--on-surface)] mb-5">MARCA</h3>
                 <div className="flex flex-wrap gap-2">
                   <Link 
-                    href={`/tienda${categorySlug ? `?category=${categorySlug}` : ""}`}
-                    className={`text-xs px-3 py-1.5 rounded-full border transition-all ${!brand ? "bg-[#7a5646] text-white border-[#7a5646] shadow-sm" : "bg-transparent text-[#50443f] border-[#d4c3bc] hover:border-[#7a5646]/50"}`}
+                    href={buildTiendaUrl(currentParams, { brand: undefined, page: undefined })}
+                    className={`text-xs px-3 py-1.5 rounded-full border transition-all ${!brand ? "bg-[var(--primary)] text-[var(--on-primary)] border-[var(--primary)] shadow-sm" : "bg-transparent text-[var(--on-surface-variant)] border-[var(--outline-variant)] hover:border-[var(--primary)]/50"}`}
                   >
-                    All
+                    Todas
                   </Link>
-                  {brands.map((brandItem: any) => (
+                  {brands.map((brandItem) => (
                     <Link 
                       key={brandItem.brand} 
-                      href={`/tienda?brand=${encodeURIComponent(brandItem.brand!)}${categorySlug ? `&category=${categorySlug}` : ""}`}
-                      className={`text-xs px-3 py-1.5 rounded-full border transition-all ${brand === brandItem.brand ? "bg-[#7a5646] text-white border-[#7a5646] shadow-sm" : "bg-transparent text-[#50443f] border-[#d4c3bc] hover:border-[#7a5646]/50"}`}
+                      href={buildTiendaUrl(currentParams, { brand: brandItem.brand || undefined, page: undefined })}
+                      className={`text-xs px-3 py-1.5 rounded-full border transition-all ${brand === brandItem.brand ? "bg-[var(--primary)] text-[var(--on-primary)] border-[var(--primary)] shadow-sm" : "bg-transparent text-[var(--on-surface-variant)] border-[var(--outline-variant)] hover:border-[var(--primary)]/50"}`}
                     >
                       {brandItem.brand}
                     </Link>
@@ -230,165 +265,110 @@ export default async function StorePage({
               </div>
             )}
 
-            <div className="bg-white p-6 rounded-xl border border-[#d4c3bc]/30 shadow-[0_2px_8px_rgba(44,44,44,0.06)]">
-              <h3 className="label-editorial text-[#1b1c1c] mb-5">PRICE RANGE</h3>
+            <div className="bg-[var(--surface-container-lowest)] p-6 rounded-xl border border-[var(--outline-variant)]/30 shadow-[var(--shadow-ambient)]">
+              <h3 className="label-editorial text-[var(--on-surface)] mb-5">RANGO DE PRECIO</h3>
               <form className="flex gap-2 items-center" action="/tienda" method="GET">
                 {categorySlug && <input type="hidden" name="category" value={categorySlug} />}
                 {brand && <input type="hidden" name="brand" value={brand} />}
                 {inStock && <input type="hidden" name="inStock" value="true" />}
-                <Input name="minPrice" type="number" placeholder="Min" className="h-9 text-xs bg-[#f6f3f2] border-[#d4c3bc]/30" defaultValue={searchParams.minPrice} />
-                <span className="text-[#50443f]">-</span>
-                <Input name="maxPrice" type="number" placeholder="Max" className="h-9 text-xs bg-[#f6f3f2] border-[#d4c3bc]/30" defaultValue={searchParams.maxPrice} />
-                <Button type="submit" size="icon" className="h-9 w-9 bg-[#7a5646] text-white hover:bg-[#603f30] shrink-0">
-                  <Search className="w-3 h-3" />
+                <label htmlFor="filter-min-price" className="sr-only">Precio mínimo</label>
+                <Input id="filter-min-price" name="minPrice" type="number" placeholder="Mín" className="h-9 text-xs bg-[var(--surface-container-low)] border-[var(--outline-variant)]/30" defaultValue={searchParams.minPrice} />
+                <span className="text-[var(--on-surface-variant)]" aria-hidden="true">-</span>
+                <label htmlFor="filter-max-price" className="sr-only">Precio máximo</label>
+                <Input id="filter-max-price" name="maxPrice" type="number" placeholder="Máx" className="h-9 text-xs bg-[var(--surface-container-low)] border-[var(--outline-variant)]/30" defaultValue={searchParams.maxPrice} />
+                <Button type="submit" size="icon" className="h-9 w-9 bg-[var(--primary)] text-[var(--on-primary)] hover:bg-[var(--on-primary-container)] shrink-0" aria-label="Filtrar por precio">
+                  <Search className="w-3 h-3" aria-hidden="true" />
                 </Button>
               </form>
             </div>
 
-            <div className="bg-white p-6 rounded-xl border border-[#d4c3bc]/30 shadow-[0_2px_8px_rgba(44,44,44,0.06)]">
-              <h3 className="label-editorial text-[#1b1c1c] mb-5">AVAILABILITY</h3>
+            <div className="bg-[var(--surface-container-lowest)] p-6 rounded-xl border border-[var(--outline-variant)]/30 shadow-[var(--shadow-ambient)]">
+              <h3 className="label-editorial text-[var(--on-surface)] mb-5">DISPONIBILIDAD</h3>
               <div className="flex flex-col gap-2">
                 <Link 
-                  href={`/tienda?${new URLSearchParams({
-                    ...(categorySlug && { category: categorySlug }),
-                    ...(brand && { brand }),
-                    ...(searchParams.minPrice && { minPrice: searchParams.minPrice }),
-                    ...(searchParams.maxPrice && { maxPrice: searchParams.maxPrice }),
-                    ...(searchParams.search && { search: searchParams.search }),
-                    ...(searchParams.sort && { sort: searchParams.sort }),
-                  }).toString()}`}
-                  className={`text-sm py-2.5 px-4 rounded-lg transition-all ${!inStock ? "bg-[#7a5646] text-white" : "bg-[#eae7e7] text-[#50443f] hover:bg-[#dcd9d9]"}`}
+                  href={buildTiendaUrl(currentParams, { inStock: undefined, page: undefined })}
+                  className={`text-sm py-2.5 px-4 rounded-lg transition-all ${!inStock ? "bg-[var(--primary)] text-[var(--on-primary)]" : "bg-[var(--surface-container-high)] text-[var(--on-surface-variant)] hover:bg-[var(--surface-dim)]"}`}
                 >
-                  All
+                  Todos
                 </Link>
                 <Link 
-                  href={`/tienda?${new URLSearchParams({
-                    ...(categorySlug && { category: categorySlug }),
-                    ...(brand && { brand }),
-                    ...(searchParams.minPrice && { minPrice: searchParams.minPrice }),
-                    ...(searchParams.maxPrice && { maxPrice: searchParams.maxPrice }),
-                    ...(searchParams.search && { search: searchParams.search }),
-                    ...(searchParams.sort && { sort: searchParams.sort }),
-                    inStock: "true",
-                  }).toString()}`}
-                  className={`text-sm py-2.5 px-4 rounded-lg transition-all ${inStock ? "bg-[#7a5646] text-white" : "bg-[#eae7e7] text-[#50443f] hover:bg-[#dcd9d9]"}`}
+                  href={buildTiendaUrl(currentParams, { inStock: "true", page: undefined })}
+                  className={`text-sm py-2.5 px-4 rounded-lg transition-all ${inStock ? "bg-[var(--primary)] text-[var(--on-primary)]" : "bg-[var(--surface-container-high)] text-[var(--on-surface-variant)] hover:bg-[var(--surface-dim)]"}`}
                 >
-                  In Stock
+                  En Stock
                 </Link>
               </div>
             </div>
           </aside>
 
           <div className="flex-1 w-full">
-            <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-xl border border-[#d4c3bc]/30 shadow-[0_2px_8px_rgba(44,44,44,0.06)]">
-              <span className="text-sm font-medium text-[#50443f]">
-                Showing <span className="text-[#1b1c1c] font-bold">{products.length}</span> of <span className="text-[#1b1c1c] font-bold">{total}</span> products
+            <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[var(--surface-container-lowest)] p-4 rounded-xl border border-[var(--outline-variant)]/30 shadow-[var(--shadow-ambient)]">
+              <span className="text-sm font-medium text-[var(--on-surface-variant)]">
+                Mostrando <span className="text-[var(--on-surface)] font-bold">{products.length}</span> de <span className="text-[var(--on-surface)] font-bold">{total}</span> productos
               </span>
               <div className="flex items-center gap-3">
-                <span className="text-xs text-[#82746e] font-medium uppercase tracking-wider">Sort:</span>
-                <Suspense fallback={<div className="text-xs text-[#82746e]">Loading...</div>}>
+                <span className="text-xs text-[var(--outline)] font-medium uppercase tracking-wider">Ordenar:</span>
+                <Suspense fallback={<div className="text-xs text-[var(--outline)]">Cargando...</div>}>
                   <SortSelect currentSort={sort} />
                 </Suspense>
               </div>
             </div>
 
+            {/* V2: Reusing ProductCard component instead of inline card JSX */}
             <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-6">
               {products.length > 0 ? (
-                products.map((product: any) => (
-                  <div key={product.id} className="group bg-white rounded-xl overflow-hidden shadow-[0_2px_8px_rgba(44,44,44,0.06)] hover:shadow-[0_8px_24px_rgba(44,44,44,0.1)] transition-all duration-300 flex flex-col border border-[#d4c3bc]/30">
-                    <Link href={`/producto/${product.slug}`} className="aspect-[4/5] bg-[#f6f3f2] relative overflow-hidden flex items-center justify-center">
-                      {product.mainImage ? (
-                        <img src={product.mainImage} alt={product.name} className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-700" />
-                      ) : (
-                        <div className="text-[#d4c3bc]/40 flex flex-col items-center group-hover:scale-110 transition-transform duration-700">
-                          <span className="text-5xl">✦</span>
-                        </div>
-                      )}
-                      {product.stock < product.minStock && product.stock > 0 && (
-                        <span className="absolute top-3 left-3 bg-[#979693] text-white text-[10px] font-bold px-2.5 py-1 rounded-full">Last few</span>
-                      )}
-                      {product.stock <= 0 && (
-                        <span className="absolute top-3 left-3 bg-[#1b1c1c] text-white text-[10px] font-bold px-2.5 py-1 rounded-full">Sold out</span>
-                      )}
-                    </Link>
-                    <div className="p-5 flex flex-col flex-grow">
-                      <div className="flex justify-between items-start mb-1">
-                        <span className="text-[10px] text-[#7a5646] font-bold uppercase tracking-widest">{product.category?.name}</span>
-                        {product.brand && <span className="text-[10px] text-[#82746e]/60 font-medium">{product.brand}</span>}
-                      </div>
-                      <Link href={`/producto/${product.slug}`} className="block mb-2">
-                        <h3 className="font-heading text-base text-[#1b1c1c] line-clamp-2 group-hover:text-[#7a5646] transition-colors leading-tight">{product.name}</h3>
-                      </Link>
-                      <div className="flex items-center gap-0.5 mb-auto">
-                        {[1,2,3,4,5].map(star => <Star key={star} className="w-3 h-3 fill-[#979693] text-[#979693]" />)}
-                      </div>
-                      <div className="flex items-center justify-between mt-5 pt-4 border-t border-[#d4c3bc]/20">
-                        <span className="text-lg font-semibold text-[#1b1c1c]">${Number(product.price).toFixed(2)}</span>
-                        <Button size="sm" className="bg-[#7a5646] hover:bg-[#603f30] text-white rounded-full font-medium" asChild>
-                          <Link href={`/producto/${product.slug}`}>View</Link>
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
+                products.map((product) => (
+                  <ProductCard key={product.id} product={product} />
                 ))
               ) : (
-                <div className="col-span-full flex flex-col items-center justify-center py-24 bg-white rounded-xl border border-dashed border-[#d4c3bc]/50">
-                  <span className="text-6xl mb-4 text-[#d4c3bc]/40">🔍</span>
-                  <p className="text-[#82746e] font-heading text-xl">No results</p>
-                  <p className="text-sm text-[#82746e]/70 mt-1">Try other filters or search terms.</p>
-                  <Button variant="outline" className="mt-6 rounded-full border-[#7a5646] text-[#7a5646]" asChild>
-                    <Link href="/tienda">Clear filters</Link>
+                <div className="col-span-full flex flex-col items-center justify-center py-24 bg-[var(--surface-container-lowest)] rounded-xl border border-dashed border-[var(--outline-variant)]/50">
+                  <span className="text-6xl mb-4 text-[var(--outline-variant)]/40" aria-hidden="true">🔍</span>
+                  <p className="text-[var(--outline)] font-heading text-xl">Sin resultados</p>
+                  <p className="text-sm text-[var(--outline)]/70 mt-1">Prueba con otros filtros o términos de búsqueda.</p>
+                  <Button variant="outline" className="mt-6 rounded-full border-[var(--primary)] text-[var(--primary)]" asChild>
+                    <Link href="/tienda">Limpiar filtros</Link>
                   </Button>
                 </div>
               )}
             </div>
 
+            {/* U7/P5: Pagination using centralized buildTiendaUrl */}
             {totalPages > 1 && (
-              <div className="flex justify-center items-center gap-2 mt-12">
+              <nav className="flex justify-center items-center gap-2 mt-12" aria-label="Paginación de productos">
                 <Button
                   variant="outline"
                   size="sm"
                   disabled={page === 1}
-                  className="rounded-full border-[#d4c3bc] text-[#50443f] hover:bg-[#f6f3f2]"
-                  asChild
+                  className="rounded-full border-[var(--outline-variant)] text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)]"
+                  asChild={page > 1}
                 >
-                  <Link href={`/tienda?${new URLSearchParams({
-                    ...(categorySlug && { category: categorySlug }),
-                    ...(brand && { brand }),
-                    ...(searchParams.minPrice && { minPrice: searchParams.minPrice }),
-                    ...(searchParams.maxPrice && { maxPrice: searchParams.maxPrice }),
-                    ...(searchParams.search && { search: searchParams.search }),
-                    ...(searchParams.sort && { sort: searchParams.sort }),
-                    ...(inStock && { inStock: "true" }),
-                    page: (page - 1).toString(),
-                  }).toString()}`}>
-                    Previous
-                  </Link>
+                  {page > 1 ? (
+                    <Link href={buildTiendaUrl(currentParams, { page: (page - 1).toString() })}>
+                      Anterior
+                    </Link>
+                  ) : (
+                    <span>Anterior</span>
+                  )}
                 </Button>
                 
-                <span className="text-sm text-[#82746e]">Page {page} of {totalPages}</span>
+                <span className="text-sm text-[var(--outline)]">Página {page} de {totalPages}</span>
 
                 <Button
                   variant="outline"
                   size="sm"
                   disabled={page === totalPages}
-                  className="rounded-full border-[#d4c3bc] text-[#50443f] hover:bg-[#f6f3f2]"
-                  asChild
+                  className="rounded-full border-[var(--outline-variant)] text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)]"
+                  asChild={page < totalPages}
                 >
-                  <Link href={`/tienda?${new URLSearchParams({
-                    ...(categorySlug && { category: categorySlug }),
-                    ...(brand && { brand }),
-                    ...(searchParams.minPrice && { minPrice: searchParams.minPrice }),
-                    ...(searchParams.maxPrice && { maxPrice: searchParams.maxPrice }),
-                    ...(searchParams.search && { search: searchParams.search }),
-                    ...(searchParams.sort && { sort: searchParams.sort }),
-                    ...(inStock && { inStock: "true" }),
-                    page: (page + 1).toString(),
-                  }).toString()}`}>
-                    Next
-                  </Link>
+                  {page < totalPages ? (
+                    <Link href={buildTiendaUrl(currentParams, { page: (page + 1).toString() })}>
+                      Siguiente
+                    </Link>
+                  ) : (
+                    <span>Siguiente</span>
+                  )}
                 </Button>
-              </div>
+              </nav>
             )}
           </div>
         </div>

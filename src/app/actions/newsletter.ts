@@ -3,6 +3,41 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
+export async function subscribeToNewsletter(email: string) {
+  try {
+    const trimmed = email.trim().toLowerCase();
+    if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      return { success: false, error: "Ingresa un correo electrónico válido." };
+    }
+
+    const existing = await prisma.newsletterSubscriber.findUnique({
+      where: { email: trimmed },
+    });
+
+    if (existing) {
+      if (existing.isActive) {
+        return { success: false, error: "Este correo ya está suscrito." };
+      }
+      // Reactivate
+      await prisma.newsletterSubscriber.update({
+        where: { id: existing.id },
+        data: { isActive: true },
+      });
+      return { success: true, message: "¡Bienvenido/a de vuelta! Tu suscripción fue reactivada." };
+    }
+
+    await prisma.newsletterSubscriber.create({
+      data: { email: trimmed },
+    });
+
+    revalidatePath("/");
+    return { success: true, message: "¡Suscripción exitosa! Recibirás nuestras novedades." };
+  } catch (error) {
+    console.error("Error subscribing to newsletter:", error);
+    return { success: false, error: "Error al procesar la suscripción." };
+  }
+}
+
 export async function getSubscribers() {
   try {
     return await prisma.newsletterSubscriber.findMany({

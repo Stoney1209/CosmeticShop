@@ -32,7 +32,8 @@ export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
     setIsMounted(true);
   }, []);
 
-  if (!isMounted) return null;
+  // P3: Render a stable placeholder during SSR to avoid CLS
+  const itemCount = isMounted ? cart.totalItems() : 0;
 
   const handleWhatsAppCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,10 +96,19 @@ export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
   return (
     <Sheet onOpenChange={(open) => !open && setIsCheckoutForm(false)}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative text-[var(--on-surface-variant)] hover:text-[var(--primary)] hover:bg-[var(--secondary-container)]/50">
-          <ShoppingBag className="h-5 w-5" />
-          {cart.items.length > 0 && (
-            <span className="absolute top-1 right-1 h-4 w-4 rounded-full bg-[var(--primary)] text-[10px] font-bold text-[var(--on-primary)] flex items-center justify-center border-2 border-[var(--surface)]">
+        {/* A1: Descriptive aria-label for cart trigger */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative text-[var(--on-surface-variant)] hover:text-[var(--primary)] hover:bg-[var(--secondary-container)]/50"
+          aria-label={itemCount > 0 ? `Carrito de compras, ${itemCount} artículos` : "Carrito de compras vacío"}
+        >
+          <ShoppingBag className="h-5 w-5" aria-hidden="true" />
+          {isMounted && cart.items.length > 0 && (
+            <span
+              className="absolute top-1 right-1 h-4 w-4 rounded-full bg-[var(--primary)] text-[10px] font-bold text-[var(--on-primary)] flex items-center justify-center border-2 border-[var(--surface)]"
+              aria-hidden="true"
+            >
               {cart.totalItems()}
             </span>
           )}
@@ -112,14 +122,18 @@ export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
                 <ArrowRight className="w-4 h-4 rotate-180" /> Volver
               </span>
             ) : (
-              <><ShoppingBag className="w-5 h-5" /> Tu Carrito</>
+              <><ShoppingBag className="w-5 h-5" aria-hidden="true" /> Tu Carrito</>
             )}
           </SheetTitle>
         </SheetHeader>
         
-        {cart.items.length === 0 ? (
+        {!isMounted ? (
+          <div className="flex-1 flex items-center justify-center p-6">
+            <div className="h-16 w-16 rounded-full bg-[var(--surface-container-low)] animate-pulse" />
+          </div>
+        ) : cart.items.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center p-6" style={{ color: 'var(--on-surface-variant)' }}>
-            <ShoppingBag className="w-16 h-16 mb-4" />
+            <ShoppingBag className="w-16 h-16 mb-4" aria-hidden="true" />
             <p className="text-lg font-heading text-[var(--on-surface)]">Tu carrito está vacío</p>
             <p className="text-sm">Agrega algunos productos para continuar.</p>
           </div>
@@ -168,9 +182,9 @@ export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
                   <div key={`${item.id}-${item.variantId || 'base'}`} className="flex gap-4 group">
                     <div className="h-20 w-20 bg-[var(--surface-container-low)] rounded-xl border border-[var(--outline-variant)]/20 overflow-hidden flex-shrink-0">
                       {item.image ? (
-                        <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
+                        <img src={item.image} alt={`${item.name}`} className="h-full w-full object-cover" />
                       ) : (
-                        <div className="h-full w-full flex items-center justify-center text-[var(--outline-variant)]/40">✦</div>
+                        <div className="h-full w-full flex items-center justify-center text-[var(--outline-variant)]/40" aria-hidden="true">✦</div>
                       )}
                     </div>
                     <div className="flex-1 flex flex-col">
@@ -183,19 +197,34 @@ export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
                             </span>
                           )}
                         </div>
-                  <button onClick={() => cart.removeItem(item.id, item.variantId)} className="text-[var(--on-surface-variant)]/40 hover:text-[var(--error)] self-start transition-colors min-w-[24px] min-h-[24px] flex items-center justify-center" aria-label="Eliminar producto del carrito">
-                    <X className="w-4 h-4" />
-                  </button>
+                        {/* A2: Descriptive aria-label for remove button */}
+                        <button
+                          onClick={() => cart.removeItem(item.id, item.variantId)}
+                          className="text-[var(--on-surface-variant)]/40 hover:text-[var(--error)] self-start transition-colors min-w-[24px] min-h-[24px] flex items-center justify-center"
+                          aria-label={`Eliminar ${item.name} del carrito`}
+                        >
+                          <X className="w-4 h-4" aria-hidden="true" />
+                        </button>
                       </div>
                       <div className="text-sm font-medium text-[var(--on-surface)] mt-auto flex items-center justify-between">
                         <span>${item.price.toFixed(2)}</span>
-                        <div className="flex items-center border border-[var(--outline-variant)]/30 rounded-lg bg-[var(--surface-container-lowest)] shadow-sm">
-                          <button onClick={() => cart.updateQuantity(item.id, item.quantity - 1, item.variantId)} className="px-2.5 py-1.5 text-[var(--on-surface-variant)] hover:text-[var(--on-surface)] hover:bg-[var(--surface-container-low)] transition-colors disabled:opacity-40" disabled={item.quantity <= 1}>
-                            <Minus className="w-3 h-3" />
+                        <div className="flex items-center border border-[var(--outline-variant)]/30 rounded-lg bg-[var(--surface-container-lowest)] shadow-sm" role="group" aria-label={`Cantidad de ${item.name}`}>
+                          {/* A2: Descriptive aria-labels for quantity buttons */}
+                          <button
+                            onClick={() => cart.updateQuantity(item.id, item.quantity - 1, item.variantId)}
+                            className="px-2.5 py-1.5 text-[var(--on-surface-variant)] hover:text-[var(--on-surface)] hover:bg-[var(--surface-container-low)] transition-colors disabled:opacity-40"
+                            disabled={item.quantity <= 1}
+                            aria-label={`Reducir cantidad de ${item.name}`}
+                          >
+                            <Minus className="w-3 h-3" aria-hidden="true" />
                           </button>
-                          <span className="text-xs font-bold w-6 text-center">{item.quantity}</span>
-                          <button onClick={() => cart.updateQuantity(item.id, item.quantity + 1, item.variantId)} className="px-2.5 py-1.5 text-[var(--on-surface-variant)] hover:text-[var(--on-surface)] hover:bg-[var(--surface-container-low)] transition-colors">
-                            <Plus className="w-3 h-3" />
+                          <span className="text-xs font-bold w-6 text-center" aria-label={`${item.quantity} unidades`}>{item.quantity}</span>
+                          <button
+                            onClick={() => cart.updateQuantity(item.id, item.quantity + 1, item.variantId)}
+                            className="px-2.5 py-1.5 text-[var(--on-surface-variant)] hover:text-[var(--on-surface)] hover:bg-[var(--surface-container-low)] transition-colors"
+                            aria-label={`Aumentar cantidad de ${item.name}`}
+                          >
+                            <Plus className="w-3 h-3" aria-hidden="true" />
                           </button>
                         </div>
                       </div>
@@ -207,9 +236,10 @@ export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
             
             <div className="py-6 mt-auto bg-[var(--surface-container-lowest)] space-y-5">
               <div className="space-y-2.5">
-                <Label className="text-xs font-bold uppercase text-[var(--on-surface-variant)]/60 tracking-wider">Cupón de descuento</Label>
+                <Label htmlFor="coupon-code" className="text-xs font-bold uppercase text-[var(--on-surface-variant)]/60 tracking-wider">Cupón de descuento</Label>
                 <div className="flex gap-2">
                   <Input 
+                    id="coupon-code"
                     placeholder="Código" 
                     value={couponCode} 
                     onChange={e => setCouponCode(e.target.value.toUpperCase())}
@@ -249,8 +279,8 @@ export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
                   )}
                 </div>
                 {appliedCoupon && (
-                  <p className="text-[11px] font-bold text-[var(--primary)] flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3" /> {appliedCoupon.code} aplicado (-${discountAmount.toFixed(2)})
+                  <p className="text-[11px] font-bold text-[var(--primary)] flex items-center gap-1" role="status">
+                    <CheckCircle2 className="w-3 h-3" aria-hidden="true" /> {appliedCoupon.code} aplicado (-${discountAmount.toFixed(2)})
                   </p>
                 )}
               </div>

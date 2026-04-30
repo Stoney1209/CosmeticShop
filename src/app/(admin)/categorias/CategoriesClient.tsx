@@ -5,6 +5,7 @@ import {
   Plus, Pencil, Trash2, ChevronRight, ChevronDown, Folder, FolderOpen, 
   Search, RotateCcw, Package, AlertCircle
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { createCategory, updateCategory, deleteCategory } from "@/app/actions/categories";
 import { Card, CardContent } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 
 type Category = {
   id: number;
@@ -39,7 +41,6 @@ function CategoryTreeItem({
   onToggle, 
   onEdit, 
   onDelete,
-  allCategories
 }: { 
   category: Category; 
   level: number;
@@ -55,84 +56,81 @@ function CategoryTreeItem({
   return (
     <div>
       <div 
-        className={`flex items-center gap-2 p-3 hover:bg-slate-50 border-b border-slate-100 transition-colors ${
+        className={`flex items-center gap-2 p-3 hover:bg-[var(--surface-container-low)] border-b border-[var(--outline-variant)]/20 transition-colors ${
           !category.isActive ? 'opacity-60' : ''
         }`}
         style={{ paddingLeft: `${level * 24 + 12}px` }}
       >
-        {/* Expand/Collapse button */}
         <button 
           onClick={() => hasChildren && onToggle(category.id)}
-          className={`w-6 h-6 flex items-center justify-center rounded hover:bg-slate-200 ${
+          className={`w-6 h-6 flex items-center justify-center rounded hover:bg-[var(--surface-container-high)] ${
             hasChildren ? 'cursor-pointer' : 'cursor-default opacity-0'
           }`}
+          aria-label={isExpanded ? "Contraer" : "Expandir"}
         >
           {hasChildren && (
-            isExpanded ? <ChevronDown className="w-4 h-4 text-slate-500" /> : <ChevronRight className="w-4 h-4 text-slate-500" />
+            isExpanded ? <ChevronDown className="w-4 h-4 text-[var(--outline)]" /> : <ChevronRight className="w-4 h-4 text-[var(--outline)]" />
           )}
         </button>
         
-        {/* Folder icon */}
-        <div className="text-pink-500">
+        <div className="text-[var(--primary)]">
           {hasChildren && isExpanded ? <FolderOpen className="w-5 h-5" /> : <Folder className="w-5 h-5" />}
         </div>
         
-        {/* Category info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="font-medium text-slate-900">{category.name}</span>
+            <span className="font-bold text-[var(--on-surface)] text-sm">{category.name}</span>
             {!category.isActive && (
-              <Badge variant="secondary" className="text-xs">Inactiva</Badge>
+              <Badge variant="secondary" className="text-[9px] font-bold uppercase border-none bg-slate-100 text-slate-500">Inactiva</Badge>
             )}
           </div>
-          <div className="flex items-center gap-3 text-xs text-slate-500 mt-1">
-            <span className="font-mono bg-slate-100 px-1.5 py-0.5 rounded">/{category.slug}</span>
+          <div className="flex items-center gap-3 text-[10px] text-[var(--outline)] mt-1">
+            <span className="font-mono bg-[var(--surface-container-high)] px-1.5 py-0.5 rounded">/{category.slug}</span>
             {category.description && (
               <span className="truncate max-w-xs">{category.description}</span>
             )}
           </div>
         </div>
         
-        {/* Stats */}
-        <div className="flex items-center gap-4 text-sm text-slate-500">
+        <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-wider text-[var(--outline)]">
           {category._count?.products !== undefined && (
             <div className="flex items-center gap-1">
-              <Package className="w-4 h-4" />
-              <span>{category._count.products} productos</span>
+              <Package className="w-4 h-4 text-[var(--primary)]" />
+              <span>{category._count.products} prod.</span>
             </div>
           )}
           {hasChildren && (
             <div className="flex items-center gap-1">
-              <Folder className="w-4 h-4" />
-              <span>{category.children!.length} subcategorías</span>
+              <Folder className="w-4 h-4 text-[var(--primary)]" />
+              <span>{category.children!.length} subcat.</span>
             </div>
           )}
         </div>
         
-        {/* Actions */}
         <div className="flex items-center gap-1">
           <Button 
             variant="ghost" 
             size="icon" 
-            className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+            className="h-8 w-8 text-[var(--outline)] hover:text-[var(--primary)]"
             onClick={() => onEdit(category)}
+            aria-label={`Editar ${category.name}`}
           >
             <Pencil className="w-4 h-4" />
           </Button>
           <Button 
             variant="ghost" 
             size="icon" 
-            className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+            className="h-8 w-8 text-[var(--outline)] hover:text-[var(--error)]"
             onClick={() => onDelete(category.id)}
+            aria-label={`Eliminar ${category.name}`}
           >
             <Trash2 className="w-4 h-4" />
           </Button>
         </div>
       </div>
       
-      {/* Children */}
       {hasChildren && isExpanded && (
-        <div className="border-l-2 border-pink-200 ml-6">
+        <div className="border-l-2 border-[var(--primary-container)]/30 ml-6">
           {category.children!.map(child => (
             <CategoryTreeItem
               key={child.id}
@@ -142,7 +140,7 @@ function CategoryTreeItem({
               onToggle={onToggle}
               onEdit={onEdit}
               onDelete={onDelete}
-              allCategories={allCategories}
+              allCategories={[]} // Not strictly needed inside Item
             />
           ))}
         </div>
@@ -155,12 +153,10 @@ function buildCategoryTree(categories: Category[]): Category[] {
   const categoryMap = new Map<number, Category>();
   const roots: Category[] = [];
   
-  // First pass: create map
   categories.forEach(cat => {
     categoryMap.set(cat.id, { ...cat, children: [] });
   });
   
-  // Second pass: build tree
   categories.forEach(cat => {
     const category = categoryMap.get(cat.id)!;
     if (cat.parentId && categoryMap.has(cat.parentId)) {
@@ -172,7 +168,6 @@ function buildCategoryTree(categories: Category[]): Category[] {
     }
   });
   
-  // Sort by displayOrder, then by name
   const sortCategories = (cats: Category[]) => {
     cats.sort((a, b) => {
       if (a.displayOrder !== b.displayOrder) {
@@ -190,14 +185,15 @@ function buildCategoryTree(categories: Category[]): Category[] {
 }
 
 export function CategoriesClient({ initialCategories }: { initialCategories: Category[] }) {
+  const router = useRouter();
   const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [searchTerm, setSearchTerm] = useState("");
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   
-  // Form State
   const [formData, setFormData] = useState({
     name: "",
     slug: "",
@@ -209,7 +205,6 @@ export function CategoriesClient({ initialCategories }: { initialCategories: Cat
 
   const categoryTree = buildCategoryTree(categories);
 
-  // Filter categories based on search term
   const filteredCategories = searchTerm
     ? categories.filter(c =>
         c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -218,14 +213,12 @@ export function CategoriesClient({ initialCategories }: { initialCategories: Cat
       )
     : categories;
 
-  // Auto-expand when searching
   useEffect(() => {
     if (searchTerm) {
       const parentIds = new Set<number>();
       filteredCategories.forEach(cat => {
         if (cat.parentId) {
           parentIds.add(cat.parentId);
-          // Find all ancestors
           let current = categories.find(c => c.id === cat.parentId);
           while (current?.parentId) {
             parentIds.add(current.parentId);
@@ -247,13 +240,8 @@ export function CategoriesClient({ initialCategories }: { initialCategories: Cat
     setExpanded(newExpanded);
   };
 
-  const expandAll = () => {
-    setExpanded(new Set(categories.map(c => c.id)));
-  };
-
-  const collapseAll = () => {
-    setExpanded(new Set());
-  };
+  const expandAll = () => setExpanded(new Set(categories.map(c => c.id)));
+  const collapseAll = () => setExpanded(new Set());
 
   const resetForm = () => {
     setEditingCategory(null);
@@ -280,27 +268,23 @@ export function CategoriesClient({ initialCategories }: { initialCategories: Cat
     setIsDialogOpen(true);
   };
 
-  const handleDelete = async (id: number) => {
-    const cat = categories.find(c => c.id === id);
-    const hasChildren = categories.some(c => c.parentId === id);
-    
-    if (hasChildren) {
-      toast.error("No se puede eliminar: esta categoría tiene subcategorías");
-      return;
-    }
-    
-    if (!confirm(`¿Estás seguro de eliminar la categoría "${cat?.name}"?`)) return;
-    
+  const onConfirmDelete = async () => {
+    if (!confirmDeleteId) return;
+    setIsSubmitting(true);
     try {
-      const result = await deleteCategory(id);
+      const result = await deleteCategory(confirmDeleteId);
       if (result.success) {
         toast.success("Categoría eliminada con éxito");
-        setCategories(categories.filter((c) => c.id !== id));
+        setCategories(categories.filter((c) => c.id !== confirmDeleteId));
+        router.refresh();
       } else {
-        toast.error(result.error || "Error al eliminar la categoría");
+        toast.error(result.error);
       }
-    } catch (e) {
-      toast.error("Error inesperado al eliminar");
+    } catch {
+      toast.error("Error inesperado");
+    } finally {
+      setIsSubmitting(false);
+      setConfirmDeleteId(null);
     }
   };
 
@@ -319,31 +303,33 @@ export function CategoriesClient({ initialCategories }: { initialCategories: Cat
 
     try {
       if (editingCategory) {
-        // Prevent setting self as parent
         if (data.parentId === editingCategory.id) {
           toast.error("Una categoría no puede ser su propia subcategoría");
           setIsSubmitting(false);
           return;
         }
-        
         const result = await updateCategory(editingCategory.id, data);
         if (result.success) {
-          toast.success("Categoría actualizada con éxito");
+          toast.success("Categoría actualizada");
+          setIsDialogOpen(false);
+          router.refresh();
           window.location.reload();
         } else {
-          toast.error(result.error || "Error al actualizar");
+          toast.error(result.error);
         }
       } else {
         const result = await createCategory(data);
         if (result.success) {
-          toast.success("Categoría creada con éxito");
+          toast.success("Categoría creada");
+          setIsDialogOpen(false);
+          router.refresh();
           window.location.reload();
         } else {
-          toast.error(result.error || "Error al crear");
+          toast.error(result.error);
         }
       }
-    } catch (error) {
-      toast.error("Ha ocurrido un error inesperado");
+    } catch {
+      toast.error("Error inesperado");
     } finally {
       setIsSubmitting(false);
     }
@@ -355,20 +341,18 @@ export function CategoriesClient({ initialCategories }: { initialCategories: Cat
       setFormData(prev => ({
         ...prev,
         name: val,
-        slug: val.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "")
+        slug: val.toLowerCase()
+          .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-|-$)+/g, "")
       }));
     }
   };
 
-  // Get parent categories (for dropdown - exclude self and descendants when editing)
   const getAvailableParents = () => {
     let available = categories.filter(c => c.isActive);
-    
     if (editingCategory) {
-      // Remove self
       available = available.filter(c => c.id !== editingCategory.id);
-      
-      // Remove all descendants to prevent cycles
       const descendants = new Set<number>();
       const addDescendants = (parentId: number) => {
         categories.filter(c => c.parentId === parentId).forEach(child => {
@@ -379,241 +363,143 @@ export function CategoriesClient({ initialCategories }: { initialCategories: Cat
       addDescendants(editingCategory.id);
       available = available.filter(c => !descendants.has(c.id));
     }
-    
     return available;
   };
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <h2 className="text-2xl font-bold text-slate-900">
-            Categorías ({categories.length})
-          </h2>
+    <div className="bg-white rounded-2xl border border-[var(--outline-variant)]/30 shadow-sm overflow-hidden animate-fade-up">
+      <div className="p-6 border-b border-[var(--outline-variant)]/30 bg-[var(--surface-container-lowest)] space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <h1 className="text-2xl font-heading font-bold text-[var(--on-surface)]">
+            Gestión de Categorías
+            <span className="ml-2 text-sm font-medium text-[var(--outline)]">({categories.length})</span>
+          </h1>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={expandAll} className="rounded-lg h-9">Expandir todo</Button>
+            <Button variant="outline" size="sm" onClick={collapseAll} className="rounded-lg h-9">Colapsar todo</Button>
+            <Button 
+              className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-white rounded-lg h-9 shadow-sm"
+              onClick={() => { resetForm(); setIsDialogOpen(true); }}
+            >
+              <Plus className="w-4 h-4 mr-2" /> Nueva Categoría
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={expandAll}>
-            Expandir todo
-          </Button>
-          <Button variant="outline" size="sm" onClick={collapseAll}>
-            Colapsar todo
-          </Button>
-          <Button 
-            className="bg-pink-600 hover:bg-pink-700 text-white"
-            onClick={() => { resetForm(); setIsDialogOpen(true); }}
-          >
-            <Plus className="w-4 h-4 mr-2" /> Nueva Categoría
-          </Button>
+
+        <div className="flex gap-4 items-center">
+          <div className="relative flex-1 max-w-md">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--outline)]" />
+            <Input
+              placeholder="Buscar categorías por nombre o slug..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 h-10 bg-[var(--surface-container-low)] border-[var(--outline-variant)]/30 rounded-lg"
+              aria-label="Buscar categorías"
+            />
+          </div>
+          {searchTerm && (
+            <Button variant="ghost" size="sm" onClick={() => setSearchTerm("")} className="h-10 text-[var(--on-surface-variant)]">
+              <RotateCcw className="w-4 h-4 mr-2" /> Limpiar
+            </Button>
+          )}
         </div>
       </div>
 
-      {/* Search */}
-      <div className="flex gap-3">
-        <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <Input
-            placeholder="Buscar categorías..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        {searchTerm && (
-          <Button variant="ghost" size="sm" onClick={() => setSearchTerm("")}>
-            <RotateCcw className="w-4 h-4 mr-1" /> Limpiar
-          </Button>
+      <div className="p-0">
+        {searchTerm ? (
+          <div className="divide-y divide-[var(--outline-variant)]/20">
+            {filteredCategories.map(cat => (
+              <div key={cat.id} className="flex items-center gap-3 p-4 hover:bg-[var(--surface-container-lowest)]">
+                <Folder className="w-5 h-5 text-[var(--primary)]" />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-sm text-[var(--on-surface)]">{cat.name}</span>
+                    {cat.parent && <Badge variant="outline" className="text-[9px] uppercase tracking-wider font-bold">Sub de: {cat.parent.name}</Badge>}
+                  </div>
+                  <span className="text-[10px] font-mono text-[var(--outline)] uppercase tracking-tight">/{cat.slug}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-[var(--outline)]" onClick={() => handleEdit(cat)} aria-label="Editar"><Pencil className="w-4 h-4" /></Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-[var(--outline)]" onClick={() => setConfirmDeleteId(cat.id)} aria-label="Eliminar"><Trash2 className="w-4 h-4" /></Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : categoryTree.length > 0 ? (
+          <div className="divide-y divide-[var(--outline-variant)]/10">
+            {categoryTree.map(category => (
+              <CategoryTreeItem key={category.id} category={category} level={0} expanded={expanded} onToggle={toggleExpand} onEdit={handleEdit} onDelete={setConfirmDeleteId} allCategories={[]} />
+            ))}
+          </div>
+        ) : (
+          <div className="p-12 text-center text-[var(--outline)] italic">
+            No hay categorías registradas.
+          </div>
         )}
       </div>
 
-      {/* Info */}
-      {!searchTerm && (
-        <div className="flex items-center gap-2 text-sm text-slate-500">
-          <AlertCircle className="w-4 h-4" />
-          <span>Haz clic en la flecha para expandir/colapsar subcategorías</span>
-        </div>
-      )}
-
-      {/* Tree View */}
-      <Card>
-        <CardContent className="p-0">
-          {searchTerm ? (
-            // Search results - flat list
-            <div>
-              <div className="px-4 py-2 bg-slate-50 text-sm text-slate-600 border-b">
-                {filteredCategories.length} resultados para "{searchTerm}"
-              </div>
-              {filteredCategories.map(cat => (
-                <div 
-                  key={cat.id} 
-                  className={`flex items-center gap-2 p-3 hover:bg-slate-50 border-b border-slate-100 ${
-                    !cat.isActive ? 'opacity-60' : ''
-                  }`}
-                >
-                  <Folder className="w-5 h-5 text-pink-500" />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-slate-900">{cat.name}</span>
-                      {cat.parent && (
-                        <Badge variant="outline" className="text-xs">
-                          Subcategoría de: {cat.parent.name}
-                        </Badge>
-                      )}
-                      {!cat.isActive && (
-                        <Badge variant="secondary" className="text-xs">Inactiva</Badge>
-                      )}
-                    </div>
-                    <span className="text-xs text-slate-500 font-mono">/{cat.slug}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-8 w-8 text-blue-600"
-                      onClick={() => handleEdit(cat)}
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-8 w-8 text-red-600"
-                      onClick={() => handleDelete(cat.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : categoryTree.length > 0 ? (
-            // Tree view
-            <div>
-              {categoryTree.map(category => (
-                <CategoryTreeItem
-                  key={category.id}
-                  category={category}
-                  level={0}
-                  expanded={expanded}
-                  onToggle={toggleExpand}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  allCategories={categories}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="p-8 text-center text-slate-500">
-              <Folder className="w-12 h-12 mx-auto mb-4 text-slate-300" />
-              <p>No hay categorías. Crea la primera para comenzar.</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Category Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>
+        <DialogContent className="max-w-xl rounded-2xl p-8 border-none shadow-2xl">
+          <DialogHeader className="mb-6">
+            <DialogTitle className="text-2xl font-heading font-bold text-[var(--on-surface)]">
               {editingCategory ? 'Editar Categoría' : 'Nueva Categoría'}
             </DialogTitle>
           </DialogHeader>
-          
-          <form onSubmit={handleSubmit} className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Nombre *</Label>
-              <Input 
-                value={formData.name}
-                onChange={(e) => handleNameChange(e.target.value)}
-                placeholder="Ej: Maquillaje"
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label>Slug (URL amigable) *</Label>
-              <Input 
-                value={formData.slug}
-                onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                placeholder="maquillaje"
-                required
-              />
-              <p className="text-xs text-slate-500">Se usa en la URL: /categoria/{formData.slug}</p>
-            </div>
-            
-            <div className="space-y-2">
-              <Label>Descripción</Label>
-              <Textarea 
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Descripción de la categoría..."
-                rows={2}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label>Categoría Padre</Label>
-              <Select 
-                value={formData.parentId} 
-                onValueChange={(val) => setFormData({ ...formData, parentId: val || "none" })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Ninguna (categoría principal)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Ninguna (categoría principal)</SelectItem>
-                  {getAvailableParents().map(c => (
-                    <SelectItem key={c.id} value={c.id.toString()}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-slate-500">
-                Selecciona una categoría padre para crear una subcategoría
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label>Orden de visualización</Label>
-                <Input 
-                  type="number"
-                  value={formData.displayOrder}
-                  onChange={(e) => setFormData({ ...formData, displayOrder: parseInt(e.target.value) || 0 })}
-                />
-                <p className="text-xs text-slate-500">Menor número = aparece primero</p>
+                <Label className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-variant)]">Nombre *</Label>
+                <Input value={formData.name} onChange={(e) => handleNameChange(e.target.value)} required className="h-11 rounded-lg bg-[var(--surface-container-low)] border-[var(--outline-variant)]/30" />
               </div>
-              
               <div className="space-y-2">
-                <Label>Estado</Label>
-                <div className="flex items-center gap-2 h-10">
-                  <input 
-                    type="checkbox" 
-                    id="isActive"
-                    checked={formData.isActive}
-                    onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                    className="w-4 h-4 rounded border-slate-300"
-                  />
-                  <Label htmlFor="isActive" className="cursor-pointer font-normal">
-                    Categoría activa
-                  </Label>
-                </div>
+                <Label className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-variant)]">Slug (URL) *</Label>
+                <Input value={formData.slug} onChange={(e) => setFormData({ ...formData, slug: e.target.value })} required className="h-11 rounded-lg bg-[var(--surface-container-low)] border-[var(--outline-variant)]/30" />
               </div>
             </div>
-            
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={isSubmitting} className="bg-pink-600 hover:bg-pink-700">
+            <div className="space-y-2">
+              <Label className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-variant)]">Descripción</Label>
+              <Textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={2} className="rounded-lg bg-[var(--surface-container-low)] border-[var(--outline-variant)]/30" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-variant)]">Categoría Padre</Label>
+                <Select value={formData.parentId} onValueChange={(val) => setFormData({ ...formData, parentId: val || "none" })}>
+                  <SelectTrigger className="h-11 rounded-lg bg-[var(--surface-container-low)] border-[var(--outline-variant)]/30"><SelectValue placeholder="Principal" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Ninguna (Principal)</SelectItem>
+                    {getAvailableParents().map(c => <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-variant)]">Orden</Label>
+                <Input type="number" value={formData.displayOrder} onChange={(e) => setFormData({ ...formData, displayOrder: parseInt(e.target.value) || 0 })} className="h-11 rounded-lg bg-[var(--surface-container-low)] border-[var(--outline-variant)]/30" />
+              </div>
+            </div>
+            <div className="bg-[var(--surface-container-low)] p-4 rounded-xl flex items-center gap-3">
+              <input type="checkbox" id="isActive" checked={formData.isActive} onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })} className="w-5 h-5 accent-[var(--primary)]" />
+              <Label htmlFor="isActive" className="cursor-pointer font-bold text-sm text-[var(--on-surface)]">Categoría Activa</Label>
+            </div>
+            <DialogFooter className="mt-8 gap-3 border-t border-black/5 pt-6">
+              <Button type="button" variant="ghost" onClick={() => setIsDialogOpen(false)} className="h-11 rounded-lg px-6 font-bold text-xs uppercase tracking-wider">Cancelar</Button>
+              <Button type="submit" disabled={isSubmitting} className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-white rounded-lg h-11 px-8 font-bold text-xs uppercase tracking-wider shadow-lg">
                 {isSubmitting ? 'Guardando...' : (editingCategory ? 'Actualizar' : 'Crear')}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog 
+        open={confirmDeleteId !== null} 
+        onOpenChange={(open) => !open && setConfirmDeleteId(null)}
+        title="¿Eliminar categoría?"
+        description="Esta acción solo se puede realizar si la categoría no tiene subcategorías vinculadas."
+        confirmLabel="Eliminar Categoría"
+        variant="destructive"
+        onConfirm={onConfirmDelete}
+        loading={isSubmitting}
+      />
     </div>
   );
 }

@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Star, ShoppingBag } from "lucide-react";
+import Image from "next/image";
+import { ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/store/cart";
 import { toast } from "sonner";
@@ -43,14 +44,17 @@ export function ProductCard({ product }: ProductCardProps) {
     <div className="group bg-[var(--surface-container-lowest)] rounded-xl overflow-hidden shadow-[var(--shadow-ambient)] hover:shadow-[var(--shadow-ambient-hover)] transition-all duration-300 flex flex-col">
       <Link href={`/producto/${product.slug}`} className="aspect-[4/5] bg-[var(--surface-container-low)] relative overflow-hidden flex items-center justify-center">
         {product.mainImage ? (
-          <img
+          /* P1: Next.js Image component for optimized loading */
+          <Image
             src={product.mainImage}
-            alt={`Imagen de ${product.name}, producto de ${product.category?.name || 'cosméticos'}`}
-            className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-700"
+            alt={`${product.name} — ${product.category?.name || 'cosmético premium'}`}
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            className="object-cover group-hover:scale-105 transition-transform duration-700"
           />
         ) : (
-          <div className="text-[var(--outline-variant)]/40 flex flex-col items-center group-hover:scale-110 transition-transform duration-700" aria-label="Sin imagen disponible">
-            <span className="text-5xl" aria-hidden="true">✦</span>
+          <div className="text-[var(--outline-variant)]/40 flex flex-col items-center group-hover:scale-110 transition-transform duration-700" aria-hidden="true">
+            <span className="text-5xl">✦</span>
           </div>
         )}
         {product.stock < product.minStock && product.stock > 0 && (
@@ -74,26 +78,22 @@ export function ProductCard({ product }: ProductCardProps) {
             disabled={product.stock <= 0}
             aria-label={product.stock <= 0 ? "Producto agotado" : `Agregar ${product.name} al carrito`}
           >
-            <ShoppingBag className="w-3.5 h-3.5 mr-1.5" />
+            <ShoppingBag className="w-3.5 h-3.5 mr-1.5" aria-hidden="true" />
             {product.stock <= 0 ? "Agotado" : "Agregar"}
           </Button>
         </div>
       </Link>
       <div className="p-5 flex flex-col flex-grow">
         <div className="text-[11px] text-[var(--primary)] font-semibold uppercase tracking-widest mb-1.5">
-          {product.category?.name || "COLLECTION"}
+          {product.category?.name || "COLECCIÓN"}
         </div>
         <Link href={`/producto/${product.slug}`} className="block mb-2">
           <h3 className="font-heading text-lg text-[var(--on-surface)] line-clamp-2 group-hover:text-[var(--primary)] transition-colors leading-tight">
             {product.name}
           </h3>
         </Link>
-        <div className="flex items-center gap-0.5 mb-auto">
-          {[1, 2, 3, 4, 5].map((star) => (
-            <Star key={star} className="w-3 h-3 fill-[var(--tertiary-container)] text-[var(--tertiary-container)]" />
-          ))}
-          <span className="text-xs text-[var(--on-surface-variant)]/60 ml-1 font-medium">(12)</span>
-        </div>
+        {/* U6: Removed hardcoded fake stars — no ratings shown unless real data exists */}
+        <div className="flex-grow" />
         <div className="flex items-center justify-between mt-5 pt-4 border-t border-[var(--outline-variant)]/20">
           <span className="text-xl font-semibold text-[var(--on-surface)]">
             ${Number(product.price).toFixed(2)}
@@ -106,7 +106,7 @@ export function ProductCard({ product }: ProductCardProps) {
             disabled={product.stock <= 0}
             aria-label={product.stock <= 0 ? "Producto agotado" : `Agregar ${product.name} al carrito`}
           >
-             <ShoppingBag className="w-3.5 h-3.5" />
+             <ShoppingBag className="w-3.5 h-3.5" aria-hidden="true" />
           </Button>
         </div>
       </div>
