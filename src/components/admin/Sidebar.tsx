@@ -8,7 +8,6 @@ import {
   Tags, 
   Users, 
   FileText, 
-  Settings, 
   PackageOpen, 
   BarChart3,
   Ticket,
@@ -35,10 +34,7 @@ export const adminNavItems: NavItem[] = [
   { name: "Análisis", href: "/reportes", icon: BarChart3 },
 ];
 
-// U7: Removed dead "Support" href="#" link
-export const adminSecondaryNavItems: NavItem[] = [
-  { name: "Configuración", href: "/configuracion", icon: Settings },
-];
+// U7: Removed "Configuración" - variantes moved to Productos section
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -77,27 +73,6 @@ export function Sidebar() {
           );
         })}
 
-        <div className="pt-4 space-y-1">
-          {adminSecondaryNavItems.map((item) => {
-            const isActive = pathname.startsWith(item.href);
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${
-                  isActive
-                    ? "bg-[#3d3836] text-white font-medium"
-                    : "text-[#a89690] hover:bg-[#3d3836] hover:text-white"
-                }`}
-                aria-current={isActive ? "page" : undefined}
-              >
-                <Icon className={`w-5 h-5 ${isActive ? "text-white" : "text-[#a89690] group-hover:text-[var(--primary-container)]"}`} aria-hidden="true" />
-                {item.name}
-              </Link>
-            );
-          })}
-        </div>
       </nav>
 
       <div className="p-4 border-t border-[#3d3836]">

@@ -7,7 +7,7 @@ import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { adminNavItems, adminSecondaryNavItems } from "./Sidebar";
+import { adminNavItems } from "./Sidebar";
 
 /**
  * U1: Mobile sidebar drawer for admin panel.
@@ -64,27 +64,6 @@ export function MobileSidebar() {
               })}
             </ul>
 
-            <div className="pt-4 mt-4 border-t border-[#3d3836] space-y-1">
-              {adminSecondaryNavItems.map((item) => {
-                const isActive = pathname.startsWith(item.href);
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    onClick={() => setOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
-                      isActive
-                        ? "bg-[#3d3836] text-white font-medium"
-                        : "text-[#a89690] hover:bg-[#3d3836] hover:text-white"
-                    }`}
-                  >
-                    <Icon className={`w-5 h-5 ${isActive ? "text-white" : "text-[#a89690]"}`} aria-hidden="true" />
-                    {item.name}
-                  </Link>
-                );
-              })}
-            </div>
           </nav>
         </ScrollArea>
       </SheetContent>

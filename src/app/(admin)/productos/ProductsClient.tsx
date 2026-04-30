@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { 
   Plus, Pencil, Trash2, Image as ImageIcon, CheckCircle2, XCircle, 
   ChevronLeft, ChevronRight, CheckSquare, Square, Upload, X, Copy, 
-  AlertCircle, ArrowUpDown, Search, RotateCcw 
+  AlertCircle, ArrowUpDown, Search, RotateCcw, Settings2 
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -424,6 +424,13 @@ export function ProductsClient({ initialProducts, categories, variantTypes }: Pr
             </h1>
           </div>
           <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              className="rounded-lg h-10"
+              onClick={() => router.push('/productos/variantes')}
+            >
+              <Settings2 className="w-4 h-4 mr-2" aria-hidden="true" /> Variantes
+            </Button>
             <Button 
               variant="outline" 
               className="border-emerald-500 text-emerald-700 hover:bg-emerald-50 rounded-lg h-10"

@@ -1,6 +1,7 @@
 "use client";
 
-import { Bell, Search } from "lucide-react";
+import { Search } from "lucide-react";
+import { NotificationsBell } from "./NotificationsBell";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -56,15 +57,8 @@ export function Header() {
           />
         </form>
 
-        {/* U12: Bell kept but without fake badge until real notifications exist */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)] hover:text-[var(--primary)] rounded-full"
-          aria-label="Notificaciones"
-        >
-          <Bell className="w-5 h-5" aria-hidden="true" />
-        </Button>
+        {/* U12: Functional notifications with real data */}
+        <NotificationsBell />
         
         <DropdownMenu>
           <DropdownMenuTrigger
