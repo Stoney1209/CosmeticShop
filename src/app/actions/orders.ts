@@ -11,7 +11,10 @@ export async function getOrders() {
     return await prisma.order.findMany({
       orderBy: { createdAt: "desc" },
       include: {
-        items: true
+        items: true,
+        statusHistory: {
+          orderBy: { createdAt: 'desc' }
+        }
       }
     });
   } catch (error) {
@@ -219,11 +222,23 @@ export async function createOrder(data: {
   }
 }
 
-export async function updateOrderStatus(id: number, status: "PENDING" | "CONFIRMED" | "PROCESSING" | "COMPLETED" | "CANCELLED") {
+export async function updateOrderStatus(id: number, status: "PENDING" | "CONFIRMED" | "PROCESSING" | "COMPLETED" | "CANCELLED", changedBy?: string) {
   try {
     const order = await prisma.$transaction(async (tx: any) => {
       const currentOrder = await tx.order.findUnique({ where: { id }, include: { items: true } });
       if (!currentOrder) throw new Error("Order not found");
+
+      // Record status history before updating
+      if (currentOrder.status !== status) {
+        await tx.orderStatusHistory.create({
+          data: {
+            orderId: id,
+            status: status,
+            changedBy: changedBy || "admin",
+            notes: `Changed from ${currentOrder.status} to ${status}`
+          }
+        });
+      }
 
       const updatedOrder = await tx.order.update({
         where: { id },
@@ -237,7 +252,7 @@ export async function updateOrderStatus(id: number, status: "PENDING" | "CONFIRM
             where: { id: item.productId },
             data: { stock: { increment: item.quantity } }
           });
-          
+
           if (item.productVariantId) {
             await tx.productVariant.update({
               where: { id: item.productVariantId },

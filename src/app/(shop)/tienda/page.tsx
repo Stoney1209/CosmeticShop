@@ -134,7 +134,13 @@ export default async function StorePage({
 
   const categories = await prisma.category.findMany({
     where: { isActive: true },
-    orderBy: { displayOrder: "asc" }
+    orderBy: { displayOrder: "asc" },
+    include: {
+      children: {
+        where: { isActive: true },
+        orderBy: { displayOrder: "asc" }
+      }
+    }
   });
 
   const brands = await prisma.product.groupBy({
@@ -180,11 +186,22 @@ export default async function StorePage({
                     All
                   </Link>
                 </li>
-                {categories.map((category: any) => (
+                {categories.filter((cat: any) => !cat.parentId).map((category: any) => (
                   <li key={category.id}>
                     <Link href={`/tienda?category=${category.slug}${brand ? `&brand=${brand}` : ""}`} className={`text-sm block py-2 px-3 rounded-lg transition-all ${categorySlug === category.slug ? "bg-[#b78d7a] text-white font-medium" : "text-[#50443f] hover:bg-[#f6f3f2]"}`}>
                       {category.name}
                     </Link>
+                    {category.children && category.children.length > 0 && (
+                      <ul className="ml-4 mt-1 space-y-1">
+                        {category.children.map((child: any) => (
+                          <li key={child.id}>
+                            <Link href={`/tienda?category=${child.slug}${brand ? `&brand=${brand}` : ""}`} className={`text-xs block py-1.5 px-3 rounded-lg transition-all ${categorySlug === child.slug ? "bg-[#7a5646] text-white" : "text-[#82746e] hover:bg-[#f6f3f2]"}`}>
+                              {child.name}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </li>
                 ))}
               </ul>

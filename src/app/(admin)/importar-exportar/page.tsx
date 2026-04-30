@@ -2,10 +2,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Upload, Download } from "lucide-react";
 import { ImportExportClient } from "./ImportExportClient";
+import { generateCSRFToken } from "@/lib/csrf";
 
 export const metadata = { title: "Importar/Exportar | Admin" };
 
-export default function ImportExportPage() {
+export default async function ImportExportPage() {
+  const csrfToken = await generateCSRFToken();
   return (
     <div className="space-y-6">
       <div>
@@ -35,10 +37,11 @@ export default function ImportExportPage() {
               Importa productos desde un archivo CSV. El archivo debe seguir el formato de exportación.
             </p>
             <form action="/api/admin/import/products" method="POST" encType="multipart/form-data">
-              <input 
-                type="file" 
-                name="file" 
-                accept=".csv" 
+              <input type="hidden" name="csrf_token" value={csrfToken} />
+              <input
+                type="file"
+                name="file"
+                accept=".csv"
                 className="mb-4 block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100"
               />
               <Button type="submit" className="w-full" variant="outline">

@@ -91,6 +91,35 @@ export async function getReportsData() {
     }
   });
 
+  // Non-rotating products (products with no sales in the last 30 days)
+  const nonRotatingProducts = await prisma.product.findMany({
+    where: {
+      isActive: true,
+      createdAt: { lte: thirtyDaysAgo },
+      orderItems: {
+        none: {
+          order: {
+            createdAt: { gte: thirtyDaysAgo }
+          }
+        }
+      }
+    },
+    select: {
+      id: true,
+      name: true,
+      sku: true,
+      stock: true,
+      price: true,
+      mainImage: true,
+      category: {
+        select: {
+          name: true
+        }
+      }
+    },
+    orderBy: { createdAt: 'asc' }
+  });
+
   return { 
     recentOrders, 
     bestSellers,
@@ -108,6 +137,7 @@ export async function getReportsData() {
       lowStock: lowStockProducts
     },
     ordersByStatus,
-    recentCustomers
+    recentCustomers,
+    nonRotatingProducts
   };
 }

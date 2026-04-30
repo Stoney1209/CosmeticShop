@@ -37,6 +37,10 @@ export default async function ReportsPage() {
     recentCustomers: data.recentCustomers.map((customer: any) => ({
       ...customer,
       createdAt: customer.createdAt.toISOString()
+    })),
+    nonRotatingProducts: data.nonRotatingProducts.map((product: any) => ({
+      ...product,
+      price: Number(product.price)
     }))
   };
 

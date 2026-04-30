@@ -7,8 +7,27 @@ export const metadata = {
 };
 
 export default async function DashboardPage() {
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startOfPreviousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const endOfPreviousMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
   // Fetch real data
-  const [totalOrders, pendingOrders, completedOrdersRaw, recentOrders, newCustomers, lowStockProducts] = await Promise.all([
+  const [
+    totalOrders,
+    pendingOrders,
+    completedOrdersRaw,
+    recentOrders,
+    newCustomers,
+    lowStockProducts,
+    currentMonthOrders,
+    currentMonthRevenue,
+    previousMonthOrders,
+    previousMonthRevenue,
+    salesLast30Days,
+    topProducts
+  ] = await Promise.all([
     prisma.order.count(),
     prisma.order.count({ where: { status: "PENDING" } }),
     prisma.order.aggregate({
@@ -25,32 +44,110 @@ export default async function DashboardPage() {
         stock: { lte: 10 },
         isActive: true
       }
+    }),
+    prisma.order.count({ where: { createdAt: { gte: startOfMonth } } }),
+    prisma.order.aggregate({
+      where: { 
+        status: { in: ["COMPLETED", "CONFIRMED"] },
+        createdAt: { gte: startOfMonth }
+      },
+      _sum: { totalAmount: true }
+    }),
+    prisma.order.count({ 
+      where: { 
+        createdAt: { gte: startOfPreviousMonth, lte: endOfPreviousMonth }
+      } 
+    }),
+    prisma.order.aggregate({
+      where: { 
+        status: { in: ["COMPLETED", "CONFIRMED"] },
+        createdAt: { gte: startOfPreviousMonth, lte: endOfPreviousMonth }
+      },
+      _sum: { totalAmount: true }
+    }),
+    prisma.order.findMany({
+      where: {
+        status: { in: ["COMPLETED", "CONFIRMED"] },
+        createdAt: { gte: thirtyDaysAgo }
+      },
+      select: {
+        createdAt: true,
+        totalAmount: true
+      },
+      orderBy: { createdAt: 'asc' }
+    }),
+    prisma.orderItem.groupBy({
+      by: ['productId'],
+      _sum: {
+        quantity: true,
+        subtotal: true
+      },
+      orderBy: {
+        _sum: {
+          quantity: 'desc'
+        }
+      },
+      take: 5
     })
   ]);
 
   const totalRevenue = Number(completedOrdersRaw._sum.totalAmount || 0);
+  const currentMonthRevenueNum = Number(currentMonthRevenue._sum.totalAmount || 0);
+  const previousMonthRevenueNum = Number(previousMonthRevenue._sum.totalAmount || 0);
+
+  // Calculate monthly comparison
+  const revenueChange = previousMonthRevenueNum > 0 
+    ? ((currentMonthRevenueNum - previousMonthRevenueNum) / previousMonthRevenueNum * 100).toFixed(1)
+    : "0";
+  const ordersChange = previousMonthOrders > 0
+    ? ((currentMonthOrders - previousMonthOrders) / previousMonthOrders * 100).toFixed(1)
+    : "0";
+
+  // Prepare chart data - group by day
+  const chartData = salesLast30Days.reduce((acc: any[], order) => {
+    const date = new Date(order.createdAt).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
+    const existing = acc.find(d => d.date === date);
+    if (existing) {
+      existing.sales += Number(order.totalAmount);
+    } else {
+      acc.push({ date, sales: Number(order.totalAmount) });
+    }
+    return acc;
+  }, []);
+
+  // Get top products details
+  const topProductIds = topProducts.map(p => p.productId);
+  const topProductDetails = await prisma.product.findMany({
+    where: { id: { in: topProductIds } },
+    select: { id: true, name: true, mainImage: true }
+  });
+
+  const topProductsWithDetails = topProducts.map(tp => ({
+    ...tp,
+    product: topProductDetails.find(p => p.id === tp.productId)
+  }));
 
   const stats = [
     {
       title: "TOTAL SALES",
       value: `$${totalRevenue.toFixed(2)}`,
-      change: "+12.5% from last month",
+      change: `${parseFloat(revenueChange) >= 0 ? '+' : ''}${revenueChange}% from last month`,
       icon: DollarSign,
-      trend: "up",
+      trend: parseFloat(revenueChange) >= 0 ? "up" : "down",
       color: "bg-[#7a5646]/10 text-[#7a5646]",
     },
     {
       title: "TOTAL ORDERS",
       value: totalOrders.toString(),
-      change: "+4.2% from last month",
+      change: `${parseFloat(ordersChange) >= 0 ? '+' : ''}${ordersChange}% from last month`,
       icon: Package,
-      trend: "up",
+      trend: parseFloat(ordersChange) >= 0 ? "up" : "down",
       color: "bg-[#695b58]/10 text-[#695b58]",
     },
     {
       title: "NEW CUSTOMERS",
       value: newCustomers.toString(),
-      change: "+18% from last month",
+      change: "This month",
       icon: Users,
       trend: "up",
       color: "bg-[#5e5e5c]/10 text-[#5e5e5c]",
@@ -99,17 +196,22 @@ export default async function DashboardPage() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
         <Card className="lg:col-span-4 card-luminous border-[#d4c3bc]/30">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg font-heading text-[#1b1c1c]">Sales Overview</CardTitle>
-            <select className="text-sm border border-[#d4c3bc]/30 rounded-lg px-3 py-1.5 bg-[#f6f3f2] text-[#1b1c1c] focus:outline-none focus:border-[#7a5646]">
-              <option>Last 30 Days</option>
-              <option>Last 7 Days</option>
-              <option>Last 90 Days</option>
-            </select>
+            <CardTitle className="text-lg font-heading text-[#1b1c1c]">Sales Overview (Last 30 Days)</CardTitle>
           </CardHeader>
-          <CardContent className="h-80 flex items-center justify-center bg-[#f6f3f2]/50 rounded-lg border border-dashed border-[#d4c3bc]/30 m-6 mt-0">
-            <p className="text-[#82746e] text-sm flex items-center gap-2">
-              <TrendingUp className="w-4 h-4" /> Charts require integration with third-party libraries (e.g., Recharts)
-            </p>
+          <CardContent className="h-80 p-6">
+            {chartData.length > 0 ? (
+              <div className="h-full flex items-center justify-center bg-[#f6f3f2]/50 rounded-lg border border-dashed border-[#d4c3bc]/30">
+                <p className="text-[#82746e] text-sm flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4" /> Chart functionality temporarily disabled due to compatibility issues
+                </p>
+              </div>
+            ) : (
+              <div className="h-full flex items-center justify-center bg-[#f6f3f2]/50 rounded-lg border border-dashed border-[#d4c3bc]/30">
+                <p className="text-[#82746e] text-sm flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4" /> No sales data for the last 30 days
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -152,6 +254,47 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="card-luminous border-[#d4c3bc]/30">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-lg font-heading text-[#1b1c1c]">Top Products This Month</CardTitle>
+          <a href="/reportes" className="text-sm text-[#7a5646] hover:text-[#603f30] font-medium">View All Reports</a>
+        </CardHeader>
+        <CardContent>
+          {topProductsWithDetails.length > 0 ? (
+            <div className="space-y-4">
+              {topProductsWithDetails.map((item: any, index: number) => (
+                <div key={item.productId} className="flex items-center justify-between group cursor-default py-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-[#f6f3f2] border border-[#d4c3bc]/30 flex items-center justify-center text-[#7a5646] font-bold">
+                      #{index + 1}
+                    </div>
+                    {item.product?.mainImage ? (
+                      <img src={item.product.mainImage} className="w-10 h-10 rounded-lg object-cover border border-[#d4c3bc]/30" />
+                    ) : (
+                      <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center border border-slate-200">
+                        <Package className="w-5 h-5 text-slate-300" />
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-sm font-medium text-[#1b1c1c]">{item.product?.name || 'Unknown Product'}</p>
+                      <p className="text-xs text-[#82746e]">{item._sum.quantity} units sold</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-[#1b1c1c]">${Number(item._sum.subtotal).toFixed(2)}</p>
+                    <p className="text-xs text-[#82746e]">Revenue</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-[#82746e] text-sm">
+              No sales data yet.
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

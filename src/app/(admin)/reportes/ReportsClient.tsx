@@ -1,9 +1,10 @@
 "use client";
 
-import { Download, TrendingUp, Users, Package, AlertTriangle } from "lucide-react";
+import { Download, TrendingUp, Users, Package, AlertTriangle, AlertOctagon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Image as ImageIcon } from "lucide-react";
 
 export function ReportsClient({ data }: { data: any }) {
   const totalRevenue = data.recentOrders.reduce((acc: number, o: any) => acc + Number(o.totalAmount), 0);
@@ -140,6 +141,43 @@ export function ReportsClient({ data }: { data: any }) {
               </TableRow>
             ))}
             {data.recentCustomers.length === 0 && <TableRow><TableCell colSpan={4} className="text-center py-8 text-slate-500">No hay clientes registrados.</TableCell></TableRow>}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Non-Rotating Products */}
+      <div>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-bold flex items-center gap-2"><AlertOctagon className="w-5 h-5"/> Productos Sin Rotación (30 días)</h3>
+          <Badge variant="outline" className="text-slate-600">{data.nonRotatingProducts?.length || 0} productos</Badge>
+        </div>
+        <Table>
+          <TableHeader><TableRow><TableHead>Producto</TableHead><TableHead>SKU</TableHead><TableHead>Categoría</TableHead><TableHead className="text-center">Stock</TableHead><TableHead className="text-right">Precio</TableHead></TableRow></TableHeader>
+          <TableBody>
+            {data.nonRotatingProducts && data.nonRotatingProducts.length > 0 ? (
+              data.nonRotatingProducts.map((product: any) => (
+                <TableRow key={product.id}>
+                  <TableCell className="font-medium flex items-center gap-3">
+                    {product.mainImage ? (
+                      <img src={product.mainImage} className="w-10 h-10 rounded-lg object-cover border" />
+                    ) : (
+                      <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center border">
+                        <ImageIcon className="w-5 h-5 text-slate-300" />
+                      </div>
+                    )}
+                    {product.name}
+                  </TableCell>
+                  <TableCell className="text-slate-500 font-mono text-xs">{product.sku}</TableCell>
+                  <TableCell><Badge variant="outline">{product.category?.name || '-'}</Badge></TableCell>
+                  <TableCell className="text-center">
+                    <Badge variant={product.stock > 0 ? "default" : "destructive"}>{product.stock}</Badge>
+                  </TableCell>
+                  <TableCell className="text-right font-medium">${product.price.toFixed(2)}</TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow><TableCell colSpan={5} className="text-center py-8 text-slate-500">Todos los productos han tenido ventas en los últimos 30 días.</TableCell></TableRow>
+            )}
           </TableBody>
         </Table>
       </div>

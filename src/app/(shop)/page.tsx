@@ -10,12 +10,24 @@ export const metadata = {
 };
 
 export default async function HomePage() {
-  const featuredProductsRaw = await prisma.product.findMany({
-    where: { isActive: true },
-    take: 8,
-    orderBy: { createdAt: "desc" },
-    include: { category: true }
-  });
+  const [featuredProductsRaw, categories] = await Promise.all([
+    prisma.product.findMany({
+      where: { isActive: true },
+      take: 8,
+      orderBy: { createdAt: "desc" },
+      include: { category: true }
+    }),
+    prisma.category.findMany({
+      where: { isActive: true },
+      orderBy: { displayOrder: "asc" },
+      include: {
+        children: {
+          where: { isActive: true },
+          orderBy: { displayOrder: "asc" }
+        }
+      }
+    })
+  ]);
 
   const featuredProducts = featuredProductsRaw.map((product: any) => ({
     id: product.id,
@@ -73,25 +85,23 @@ export default async function HomePage() {
             <h2 className="text-3xl md:text-4xl font-heading text-[#1b1c1c]">Curated Collections</h2>
             <p className="text-[#82746e] mt-3">Explore our carefully selected categories</p>
           </div>
-          
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 justify-items-center">
-            {[
-              { name: "SKINCARE", slug: "skincare", color: "bg-[#e8f0e8]" },
-              { name: "MAKEUP", slug: "maquillaje", color: "bg-[#f5e6e0]" },
-              { name: "FRAGRANCE", slug: "perfumes", color: "bg-[#f0e8f5]" },
-              { name: "HAIRCARE", slug: "cabello", color: "bg-[#f5f0e6]" },
-            ].map((cat, i) => (
-              <Link 
-                key={cat.name} 
-                href={`/tienda?category=${cat.slug}`} 
+            {categories.filter((cat: any) => !cat.parentId).slice(0, 4).map((category: any, i: number) => (
+              <Link
+                key={category.id}
+                href={`/tienda?category=${category.slug}`}
                 className="group flex flex-col items-center"
               >
-                <div 
-                  className={`w-32 h-32 md:w-40 md:h-40 rounded-full flex items-center justify-center ${cat.color} border border-[#d4c3bc]/30 hover:shadow-[0_8px_24px_rgba(44,44,44,0.1)] transition-all duration-300 hover:scale-105`}
+                <div
+                  className={`w-32 h-32 md:w-40 md:h-40 rounded-full flex items-center justify-center bg-[#e8f0f0] border border-[#d4c3bc]/30 hover:shadow-[0_8px_24px_rgba(44,44,44,0.1)] transition-all duration-300 hover:scale-105`}
                 >
                   <span className="text-3xl md:text-4xl" aria-hidden="true">✦</span>
                 </div>
-                <h3 className="label-editorial text-[#7a5646] mt-4 group-hover:text-[#603f30] transition-colors">{cat.name}</h3>
+                <h3 className="label-editorial text-[#7a5646] mt-4 group-hover:text-[#603f30] transition-colors">{category.name}</h3>
+                {category.children && category.children.length > 0 && (
+                  <p className="text-xs text-[#82746e] mt-1">{category.children.length} subcategories</p>
+                )}
               </Link>
             ))}
           </div>

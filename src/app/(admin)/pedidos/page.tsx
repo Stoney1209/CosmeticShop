@@ -17,7 +17,8 @@ export default async function OrdersPage() {
       ...item,
       unitPrice: Number(item.unitPrice),
       subtotal: Number(item.subtotal)
-    }))
+    })),
+    statusHistory: order.statusHistory || []
   }));
 
   return (

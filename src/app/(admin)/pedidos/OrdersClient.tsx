@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { Eye, Truck, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Eye, Truck, CheckCircle2, XCircle, Clock, Calendar, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { updateOrderStatus } from "@/app/actions/orders";
 
@@ -20,9 +21,34 @@ const statusConfig = {
 
 export function OrdersClient({ initialOrders }: { initialOrders: any[] }) {
   const [orders, setOrders] = useState(initialOrders);
+  const [filteredOrders, setFilteredOrders] = useState(initialOrders);
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isStatusSubmitting, setIsStatusSubmitting] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+
+  // Apply filters
+  useEffect(() => {
+    let filtered = orders;
+
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(o => o.status === statusFilter);
+    }
+
+    if (dateFrom) {
+      filtered = filtered.filter(o => new Date(o.createdAt) >= new Date(dateFrom));
+    }
+
+    if (dateTo) {
+      const endDate = new Date(dateTo);
+      endDate.setHours(23, 59, 59);
+      filtered = filtered.filter(o => new Date(o.createdAt) <= endDate);
+    }
+
+    setFilteredOrders(filtered);
+  }, [orders, statusFilter, dateFrom, dateTo]);
 
   const handleStatusChange = async (id: number, newStatus: string) => {
     setIsStatusSubmitting(true);
@@ -51,6 +77,54 @@ export function OrdersClient({ initialOrders }: { initialOrders: any[] }) {
 
   return (
     <div>
+      <div className="p-4 border-b border-slate-200 flex flex-wrap gap-4 items-center bg-slate-50/50">
+        <div className="flex items-center gap-2">
+          <Filter className="w-4 h-4 text-slate-500" />
+          <span className="text-sm font-medium text-slate-700">Filtros:</span>
+        </div>
+        <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value || "all")}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Estado" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos los estados</SelectItem>
+            <SelectItem value="PENDING">Pendiente</SelectItem>
+            <SelectItem value="CONFIRMED">Confirmado</SelectItem>
+            <SelectItem value="PROCESSING">En Proceso</SelectItem>
+            <SelectItem value="COMPLETED">Completado</SelectItem>
+            <SelectItem value="CANCELLED">Cancelado</SelectItem>
+          </SelectContent>
+        </Select>
+        <div className="flex items-center gap-2">
+          <Calendar className="w-4 h-4 text-slate-500" />
+          <Input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="w-[150px]"
+          />
+          <span className="text-slate-500">-</span>
+          <Input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="w-[150px]"
+          />
+        </div>
+        {(statusFilter !== "all" || dateFrom || dateTo) && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setStatusFilter("all");
+              setDateFrom("");
+              setDateTo("");
+            }}
+          >
+            Limpiar filtros
+          </Button>
+        )}
+      </div>
       <Table>
         <TableHeader>
           <TableRow className="bg-slate-50/50">
@@ -63,14 +137,14 @@ export function OrdersClient({ initialOrders }: { initialOrders: any[] }) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {orders.length === 0 ? (
+          {filteredOrders.length === 0 ? (
             <TableRow>
               <TableCell colSpan={6} className="h-24 text-center text-slate-500">
-                No hay pedidos registrados.
+                No hay pedidos que coincidan con los filtros.
               </TableCell>
             </TableRow>
           ) : (
-            orders.map((order) => {
+            filteredOrders.map((order) => {
               const StatusIcon = statusConfig[order.status as keyof typeof statusConfig].icon;
               return (
                 <TableRow key={order.id} className="group hover:bg-slate-50 transition-colors">
@@ -167,6 +241,33 @@ export function OrdersClient({ initialOrders }: { initialOrders: any[] }) {
                 <span className="font-bold text-slate-900">Total</span>
                 <span className="text-xl font-extrabold text-pink-600">${selectedOrder.totalAmount.toFixed(2)}</span>
               </div>
+
+              {selectedOrder.statusHistory && selectedOrder.statusHistory.length > 0 && (
+                <div className="border-t border-slate-100 pt-4 mt-4">
+                  <h4 className="text-sm font-semibold text-slate-900 mb-3">Historial de Estados</h4>
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {selectedOrder.statusHistory.map((history: any, index: number) => (
+                      <div key={history.id} className="flex items-start gap-3 text-sm">
+                        <div className="w-2 h-2 rounded-full bg-pink-600 mt-1.5" />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{statusConfig[history.status as keyof typeof statusConfig]?.label || history.status}</span>
+                            <span className="text-xs text-slate-500">
+                              {new Date(history.createdAt).toLocaleString()}
+                            </span>
+                          </div>
+                          {history.notes && (
+                            <p className="text-xs text-slate-600 mt-1">{history.notes}</p>
+                          )}
+                          {history.changedBy && (
+                            <p className="text-xs text-slate-500">por {history.changedBy}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </>
           )}
         </DialogContent>

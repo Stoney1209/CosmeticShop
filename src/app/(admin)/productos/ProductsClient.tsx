@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Pencil, Trash2, Image as ImageIcon, CheckCircle2, XCircle, Boxes, Tag, Layers } from "lucide-react";
+import { Plus, Pencil, Trash2, Image as ImageIcon, CheckCircle2, XCircle, Boxes, Tag, Layers, ChevronLeft, ChevronRight, CheckSquare, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +23,9 @@ export function ProductsClient({ initialProducts, categories, variantTypes }: { 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedProducts, setSelectedProducts] = useState<number[]>([]);
+  const itemsPerPage = 10;
   
   // Basic Form State
   const [sku, setSku] = useState("");
@@ -75,6 +78,7 @@ export function ProductsClient({ initialProducts, categories, variantTypes }: { 
       );
       setFilteredProducts(filtered);
     }
+    setCurrentPage(1); // Reset to first page on search
   }, [searchTerm, products]);
 
   const handleEdit = (prod: any) => {
@@ -122,6 +126,84 @@ export function ProductsClient({ initialProducts, categories, variantTypes }: { 
       toast.error("Error inesperado al eliminar");
     }
   };
+
+  const handleSelectProduct = (id: number) => {
+    setSelectedProducts(prev =>
+      prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedProducts.length === paginatedProducts.length) {
+      setSelectedProducts([]);
+    } else {
+      setSelectedProducts(paginatedProducts.map(p => p.id));
+    }
+  };
+
+  const handleBulkActivate = async () => {
+    if (selectedProducts.length === 0) {
+      toast.error("Selecciona productos primero");
+      return;
+    }
+    if (!confirm(`¿Activar ${selectedProducts.length} productos?`)) return;
+
+    try {
+      for (const id of selectedProducts) {
+        await updateProduct(id, { isActive: true });
+      }
+      toast.success(`${selectedProducts.length} productos activados`);
+      setSelectedProducts([]);
+      window.location.reload();
+    } catch {
+      toast.error("Error al activar productos");
+    }
+  };
+
+  const handleBulkDeactivate = async () => {
+    if (selectedProducts.length === 0) {
+      toast.error("Selecciona productos primero");
+      return;
+    }
+    if (!confirm(`¿Desactivar ${selectedProducts.length} productos?`)) return;
+
+    try {
+      for (const id of selectedProducts) {
+        await updateProduct(id, { isActive: false });
+      }
+      toast.success(`${selectedProducts.length} productos desactivados`);
+      setSelectedProducts([]);
+      window.location.reload();
+    } catch {
+      toast.error("Error al desactivar productos");
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedProducts.length === 0) {
+      toast.error("Selecciona productos primero");
+      return;
+    }
+    if (!confirm(`¿Eliminar ${selectedProducts.length} productos?`)) return;
+
+    try {
+      for (const id of selectedProducts) {
+        await deleteProduct(id);
+      }
+      toast.success(`${selectedProducts.length} productos eliminados`);
+      setSelectedProducts([]);
+      window.location.reload();
+    } catch {
+      toast.error("Error al eliminar productos");
+    }
+  };
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const generateVariants = () => {
     if (selectedVariantTypes.length === 0) return;
@@ -227,14 +309,30 @@ export function ProductsClient({ initialProducts, categories, variantTypes }: { 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
       <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
-        <div className="relative max-w-xs w-full">
-          <Input 
-            placeholder="Buscar por SKU o Nombre..." 
-            className="bg-white pl-10"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <ImageIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        <div className="flex items-center gap-4">
+          <div className="relative max-w-xs w-full">
+            <Input 
+              placeholder="Buscar por SKU o Nombre..." 
+              className="bg-white pl-10"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <ImageIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          </div>
+          {selectedProducts.length > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-slate-600">{selectedProducts.length} seleccionados</span>
+              <Button size="sm" variant="outline" onClick={handleBulkActivate}>
+                <CheckCircle2 className="w-4 h-4 mr-1" /> Activar
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleBulkDeactivate}>
+                <XCircle className="w-4 h-4 mr-1" /> Desactivar
+              </Button>
+              <Button size="sm" variant="destructive" onClick={handleBulkDelete}>
+                <Trash2 className="w-4 h-4 mr-1" /> Eliminar
+              </Button>
+            </div>
+          )}
         </div>
         <Dialog open={isDialogOpen} onOpenChange={(open) => {
           setIsDialogOpen(open);
@@ -564,7 +662,16 @@ export function ProductsClient({ initialProducts, categories, variantTypes }: { 
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent border-slate-200">
-              <TableHead className="w-[100px] pl-6 font-bold text-slate-800">Vista</TableHead>
+              <TableHead className="w-[50px] pl-6 font-bold text-slate-800">
+                <button onClick={handleSelectAll} className="hover:bg-slate-100 rounded p-1">
+                  {selectedProducts.length === paginatedProducts.length && paginatedProducts.length > 0 ? (
+                    <CheckSquare className="w-4 h-4" />
+                  ) : (
+                    <Square className="w-4 h-4" />
+                  )}
+                </button>
+              </TableHead>
+              <TableHead className="w-[100px] font-bold text-slate-800">Vista</TableHead>
               <TableHead className="font-bold text-slate-800">Producto</TableHead>
               <TableHead className="font-bold text-slate-800">Categoría</TableHead>
               <TableHead className="text-right font-bold text-slate-800">Precio</TableHead>
@@ -574,9 +681,18 @@ export function ProductsClient({ initialProducts, categories, variantTypes }: { 
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredProducts.map((product) => (
+            {paginatedProducts.map((product) => (
               <TableRow key={product.id} className="group hover:bg-slate-50/50 transition-colors">
                 <TableCell className="pl-6">
+                  <button onClick={() => handleSelectProduct(product.id)} className="hover:bg-slate-100 rounded p-1">
+                    {selectedProducts.includes(product.id) ? (
+                      <CheckSquare className="w-4 h-4 text-pink-600" />
+                    ) : (
+                      <Square className="w-4 h-4 text-slate-400" />
+                    )}
+                  </button>
+                </TableCell>
+                <TableCell>
                   {product.mainImage ? (
                     <img src={product.mainImage} className="w-12 h-12 rounded-xl object-cover border border-slate-200 shadow-sm" />
                   ) : (
@@ -627,6 +743,44 @@ export function ProductsClient({ initialProducts, categories, variantTypes }: { 
           </TableBody>
         </Table>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200">
+          <div className="text-sm text-slate-600">
+            Mostrando {(currentPage - 1) * itemsPerPage + 1} a {Math.min(currentPage * itemsPerPage, filteredProducts.length)} de {filteredProducts.length} productos
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+              <Button
+                key={page}
+                variant={currentPage === page ? "default" : "outline"}
+                size="sm"
+                onClick={() => setCurrentPage(page)}
+                className={currentPage === page ? "bg-pink-600 hover:bg-pink-700" : ""}
+              >
+                {page}
+              </Button>
+            ))}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

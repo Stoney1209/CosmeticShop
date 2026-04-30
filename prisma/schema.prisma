@@ -233,6 +233,20 @@ model Order {
   items           OrderItem[]
   reviews         Review[]
   invoices        Invoice[]
+  statusHistory   OrderStatusHistory[]
+}
+
+model OrderStatusHistory {
+  id          Int         @id @default(autoincrement())
+  orderId     Int
+  status      OrderStatus
+  changedBy   String?     // Username or system
+  notes       String?
+  createdAt   DateTime    @default(now())
+
+  order       Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
 }
 
 model OrderItem {
