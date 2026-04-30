@@ -14,6 +14,13 @@ export async function Header() {
 
   const whatsappNumber = whatsappSetting?.settingValue || "5219212724532";
 
+  // Obtener categorías activas de la base de datos
+  const categories = await prisma.category.findMany({
+    where: { isActive: true },
+    orderBy: { name: "asc" },
+    take: 5, // Limitar a 5 categorías principales
+  });
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[var(--outline-variant)]/30 bg-[var(--surface)]/95 backdrop-blur-md">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -61,11 +68,17 @@ export async function Header() {
       <nav className="hidden md:block border-t border-[var(--outline-variant)]/20 bg-[var(--surface-container-lowest)]">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <ul className="flex items-center gap-6 lg:gap-8 py-3.5 text-sm font-medium text-[var(--on-surface-variant)]">
-            <li><Link href="/tienda" className="hover:text-[var(--primary)] transition-colors">Novedades</Link></li>
-            <li><Link href="/tienda?category=maquillaje" className="hover:text-[var(--primary)] transition-colors">Maquillaje</Link></li>
-            <li><Link href="/tienda?category=skincare" className="hover:text-[var(--primary)] transition-colors">Skincare</Link></li>
-            <li><Link href="/tienda?category=perfumes" className="hover:text-[var(--primary)] transition-colors">Perfumes</Link></li>
-            <li><Link href="/tienda?category=cabello" className="hover:text-[var(--primary)] transition-colors">Cabello</Link></li>
+            <li><Link href="/tienda" className="hover:text-[var(--primary)] transition-colors">Ver Todo</Link></li>
+            {categories.map((category) => (
+              <li key={category.id}>
+                <Link 
+                  href={`/tienda?category=${category.slug}`} 
+                  className="hover:text-[var(--primary)] transition-colors"
+                >
+                  {category.name}
+                </Link>
+              </li>
+            ))}
             <li><Link href="/tienda?sort=price_asc" className="text-[var(--primary)] font-semibold hover:text-[var(--primary-container)] transition-colors">Ofertas</Link></li>
           </ul>
         </div>
