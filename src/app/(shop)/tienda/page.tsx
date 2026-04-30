@@ -13,15 +13,16 @@ import { buildTiendaUrl, type TiendaSearchParams, type CategoryNode, type BrandG
 export async function generateMetadata({
   searchParams,
 }: {
-  searchParams: {
+  searchParams: Promise<{
     category?: string;
     search?: string;
     brand?: string;
-  };
+  }>;
 }): Promise<Metadata> {
-  const categorySlug = searchParams.category;
-  const search = searchParams.search;
-  const brand = searchParams.brand;
+  const params = await searchParams;
+  const categorySlug = params.category;
+  const search = params.search;
+  const brand = params.brand;
 
   let title = "Catálogo | LUXE BEAUTÉ";
   let description = "Explora nuestra selección de los mejores productos de belleza premium.";
@@ -61,17 +62,18 @@ export async function generateMetadata({
 export default async function StorePage({
   searchParams
 }: {
-  searchParams: TiendaSearchParams;
+  searchParams: Promise<TiendaSearchParams>;
 }) {
-  const categorySlug = searchParams.category;
-  const search = searchParams.search;
-  const minPrice = searchParams.minPrice ? parseFloat(searchParams.minPrice) : undefined;
-  const maxPrice = searchParams.maxPrice ? parseFloat(searchParams.maxPrice) : undefined;
-  const brand = searchParams.brand;
-  const sort = searchParams.sort || "newest";
-  const page = parseInt(searchParams.page || "1");
+  const params = await searchParams;
+  const categorySlug = params.category;
+  const search = params.search;
+  const minPrice = params.minPrice ? parseFloat(params.minPrice) : undefined;
+  const maxPrice = params.maxPrice ? parseFloat(params.maxPrice) : undefined;
+  const brand = params.brand;
+  const sort = params.sort || "newest";
+  const page = parseInt(params.page || "1");
   const limit = 12;
-  const inStock = searchParams.inStock === "true";
+  const inStock = params.inStock === "true";
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let whereClause: any = { isActive: true };
@@ -181,7 +183,7 @@ export default async function StorePage({
     : null;
 
   // U7/P5: Helper to build URLs from current params
-  const currentParams: TiendaSearchParams = searchParams;
+  const currentParams: TiendaSearchParams = params;
 
   return (
     <div className="bg-[var(--surface)] min-h-screen py-12 lg:py-16">
@@ -272,10 +274,10 @@ export default async function StorePage({
                 {brand && <input type="hidden" name="brand" value={brand} />}
                 {inStock && <input type="hidden" name="inStock" value="true" />}
                 <label htmlFor="filter-min-price" className="sr-only">Precio mínimo</label>
-                <Input id="filter-min-price" name="minPrice" type="number" placeholder="Mín" className="h-9 text-xs bg-[var(--surface-container-low)] border-[var(--outline-variant)]/30" defaultValue={searchParams.minPrice} />
+                <Input id="filter-min-price" name="minPrice" type="number" placeholder="Mín" className="h-9 text-xs bg-[var(--surface-container-low)] border-[var(--outline-variant)]/30" defaultValue={params.minPrice} />
                 <span className="text-[var(--on-surface-variant)]" aria-hidden="true">-</span>
                 <label htmlFor="filter-max-price" className="sr-only">Precio máximo</label>
-                <Input id="filter-max-price" name="maxPrice" type="number" placeholder="Máx" className="h-9 text-xs bg-[var(--surface-container-low)] border-[var(--outline-variant)]/30" defaultValue={searchParams.maxPrice} />
+                <Input id="filter-max-price" name="maxPrice" type="number" placeholder="Máx" className="h-9 text-xs bg-[var(--surface-container-low)] border-[var(--outline-variant)]/30" defaultValue={params.maxPrice} />
                 <Button type="submit" size="icon" className="h-9 w-9 bg-[var(--primary)] text-[var(--on-primary)] hover:bg-[var(--on-primary-container)] shrink-0" aria-label="Filtrar por precio">
                   <Search className="w-3 h-3" aria-hidden="true" />
                 </Button>
