@@ -15,8 +15,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { getDashboardData, type DashboardData } from "@/app/actions/dashboard";
-import { STATUS_LABELS } from "@/app/actions/dashboard-types";
+import { getDashboardData } from "@/app/actions/dashboard";
+import { STATUS_LABELS, type DashboardData } from "@/app/actions/dashboard-types";
 import { SalesChart, ComparisonBar } from "@/components/admin/DashboardCharts";
 import Image from "next/image";
 
