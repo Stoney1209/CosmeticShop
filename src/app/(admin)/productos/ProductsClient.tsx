@@ -52,6 +52,7 @@ export function ProductsClient({ initialProducts, categories, variantTypes }: {
     name: "",
     slug: "",
     description: "",
+    longDescription: "",
     categoryId: "",
     price: "",
     costPrice: "",
@@ -145,6 +146,7 @@ export function ProductsClient({ initialProducts, categories, variantTypes }: {
       name: "",
       slug: "",
       description: "",
+      longDescription: "",
       categoryId: "",
       price: "",
       costPrice: "",
@@ -165,6 +167,7 @@ export function ProductsClient({ initialProducts, categories, variantTypes }: {
       name: prod.name,
       slug: prod.slug,
       description: prod.description || "",
+      longDescription: prod.longDescription || "",
       categoryId: prod.categoryId.toString(),
       price: prod.price.toString(),
       costPrice: prod.costPrice?.toString() || "",
@@ -202,6 +205,7 @@ export function ProductsClient({ initialProducts, categories, variantTypes }: {
         name: `${prod.name} (Copia)`,
         slug: `${prod.slug}-copy`,
         description: prod.description,
+        longDescription: prod.longDescription,
         categoryId: prod.categoryId,
         price: prod.price,
         costPrice: prod.costPrice,
@@ -615,6 +619,7 @@ export function ProductsClient({ initialProducts, categories, variantTypes }: {
             
             const data = {
               ...formData,
+              longDescription: formData.longDescription,
               categoryId: parseInt(formData.categoryId),
               price: parseFloat(formData.price),
               costPrice: formData.costPrice ? parseFloat(formData.costPrice) : undefined,
@@ -691,8 +696,13 @@ export function ProductsClient({ initialProducts, categories, variantTypes }: {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label>Descripción</Label>
-                  <Textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} rows={3} />
+                  <Label>Descripción Corta</Label>
+                  <Textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} rows={2} />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Descripción Larga (HTML)</Label>
+                  <Textarea value={formData.longDescription} onChange={e => setFormData({...formData, longDescription: e.target.value})} rows={4} />
                 </div>
                 
                 <div className="flex gap-4">

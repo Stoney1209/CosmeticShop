@@ -38,6 +38,7 @@ export async function createProduct(data: {
   name: string;
   slug: string;
   description?: string;
+  longDescription?: string;
   categoryId: number;
   price: number;
   costPrice?: number;

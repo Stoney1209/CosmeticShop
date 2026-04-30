@@ -179,7 +179,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         {/* Details */}
         <div className="space-y-8">
           <div>
-            <div className="text-sm font-bold text-pink-600 uppercase tracking-widest mb-2">
+            <div className="text-sm font-bold text-pink-600 uppercase tracking-widest mb-2 italic">
               {product.brand || product.category?.name || "Cosmetics"}
             </div>
             <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 leading-tight mb-4 font-heading">

@@ -292,7 +292,7 @@ export default async function StorePage({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-6">
               {products.length > 0 ? (
                 products.map((product: any) => (
                   <div key={product.id} className="group bg-white rounded-xl overflow-hidden shadow-[0_2px_8px_rgba(44,44,44,0.06)] hover:shadow-[0_8px_24px_rgba(44,44,44,0.1)] transition-all duration-300 flex flex-col border border-[#d4c3bc]/30">
