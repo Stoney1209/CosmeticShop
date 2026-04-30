@@ -8,7 +8,7 @@ export default withAuth(
 
     if (isAuthPage) {
       if (isAuth) {
-        return NextResponse.redirect(new URL("/admin/dashboard", req.url));
+        return NextResponse.redirect(new URL("/dashboard", req.url));
       }
       return null;
     }
@@ -26,22 +26,22 @@ export default withAuth(
 
 export const config = {
   matcher: [
-    "/admin/dashboard/:path*",
-    "/admin/productos/:path*",
-    "/admin/categorias/:path*",
-    "/admin/pedidos/:path*",
-    "/admin/clientes/:path*",
-    "/admin/usuarios/:path*",
-    "/admin/inventario/:path*",
-    "/admin/reportes/:path*",
-    "/admin/carritos-abandonados/:path*",
-    "/admin/configuracion/:path*",
-    "/admin/cupones/:path*",
-    "/admin/facturacion/:path*",
-    "/admin/newsletter/:path*",
-    "/admin/respaldos/:path*",
-    "/admin/importar-exportar/:path*",
-    "/admin/actividad/:path*",
+    "/dashboard/:path*",
+    "/productos/:path*",
+    "/categorias/:path*",
+    "/pedidos/:path*",
+    "/clientes/:path*",
+    "/usuarios/:path*",
+    "/inventario/:path*",
+    "/reportes/:path*",
+    "/carritos-abandonados/:path*",
+    "/configuracion/:path*",
+    "/cupones/:path*",
+    "/facturacion/:path*",
+    "/newsletter/:path*",
+    "/respaldos/:path*",
+    "/importar-exportar/:path*",
+    "/actividad/:path*",
     "/login"
   ],
 };
