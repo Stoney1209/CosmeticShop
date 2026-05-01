@@ -345,11 +345,383 @@ async function main() {
   });
 
   console.log("Admin user created");
+
+  // Create variant types (Tamaño, Color)
+  const sizeVariantType = await prisma.variantType.upsert({
+    where: { slug: "tamano" },
+    update: {},
+    create: {
+      name: "Tamaño",
+      slug: "tamano",
+    },
+  });
+
+  const colorVariantType = await prisma.variantType.upsert({
+    where: { slug: "color" },
+    update: {},
+    create: {
+      name: "Color",
+      slug: "color",
+    },
+  });
+
+  console.log("Variant types created (Tamaño, Color)");
+
+  // Delete existing variant values to avoid duplicates, then create new ones
+  await prisma.variantValue.deleteMany({});
+  
+  // Create variant values for Tamaño
+  const size30ml = await prisma.variantValue.create({
+    data: {
+      variantTypeId: sizeVariantType.id,
+      value: "30ml",
+    },
+  });
+  
+  const size50ml = await prisma.variantValue.create({
+    data: {
+      variantTypeId: sizeVariantType.id,
+      value: "50ml",
+    },
+  });
+  
+  const size100ml = await prisma.variantValue.create({
+    data: {
+      variantTypeId: sizeVariantType.id,
+      value: "100ml",
+    },
+  });
+
+  // Create variant values for Color
+  const colorNatural = await prisma.variantValue.create({
+    data: {
+      variantTypeId: colorVariantType.id,
+      value: "Natural",
+      hexColor: "#F5DEB3",
+    },
+  });
+  
+  const colorBeige = await prisma.variantValue.create({
+    data: {
+      variantTypeId: colorVariantType.id,
+      value: "Beige",
+      hexColor: "#E8D4C4",
+    },
+  });
+  
+  const colorRosa = await prisma.variantValue.create({
+    data: {
+      variantTypeId: colorVariantType.id,
+      value: "Rosa",
+      hexColor: "#FFB6C1",
+    },
+  });
+  
+  const colorDorado = await prisma.variantValue.create({
+    data: {
+      variantTypeId: colorVariantType.id,
+      value: "Dorado",
+      hexColor: "#FFD700",
+    },
+  });
+
+  console.log("Variant values created (30ml, 50ml, 100ml, Natural, Beige, Rosa, Dorado)");
+
+  // Create product with variants - Serum Vitamina C
+  const serumWithVariants = await prisma.product.upsert({
+    where: { sku: "CF-001-VAR" },
+    update: {},
+    create: {
+      sku: "CF-001-VAR",
+      name: "Serum Vitamina C - Edición Variantes",
+      slug: "serum-vitamina-c-variantes",
+      description: "Serum iluminador disponible en diferentes presentaciones",
+      longDescription: "Serum facial con vitamina C pura. Disponible en 30ml, 50ml y 100ml.",
+      categoryId: facialCategory.id,
+      price: 450,
+      costPrice: 180,
+      stock: 100, // Total stock across variants
+      minStock: 20,
+      brand: "Glow Beauty",
+      isFeatured: true,
+      isActive: true,
+      mainImage: "https://placehold.co/600x800/F5DEB3/7a5646?text=Serum+Vitamina+C",
+    },
+  });
+
+  // Create variants for the serum (using upsert to avoid duplicates)
+  const serumVariant30 = await prisma.productVariant.upsert({
+    where: { sku: "CF-001-VAR-30" },
+    update: { stock: 40, price: 450 },
+    create: {
+      productId: serumWithVariants.id,
+      sku: "CF-001-VAR-30",
+      price: 450,
+      stock: 40,
+      values: { connect: [{ id: size30ml.id }] },
+    },
+  });
+
+  const serumVariant50 = await prisma.productVariant.upsert({
+    where: { sku: "CF-001-VAR-50" },
+    update: { stock: 35, price: 680 },
+    create: {
+      productId: serumWithVariants.id,
+      sku: "CF-001-VAR-50",
+      price: 680,
+      stock: 35,
+      values: { connect: [{ id: size50ml.id }] },
+    },
+  });
+
+  const serumVariant100 = await prisma.productVariant.upsert({
+    where: { sku: "CF-001-VAR-100" },
+    update: { stock: 25, price: 950 },
+    create: {
+      productId: serumWithVariants.id,
+      sku: "CF-001-VAR-100",
+      price: 950,
+      stock: 25,
+      values: { connect: [{ id: size100ml.id }] },
+    },
+  });
+
+  console.log("Serum variants created (30ml, 50ml, 100ml)");
+
+  // Create product with color variants - Base Líquida
+  const foundationWithColors = await prisma.product.upsert({
+    where: { sku: "MQ-001-VAR" },
+    update: {},
+    create: {
+      sku: "MQ-001-VAR",
+      name: "Base Líquida Matte - Con Variantes de Color",
+      slug: "base-liquida-matte-colores",
+      description: "Base de larga duración en 4 tonos",
+      longDescription: "Base líquida de alta cobertura disponible en Natural, Beige, Rosa y Dorado.",
+      categoryId: makeupCategory.id,
+      price: 380,
+      costPrice: 140,
+      stock: 80,
+      minStock: 15,
+      brand: "Perfect Finish",
+      isFeatured: true,
+      isActive: true,
+      mainImage: "https://placehold.co/600x800/E8D4C4/7a5646?text=Base+Matte",
+    },
+  });
+
+  // Create color variants (using upsert to avoid duplicates)
+  const naturalVariant = await prisma.productVariant.upsert({
+    where: { sku: "MQ-001-VAR-NAT" },
+    update: { stock: 25, price: 380 },
+    create: {
+      productId: foundationWithColors.id,
+      sku: "MQ-001-VAR-NAT",
+      price: 380,
+      stock: 25,
+      values: { connect: [{ id: colorNatural.id }] },
+    },
+  });
+
+  const beigeVariant = await prisma.productVariant.upsert({
+    where: { sku: "MQ-001-VAR-BEIGE" },
+    update: { stock: 20, price: 380 },
+    create: {
+      productId: foundationWithColors.id,
+      sku: "MQ-001-VAR-BEIGE",
+      price: 380,
+      stock: 20,
+      values: { connect: [{ id: colorBeige.id }] },
+    },
+  });
+
+  const rosaVariant = await prisma.productVariant.upsert({
+    where: { sku: "MQ-001-VAR-ROSA" },
+    update: { stock: 20, price: 380 },
+    create: {
+      productId: foundationWithColors.id,
+      sku: "MQ-001-VAR-ROSA",
+      price: 380,
+      stock: 20,
+      values: { connect: [{ id: colorRosa.id }] },
+    },
+  });
+
+  const doradoVariant = await prisma.productVariant.upsert({
+    where: { sku: "MQ-001-VAR-DOR" },
+    update: { stock: 15, price: 400 },
+    create: {
+      productId: foundationWithColors.id,
+      sku: "MQ-001-VAR-DOR",
+      price: 400,
+      stock: 15,
+      values: { connect: [{ id: colorDorado.id }] },
+    },
+  });
+
+  console.log("Foundation color variants created");
+
+  // Create low stock products to trigger notifications
+  const lowStockProducts = await prisma.product.createMany({
+    data: [
+      {
+        sku: "TEST-LOW-1",
+        name: "Producto Stock Bajo 1",
+        slug: "producto-stock-bajo-1",
+        description: "Producto con stock bajo para probar notificaciones",
+        categoryId: facialCategory.id,
+        price: 100,
+        stock: 2, // Low stock
+        minStock: 5,
+        isActive: true,
+      },
+      {
+        sku: "TEST-LOW-2",
+        name: "Producto Stock Bajo 2",
+        slug: "producto-stock-bajo-2",
+        description: "Otro producto con stock bajo",
+        categoryId: makeupCategory.id,
+        price: 150,
+        stock: 3,
+        minStock: 5,
+        isActive: true,
+      },
+      {
+        sku: "TEST-LOW-3",
+        name: "Producto Stock Bajo 3",
+        slug: "producto-stock-bajo-3",
+        description: "Tercer producto con stock crítico",
+        categoryId: bodyCategory.id,
+        price: 200,
+        stock: 1,
+        minStock: 5,
+        isActive: true,
+      },
+    ],
+    skipDuplicates: true,
+  });
+
+  console.log("Low stock products created (to test notifications)");
+
+  // Create test orders to trigger notifications
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  const twoDaysAgo = new Date();
+  twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+
+  // Create a customer first
+  const customerPassword = await bcrypt.hash("test123", 10);
+  const testCustomer = await prisma.customer.upsert({
+    where: { email: "test@example.com" },
+    update: {},
+    create: {
+      email: "test@example.com",
+      password: customerPassword,
+      fullName: "Cliente de Prueba",
+      phone: "5551234567",
+      isVerified: true,
+    },
+  });
+
+  // Create pending orders from yesterday (urgent - >24h)
+  const timestamp = Date.now();
+  const urgentOrder = await prisma.order.create({
+    data: {
+      orderNumber: `ORD-${twoDaysAgo.toISOString().slice(0, 10).replace(/-/g, "")}-${timestamp}-U`,
+      customerId: testCustomer.id,
+      customerName: "Cliente Urgente",
+      customerEmail: "urgente@test.com",
+      customerPhone: "5551111111",
+      totalAmount: 850,
+      status: "PENDING",
+      paymentMethod: "TRANSFER",
+      items: {
+        create: [
+          {
+            productId: serumWithVariants.id,
+            productName: serumWithVariants.name,
+            productSku: serumWithVariants.sku,
+            quantity: 1,
+            unitPrice: 450,
+            subtotal: 450,
+          },
+          {
+            productId: foundationWithColors.id,
+            productName: foundationWithColors.name,
+            productSku: foundationWithColors.sku,
+            quantity: 1,
+            unitPrice: 380,
+            subtotal: 380,
+          },
+        ],
+      },
+      createdAt: twoDaysAgo,
+    },
+  });
+
+  // Create pending orders from today (new orders)
+  const todayOrder1 = await prisma.order.create({
+    data: {
+      orderNumber: `ORD-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${timestamp}-1`,
+      customerId: testCustomer.id,
+      customerName: "Cliente Nuevo 1",
+      customerEmail: "nuevo1@test.com",
+      customerPhone: "5552222222",
+      totalAmount: 450,
+      status: "PENDING",
+      paymentMethod: "CASH",
+      items: {
+        create: [
+          {
+            productId: serumWithVariants.id,
+            productName: serumWithVariants.name,
+            productSku: serumWithVariants.sku,
+            quantity: 1,
+            unitPrice: 450,
+            subtotal: 450,
+          },
+        ],
+      },
+    },
+  });
+
+  const todayOrder2 = await prisma.order.create({
+    data: {
+      orderNumber: `ORD-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${timestamp}-2`,
+      customerId: testCustomer.id,
+      customerName: "Cliente Nuevo 2",
+      customerEmail: "nuevo2@test.com",
+      customerPhone: "5553333333",
+      totalAmount: 680,
+      status: "CONFIRMED",
+      paymentMethod: "TRANSFER",
+      items: {
+        create: [
+          {
+            productId: serumWithVariants.id,
+            productName: serumWithVariants.name,
+            productSku: serumWithVariants.sku,
+            quantity: 1,
+            unitPrice: 680,
+            subtotal: 680,
+          },
+        ],
+      },
+    },
+  });
+
+  console.log("Test orders created (1 urgent >24h, 2 from today)");
+
   console.log("\n✅ Seeding completed!");
   console.log(`- 4 categories`);
-  console.log(`- ${products.length} products`);
+  console.log(`- ${products.length} + 7 test products created`);
+  console.log(`- 2 products with variants (Serum, Foundation)`);
+  console.log(`- 3 low stock products (to test notifications)`);
   console.log(`- ${coupons.length} coupons`);
-  console.log(`- 1 admin user (admin/admin123)`);
+  console.log(`- 2 users (admin/admin123, test@test123)`);
+  console.log(`- 3 test orders (1 urgent, 2 pending)`);
+  console.log("\n📊 Test the notifications bell in admin panel!");
 }
 
 main()
