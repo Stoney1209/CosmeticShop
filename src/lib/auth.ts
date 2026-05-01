@@ -30,14 +30,14 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (!user || !user.isActive) {
-          await recordLoginAttempt(ipAddress, username, false);
+          await recordLoginAttempt(ipAddress, false);
           throw new Error("Usuario no encontrado o inactivo");
         }
 
         const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
 
         if (!isPasswordValid) {
-          await recordLoginAttempt(ipAddress, username, false);
+          await recordLoginAttempt(ipAddress, false);
           const recentAttempts = await getRecentFailedAttempts(ipAddress);
           if (recentAttempts > 0) {
             throw new Error(`Contraseña incorrecta. Intentos restantes: ${5 - recentAttempts}`);
@@ -45,7 +45,7 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Contraseña incorrecta");
         }
 
-        await recordLoginAttempt(ipAddress, username, true);
+        await recordLoginAttempt(ipAddress, true);
 
         return {
           id: user.id.toString(),

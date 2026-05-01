@@ -13,11 +13,11 @@ export type CustomerSession = {
 };
 
 function getSecret() {
-  return (
-    process.env.CUSTOMER_SESSION_SECRET ||
-    process.env.NEXTAUTH_SECRET ||
-    "dev-customer-session-secret"
-  );
+  const secret = process.env.CUSTOMER_SESSION_SECRET || process.env.NEXTAUTH_SECRET;
+  if (!secret) {
+    throw new Error("CUSTOMER_SESSION_SECRET or NEXTAUTH_SECRET environment variable is required");
+  }
+  return secret;
 }
 
 function encode(payload: CustomerSession) {

@@ -1,28 +1,20 @@
 import { withAuth } from "next-auth/middleware";
-import { NextResponse } from "next/server";
 
-export default withAuth(
-  function middleware(req) {
-    const isAuth = !!req.nextauth.token;
-    const isAuthPage = req.nextUrl.pathname.startsWith("/login");
-
-    if (isAuthPage) {
-      if (isAuth) {
-        return NextResponse.redirect(new URL("/dashboard", req.url));
+export default withAuth({
+  callbacks: {
+    authorized: ({ token }) => {
+      // Check if user has admin or operator role
+      const userRole = token?.role;
+      if (!userRole || (userRole !== "ADMIN" && userRole !== "OPERATOR")) {
+        return false;
       }
-      return null;
-    }
-
-    if (!isAuth) {
-      return NextResponse.redirect(new URL("/login", req.url));
-    }
-  },
-  {
-    callbacks: {
-      authorized: () => true,
+      return true;
     },
-  }
-);
+  },
+  pages: {
+    signIn: "/login",
+  },
+});
 
 export const config = {
   matcher: [

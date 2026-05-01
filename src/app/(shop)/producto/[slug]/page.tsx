@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Star } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { AddToCartButton } from "./AddToCartButton";
@@ -249,13 +250,20 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         <div className="mt-24">
           <h2 className="text-2xl font-bold text-slate-900 mb-8 font-heading">También te podría gustar</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {related.map((item: any) => (
+            {related.map((item) => (
               <Link key={item.id} href={`/producto/${item.slug}`} className="group">
-                <div className="aspect-[4/5] bg-slate-100 rounded-xl mb-4 overflow-hidden">
+                <div className="aspect-[4/5] bg-slate-100 rounded-xl mb-4 overflow-hidden relative">
                   {item.mainImage ? (
-                    <img src={item.mainImage} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                    // P6: Optimized with next/image
+                    <Image 
+                      src={item.mainImage} 
+                      alt={item.name}
+                      fill
+                      sizes="(max-width: 768px) 50vw, 25vw"
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-slate-300">✦</div>
+                    <div className="w-full h-full flex items-center justify-center text-slate-300" aria-hidden="true">✦</div>
                   )}
                 </div>
                 <h3 className="font-medium text-slate-900 line-clamp-1 group-hover:text-pink-600">{item.name}</h3>

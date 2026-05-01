@@ -3,8 +3,10 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { sendEmail, generateAbandonedCartEmail } from "@/lib/email";
+import { requireAdminServerAuth } from "@/lib/server-auth";
 
 export async function getAbandonedCarts() {
+  await requireAdminServerAuth();
   try {
     return await prisma.abandonedCart.findMany({
       include: {
@@ -63,6 +65,7 @@ export async function trackAbandonedCart(data: {
 }
 
 export async function sendRecoveryEmail(cartId: number) {
+  await requireAdminServerAuth();
   try {
     const cart = await prisma.abandonedCart.findUnique({
       where: { id: cartId },
@@ -135,6 +138,7 @@ export async function sendRecoveryEmail(cartId: number) {
 }
 
 export async function clearAbandonedCart(customerId: number) {
+  await requireAdminServerAuth();
   try {
     await prisma.abandonedCart.deleteMany({
       where: { customerId },

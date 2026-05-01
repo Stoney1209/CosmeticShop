@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { parse } from "csv-parse/sync";
 
 export async function exportProductsToCSV() {
   try {
@@ -47,7 +48,7 @@ export async function exportProductsToCSV() {
 
     const csvContent = [
       headers.join(","),
-      ...rows.map((row: any) => row.map((cell: any) => `"${cell}"`).join(",")),
+      ...rows.map((row: any) => row.map((cell: any) => `"${String(cell).replace(/"/g, '""')}"`).join(",")),
     ].join("\n");
 
     return { success: true, csvContent };
@@ -59,8 +60,11 @@ export async function exportProductsToCSV() {
 
 export async function importProductsFromCSV(csvContent: string) {
   try {
-    const lines = csvContent.split("\n");
-    const headers = lines[0].split(",").map((h) => h.replace(/"/g, "").trim());
+    const records = parse(csvContent, {
+      columns: true,
+      skip_empty_lines: true,
+      trim: true,
+    });
 
     const results = {
       success: 0,
@@ -68,16 +72,8 @@ export async function importProductsFromCSV(csvContent: string) {
       errorDetails: [] as string[],
     };
 
-    for (let i = 1; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (!line) continue;
-
-      const values = line.split(",").map((v) => v.replace(/"/g, "").trim());
-      const row: any = {};
-      
-      headers.forEach((header, index) => {
-        row[header] = values[index];
-      });
+    for (let i = 0; i < records.length; i++) {
+      const row: any = records[i];
 
       try {
         const categoryId = parseInt(row.categoryId);
@@ -121,7 +117,7 @@ export async function importProductsFromCSV(csvContent: string) {
         results.success++;
       } catch (error) {
         results.errors++;
-        results.errorDetails.push(`Row ${i + 1}: ${error}`);
+        results.errorDetails.push(`Row ${i + 2}: ${error}`);
       }
     }
 

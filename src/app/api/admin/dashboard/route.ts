@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireAdminAuth } from "@/lib/api-auth";
 
 export async function GET() {
   try {
+    await requireAdminAuth();
+
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const tomorrow = new Date(today);
@@ -224,6 +227,12 @@ export async function GET() {
       }
     });
   } catch (error) {
+    if (error instanceof Error && (error.message === "Unauthorized" || error.message === "Forbidden: Admin access required")) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.message === "Unauthorized" ? 401 : 403 }
+      );
+    }
     console.error("Dashboard error:", error);
     return NextResponse.json(
       { error: "Error loading dashboard data" },

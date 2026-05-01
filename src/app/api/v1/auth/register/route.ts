@@ -4,6 +4,8 @@ import bcrypt from "bcryptjs";
 import crypto from "node:crypto";
 import { setCustomerSession } from "@/lib/customer-session";
 import { sendEmail, generateEmailVerificationEmail, generateWelcomeEmail } from "@/lib/email";
+import { validatePassword } from "@/lib/password-validation";
+import { validateEmail } from "@/lib/email-validation";
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,9 +19,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (password.length < 6) {
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.valid) {
       return NextResponse.json(
-        { success: false, error: "La contraseña debe tener al menos 6 caracteres" },
+        { success: false, error: emailValidation.error },
+        { status: 400 }
+      );
+    }
+
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+      return NextResponse.json(
+        { success: false, error: passwordValidation.error },
         { status: 400 }
       );
     }

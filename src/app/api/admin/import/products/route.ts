@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { importProductsFromCSV } from "@/app/actions/import-export";
 import { validateCSRFToken } from "@/lib/csrf";
+import { requireAdminAuth } from "@/lib/api-auth";
 
 export async function POST(request: NextRequest) {
   try {
+    await requireAdminAuth();
     const formData = await request.formData();
     const csrfToken = formData.get("csrf_token") as string;
     const file = formData.get("file") as File;
@@ -44,6 +46,12 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
+    if (error instanceof Error && (error.message === "Unauthorized" || error.message === "Forbidden: Admin access required")) {
+      return NextResponse.json(
+        { success: false, error: error.message },
+        { status: error.message === "Unauthorized" ? 401 : 403 }
+      );
+    }
     console.error("Error importing products:", error);
     return NextResponse.json(
       { success: false, error: "Error al importar productos" },

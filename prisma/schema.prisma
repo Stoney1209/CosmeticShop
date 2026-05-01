@@ -200,6 +200,7 @@ enum OrderStatus {
   PENDING
   CONFIRMED
   PROCESSING
+  SHIPPED
   COMPLETED
   CANCELLED
 }
@@ -247,6 +248,7 @@ model OrderStatusHistory {
   order       Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
+  @@index([orderId, createdAt])
 }
 
 model OrderItem {

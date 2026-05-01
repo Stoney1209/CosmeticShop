@@ -1,8 +1,10 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { requireAdminServerAuth } from "@/lib/server-auth";
 
 export async function createDatabaseBackup() {
+  await requireAdminServerAuth();
   try {
     // Get all data from all tables
     const [
@@ -81,6 +83,7 @@ export async function createDatabaseBackup() {
 }
 
 export async function restoreDatabaseBackup(backup: any) {
+  await requireAdminServerAuth();
   try {
     // Validate backup structure
     if (!backup.timestamp || !backup.data) {

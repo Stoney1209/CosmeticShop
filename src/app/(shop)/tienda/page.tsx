@@ -9,6 +9,7 @@ import { SortSelect } from "@/components/shop/SortSelect";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { Metadata } from "next";
 import { buildTiendaUrl, type TiendaSearchParams, type CategoryNode, type BrandGroup } from "@/types/shop";
+import { Prisma } from "@prisma/client";
 
 export async function generateMetadata({
   searchParams,
@@ -75,8 +76,8 @@ export default async function StorePage({
   const limit = 12;
   const inStock = params.inStock === "true";
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let whereClause: any = { isActive: true };
+  // P4: Strict typing for Prisma queries
+  const whereClause: Prisma.ProductWhereInput = { isActive: true };
 
   if (categorySlug) {
     whereClause.category = { slug: categorySlug };
@@ -91,9 +92,10 @@ export default async function StorePage({
   }
 
   if (minPrice !== undefined || maxPrice !== undefined) {
-    whereClause.price = {};
-    if (minPrice !== undefined) whereClause.price.gte = minPrice;
-    if (maxPrice !== undefined) whereClause.price.lte = maxPrice;
+    const priceFilter: Prisma.DecimalFilter<"Product"> = {};
+    if (minPrice !== undefined) priceFilter.gte = minPrice;
+    if (maxPrice !== undefined) priceFilter.lte = maxPrice;
+    whereClause.price = priceFilter;
   }
 
   if (brand) {
@@ -104,8 +106,8 @@ export default async function StorePage({
     whereClause.stock = { gt: 0 };
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let orderBy: any = { createdAt: "desc" };
+  // P4: Strict typing for orderBy
+  let orderBy: Prisma.ProductOrderByWithRelationInput = { createdAt: "desc" };
   if (sort === "price_asc") orderBy = { price: "asc" };
   if (sort === "price_desc") orderBy = { price: "desc" };
   if (sort === "name_asc") orderBy = { name: "asc" };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getNotifications } from "@/app/actions/notifications";
@@ -8,17 +8,29 @@ import { getNotifications } from "@/app/actions/notifications";
 export function NotificationsBell() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [tooltipText, setTooltipText] = useState("Sin notificaciones");
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
+    // P3: Guard to prevent setState on unmounted component
+    isMountedRef.current = true;
+    
     loadNotifications();
     // Refresh every 5 minutes
     const interval = setInterval(loadNotifications, 5 * 60 * 1000);
-    return () => clearInterval(interval);
+    
+    return () => {
+      isMountedRef.current = false;
+      clearInterval(interval);
+    };
   }, []);
 
   async function loadNotifications() {
     try {
       const data = await getNotifications();
+      
+      // Only update state if component is still mounted
+      if (!isMountedRef.current) return;
+      
       setUnreadCount(data.unreadCount);
       
       // Build tooltip text from notifications
@@ -29,7 +41,10 @@ export function NotificationsBell() {
         setTooltipText("Sin notificaciones pendientes");
       }
     } catch (error) {
-      console.error("Failed to load notifications:", error);
+      // P3: Only log if component is still mounted
+      if (isMountedRef.current) {
+        console.error("Failed to load notifications:", error);
+      }
     }
   }
 

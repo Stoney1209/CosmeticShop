@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireAdminAuth } from "@/lib/api-auth";
 
 export async function POST(request: NextRequest) {
   try {
+    await requireAdminAuth();
     const formData = await request.formData();
     const file = formData.get('file') as File;
 
@@ -104,10 +106,16 @@ export async function POST(request: NextRequest) {
       imported: results.imported,
       errors: results.errors,
     });
-  } catch (error: any) {
+  } catch (error) {
+    if (error instanceof Error && (error.message === "Unauthorized" || error.message === "Forbidden: Admin access required")) {
+      return NextResponse.json(
+        { success: false, error: error.message },
+        { status: error.message === "Unauthorized" ? 401 : 403 }
+      );
+    }
     console.error("Error importing products:", error);
     return NextResponse.json(
-      { success: false, error: error.message || "Error importing products" },
+      { success: false, error: "Error importing products" },
       { status: 500 }
     );
   }

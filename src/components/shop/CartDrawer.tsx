@@ -101,13 +101,17 @@ export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
             variant="ghost"
             size="icon"
             className="relative text-[var(--on-surface-variant)] hover:text-[var(--primary)] hover:bg-[var(--secondary-container)]/50"
-            aria-label={itemCount > 0 ? `Carrito de compras, ${itemCount} artículos` : "Carrito de compras vacío"}
+            // P7: Use suppressHydrationWarning for aria-label that differs between SSR and client
+            aria-label="Carrito de compras"
+            suppressHydrationWarning
           >
             <ShoppingBag className="h-5 w-5" aria-hidden="true" />
+            {/* P7: Badge only rendered after mount to avoid hydration mismatch */}
             {isMounted && cart.items.length > 0 && (
               <span
                 className="absolute top-1 right-1 h-4 w-4 rounded-full bg-[var(--primary)] text-[10px] font-bold text-[var(--on-primary)] flex items-center justify-center border-2 border-[var(--surface)]"
                 aria-hidden="true"
+                suppressHydrationWarning
               >
                 {cart.totalItems()}
               </span>
@@ -129,8 +133,10 @@ export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
         </SheetHeader>
         
         {!isMounted ? (
-          <div className="flex-1 flex items-center justify-center p-6">
-            <div className="h-16 w-16 rounded-full bg-[var(--surface-container-low)] animate-pulse" />
+          // P9: Accessible loading state with aria-live
+          <div className="flex-1 flex items-center justify-center p-6" role="status" aria-live="polite" aria-label="Cargando carrito">
+            <span className="sr-only">Cargando contenido del carrito...</span>
+            <div className="h-16 w-16 rounded-full bg-[var(--surface-container-low)] animate-pulse" aria-hidden="true" />
           </div>
         ) : cart.items.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center p-6" style={{ color: 'var(--on-surface-variant)' }}>

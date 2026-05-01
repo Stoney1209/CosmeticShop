@@ -2,8 +2,10 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { requireAdminServerAuth } from "@/lib/server-auth";
 
 export async function getCustomers() {
+  await requireAdminServerAuth();
   try {
     return await prisma.customer.findMany({
       include: {
@@ -42,6 +44,7 @@ export async function getCustomers() {
 }
 
 export async function getCustomerById(id: number) {
+  await requireAdminServerAuth();
   try {
     return await prisma.customer.findUnique({
       where: { id },
@@ -88,6 +91,7 @@ export async function getCustomerById(id: number) {
 }
 
 export async function updateCustomerStatus(id: number, isActive: boolean) {
+  await requireAdminServerAuth();
   try {
     await prisma.customer.update({
       where: { id },
@@ -103,6 +107,7 @@ export async function updateCustomerStatus(id: number, isActive: boolean) {
 }
 
 export async function updateCustomerVerification(id: number, isVerified: boolean) {
+  await requireAdminServerAuth();
   try {
     await prisma.customer.update({
       where: { id },
@@ -118,6 +123,7 @@ export async function updateCustomerVerification(id: number, isVerified: boolean
 }
 
 export async function deleteCustomer(id: number) {
+  await requireAdminServerAuth();
   try {
     await prisma.customer.delete({
       where: { id },

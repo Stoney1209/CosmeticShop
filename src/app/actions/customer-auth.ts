@@ -67,13 +67,13 @@ export async function loginCustomer(data: { email: string; password: string; ipA
   const customer = await prisma.customer.findUnique({ where: { email } });
 
   if (!customer || !customer.isActive) {
-    await recordLoginAttempt(ipAddress, email, false);
+    await recordLoginAttempt(ipAddress, false);
     return { success: false, error: "Credenciales incorrectas." };
   }
 
   const valid = await bcrypt.compare(data.password, customer.password);
   if (!valid) {
-    await recordLoginAttempt(ipAddress, email, false);
+    await recordLoginAttempt(ipAddress, false);
     const recentAttempts = await getRecentFailedAttempts(ipAddress);
     if (recentAttempts > 0) {
       return { success: false, error: `Credenciales incorrectas. Intentos restantes: ${5 - recentAttempts}` };
@@ -81,7 +81,7 @@ export async function loginCustomer(data: { email: string; password: string; ipA
     return { success: false, error: "Credenciales incorrectas." };
   }
 
-  await recordLoginAttempt(ipAddress, email, true);
+  await recordLoginAttempt(ipAddress, true);
   await setCustomerSession({
     id: customer.id,
     email: customer.email,

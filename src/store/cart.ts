@@ -22,6 +22,9 @@ interface CartStore {
   totalPrice: () => number;
 }
 
+// P11: Selector hooks for optimized re-renders
+// These selectors prevent components from re-rendering when unrelated state changes
+
 export const useCart = create<CartStore>()(
   persist(
     (set, get) => ({

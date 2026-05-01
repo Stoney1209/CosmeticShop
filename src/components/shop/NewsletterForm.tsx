@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { subscribeToNewsletter } from "@/app/actions/newsletter";
 
@@ -9,14 +10,27 @@ interface NewsletterFormProps {
   variant?: "hero" | "footer";
 }
 
+// P5: Rate limiting - minimum time between submissions (5 seconds)
+const RATE_LIMIT_MS = 5000;
+
 export function NewsletterForm({ variant = "hero" }: NewsletterFormProps) {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
+  const lastSubmitTime = useRef<number>(0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
+
+    // P5: Client-side rate limiting
+    const now = Date.now();
+    if (now - lastSubmitTime.current < RATE_LIMIT_MS) {
+      const waitSeconds = Math.ceil((RATE_LIMIT_MS - (now - lastSubmitTime.current)) / 1000);
+      toast.error(`Por favor espera ${waitSeconds} segundos antes de intentar nuevamente`);
+      return;
+    }
+    lastSubmitTime.current = now;
 
     setStatus("loading");
     try {

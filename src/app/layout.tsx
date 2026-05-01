@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Noto_Serif, Manrope } from "next/font/google";
 import "./globals.css";
 import { StructuredData, generateOrganizationStructuredData, generateWebSiteStructuredData } from "@/components/seo/StructuredData";
@@ -15,9 +15,22 @@ const manrope = Manrope({
   weight: ["400", "500", "600", "700"],
 });
 
+// P12: PWA metadata
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#7a5646",
+};
+
 export const metadata: Metadata = {
   title: "LUXE BEAUTÉ | Premium Beauty & Skincare",
   description: "Discover luxury beauty products curated for the discerning clientele. Radiance reimagined.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "LUXE BEAUTÉ",
+  },
 };
 
 export default function RootLayout({

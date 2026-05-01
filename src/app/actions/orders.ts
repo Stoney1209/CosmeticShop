@@ -1,12 +1,17 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { getCustomerSession } from "@/lib/customer-session";
+import { requireAdminServerAuth } from "@/lib/server-auth";
 import { sendEmail, generateOrderConfirmationEmail, generateAdminOrderNotificationEmail, generateOrderStatusUpdateEmail } from "@/lib/email";
 import { generateWhatsAppMessage, markWhatsAppSent } from "@/lib/whatsapp";
+import { createOrderSchema, updateOrderStatusSchema } from "@/lib/validations";
+import { config } from "@/lib/config";
 
 export async function getOrders() {
+  await requireAdminServerAuth();
   try {
     return await prisma.order.findMany({
       orderBy: { createdAt: "desc" },
@@ -34,15 +39,19 @@ export async function createOrder(data: {
     productId: number; 
     productVariantId?: number;
     productName: string; 
-    productSku: string; 
+    productSku: string;
+    quantity: number;
+    unitPrice: number;
+    subtotal: number;
     variantLabel?: string;
-    quantity: number; 
-    unitPrice: number; 
-    subtotal: number 
   }[];
   totalAmount: number;
 }) {
   try {
+    // Validate input with Zod
+    const validatedData = createOrderSchema.parse(data);
+    data = validatedData as any;
+
     const session = await getCustomerSession();
 
     // Validaciones server-side antes de crear el pedido
@@ -127,7 +136,8 @@ export async function createOrder(data: {
     const count = await prisma.order.count({ where: { createdAt: { gte: new Date(new Date().setHours(0,0,0,0)) } } });
     const orderNumber = `ORD-${dateStr}-${(count + 1).toString().padStart(4, '0')}`;
 
-    const order = await prisma.$transaction(async (tx: any) => {
+    const order = await prisma.$transaction(
+      async (tx: Prisma.TransactionClient) => {
       // Create order
       const newOrder = await tx.order.create({
         data: {
@@ -155,16 +165,34 @@ export async function createOrder(data: {
         include: { items: true }
       });
 
-      // Update stock
+      // Update stock with race condition protection
       for (const item of data.items) {
-        // Decrement main product stock
+        // Check and decrement main product stock atomically
+        const product = await tx.product.findUnique({
+          where: { id: item.productId },
+          select: { stock: true }
+        });
+        
+        if (!product || product.stock < item.quantity) {
+          throw new Error(`Stock insuficiente para ${item.productName}`);
+        }
+
         await tx.product.update({
           where: { id: item.productId },
           data: { stock: { decrement: item.quantity } }
         });
 
-        // Decrement variant stock if exists
+        // Check and decrement variant stock if exists
         if (item.productVariantId) {
+          const variant = await tx.productVariant.findUnique({
+            where: { id: item.productVariantId },
+            select: { stock: true }
+          });
+          
+          if (!variant || variant.stock < item.quantity) {
+            throw new Error(`Stock insuficiente para variante de ${item.productName}`);
+          }
+
           await tx.productVariant.update({
             where: { id: item.productVariantId },
             data: { stock: { decrement: item.quantity } }
@@ -181,7 +209,9 @@ export async function createOrder(data: {
       }
 
       return newOrder;
-    });
+    },
+    { timeout: config.transactionTimeoutMs } // Transaction timeout from config
+    );
 
     revalidatePath("/pedidos");
     revalidatePath("/inventario");
@@ -223,9 +253,13 @@ export async function createOrder(data: {
   }
 }
 
-export async function updateOrderStatus(id: number, status: "PENDING" | "CONFIRMED" | "PROCESSING" | "COMPLETED" | "CANCELLED" | "SHIPPED", changedBy?: string, notes?: string) {
+export async function updateOrderStatus(id: number, status: "PENDING" | "CONFIRMED" | "PROCESSING" | "COMPLETED" | "CANCELLED", changedBy?: string, notes?: string) {
+  await requireAdminServerAuth();
   try {
-    const order = await prisma.$transaction(async (tx: any) => {
+    // Validate input with Zod
+    updateOrderStatusSchema.parse({ status, notes });
+    const order = await prisma.$transaction(
+      async (tx: Prisma.TransactionClient) => {
       const currentOrder = await tx.order.findUnique({ where: { id }, include: { items: true } });
       if (!currentOrder) throw new Error("Order not found");
 
@@ -281,7 +315,9 @@ export async function updateOrderStatus(id: number, status: "PENDING" | "CONFIRM
       }
 
       return updatedOrder;
-    });
+    },
+    { timeout: config.transactionTimeoutMs } // Transaction timeout from config
+    );
 
     // Send status update email to customer
     try {

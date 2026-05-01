@@ -2,8 +2,11 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { requireAdminServerAuth } from "@/lib/server-auth";
+import { createProductSchema, updateProductSchema } from "@/lib/validations";
 
 export async function getProducts(search?: string) {
+  await requireAdminServerAuth();
   try {
     const where = search ? {
       OR: [
@@ -56,8 +59,11 @@ export async function createProduct(data: {
     valueIds: number[];
   }[];
 }) {
+  await requireAdminServerAuth();
   try {
-    const { variants, ...productData } = data;
+    // Validate input
+    const validatedData = createProductSchema.parse(data);
+    const { variants, ...productData } = validatedData;
 
     const product = await prisma.product.create({
       data: {
@@ -89,8 +95,24 @@ export async function createProduct(data: {
 }
 
 export async function updateProduct(id: number, data: any) {
+  await requireAdminServerAuth();
   try {
-    const { variants, ...productData } = data;
+    // Validate input
+    const validatedData = updateProductSchema.parse(data);
+    const { variants, ...productData } = validatedData;
+
+    // Check if slug is unique (excluding current product)
+    if (productData.slug) {
+      const existing = await prisma.product.findFirst({
+        where: {
+          slug: productData.slug,
+          id: { not: id }
+        }
+      });
+      if (existing) {
+        return { success: false, error: "El slug ya está en uso por otro producto" };
+      }
+    }
 
     // Para simplificar el update de variantes, eliminamos las anteriores y creamos las nuevas
     // (En un sistema real más complejo haríamos una sincronización fina)
@@ -128,6 +150,7 @@ export async function updateProduct(id: number, data: any) {
 }
 
 export async function deleteProduct(id: number) {
+  await requireAdminServerAuth();
   try {
     await prisma.product.delete({
       where: { id },

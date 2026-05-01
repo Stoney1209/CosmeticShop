@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
+import { requireAdminAuth } from "@/lib/api-auth";
 
 export async function POST(request: NextRequest) {
   try {
+    await requireAdminAuth();
     const { id } = await request.json();
 
     if (!id) {
@@ -41,10 +43,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: "Password reset email sent",
-      // Remove this in production
-      resetToken: process.env.NODE_ENV === 'development' ? resetToken : undefined,
     });
   } catch (error) {
+    if (error instanceof Error && (error.message === "Unauthorized" || error.message === "Forbidden: Admin access required")) {
+      return NextResponse.json(
+        { success: false, error: error.message },
+        { status: error.message === "Unauthorized" ? 401 : 403 }
+      );
+    }
     console.error("Error resetting password:", error);
     return NextResponse.json(
       { success: false, error: "Error resetting password" },

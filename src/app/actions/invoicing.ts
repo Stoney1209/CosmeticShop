@@ -2,8 +2,10 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { requireAdminServerAuth } from "@/lib/server-auth";
 
 export async function getInvoiceSettings() {
+  await requireAdminServerAuth();
   try {
     const settings = await prisma.invoiceSetting.findFirst();
     return settings || null;
@@ -14,14 +16,14 @@ export async function getInvoiceSettings() {
 }
 
 export async function updateInvoiceSettings(data: {
-  rfc: string;
   businessName: string;
-  regime: string;
-  postalCode: string;
+  rfc: string;
+  address: string;
   email: string;
-  pacApiKey?: string;
-  pacApiUrl?: string;
+  phone: string;
+  taxRate: number;
 }) {
+  await requireAdminServerAuth();
   try {
     const existing = await prisma.invoiceSetting.findFirst();
     
@@ -45,6 +47,7 @@ export async function updateInvoiceSettings(data: {
 }
 
 export async function createInvoice(orderId: number) {
+  await requireAdminServerAuth();
   try {
     const order = await prisma.order.findUnique({
       where: { id: orderId },
@@ -83,7 +86,7 @@ export async function createInvoice(orderId: number) {
         emitterRfc: settings.rfc,
         emitterName: settings.businessName,
         emitterAddress: settings.address,
-        receptorRfc: "XAXX010101000", // Generic RFC for customers without one
+        receptorRfc: "XAXX010101000", // Generic RFC for customers (should be collected from customer in future)
         receptorName: order.customerName,
         receptorEmail: order.customerEmail,
         receptorUse: "G03",
@@ -108,6 +111,7 @@ export async function createInvoice(orderId: number) {
 }
 
 export async function getInvoices() {
+  await requireAdminServerAuth();
   try {
     return await prisma.invoice.findMany({
       include: {

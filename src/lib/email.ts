@@ -1,6 +1,10 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY || "re_GfUNAzQL_Q91bjGrXQ6jhXs4TjV21hVx3");
+if (!process.env.RESEND_API_KEY) {
+  throw new Error("RESEND_API_KEY environment variable is required");
+}
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM_EMAIL = process.env.EMAIL_FROM || "noreply@cosmeticsshop.com";
 
 interface EmailOptions {
@@ -8,6 +12,44 @@ interface EmailOptions {
   subject: string;
   html: string;
   text?: string;
+}
+
+async function sendEmailWithRetry({ to, subject, html, text, maxRetries = 3 }: { to: string; subject: string; html: string; text?: string; maxRetries?: number }) {
+  let lastError: any;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const { data, error } = await resend.emails.send({
+        from: FROM_EMAIL,
+        to,
+        subject,
+        html,
+        text: text || html.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim(),
+      });
+
+      if (error) {
+        console.error(`Error sending email (attempt ${attempt}/${maxRetries}):`, error);
+        lastError = error;
+        
+        // Wait before retry (exponential backoff)
+        if (attempt < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+        }
+      } else {
+        return data;
+      }
+    } catch (error) {
+      console.error(`Error sending email (attempt ${attempt}/${maxRetries}):`, error);
+      lastError = error;
+      
+      // Wait before retry (exponential backoff)
+      if (attempt < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+      }
+    }
+  }
+  
+  throw lastError || new Error("Failed to send email after retries");
 }
 
 export async function sendEmail({ to, subject, html, text }: EmailOptions) {
@@ -18,24 +60,12 @@ export async function sendEmail({ to, subject, html, text }: EmailOptions) {
       return { success: false, error: "Invalid email address" };
     }
 
-    const { data, error } = await resend.emails.send({
-      from: FROM_EMAIL,
-      to: [to],
-      subject,
-      html,
-      text: text || html.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim(),
-    });
-
-    if (error) {
-      console.error("Resend email error:", error);
-      return { success: false, error: error.message };
-    }
-
+    const data = await sendEmailWithRetry({ to, subject, html, text });
     console.log("Email sent successfully:", { to, subject, id: data?.id });
     return { success: true, id: data?.id };
   } catch (error) {
-    console.error("Error sending email:", error);
-    return { success: false, error: "Failed to send email" };
+    console.error("Error sending email after retries:", error);
+    return { success: false, error: error instanceof Error ? error.message : "Failed to send email" };
   }
 }
 
