@@ -769,15 +769,17 @@ export function ProductsClient({ initialProducts, categories, variantTypes }: Pr
 
       {/* Forms and Dialogs */}
       <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) setIsDialogOpen(false); }}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 border-none shadow-2xl rounded-2xl">
-          <div className="p-8">
-            <DialogHeader className="mb-6">
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0 border-none shadow-2xl rounded-2xl flex flex-col">
+          <div className="p-8 pb-4 border-b border-[var(--outline-variant)]/20">
+            <DialogHeader className="mb-2">
               <DialogTitle className="text-2xl font-heading font-bold text-[var(--on-surface)]">
                 {editingProduct ? 'Editar Producto' : 'Crear Nuevo Producto'}
               </DialogTitle>
               <p className="text-sm text-[var(--on-surface-variant)]">Completa los campos para {editingProduct ? 'actualizar' : 'añadir'} un producto al catálogo.</p>
             </DialogHeader>
-            
+          </div>
+          
+          <div className="flex-1 overflow-y-auto px-8 py-4">
             <form onSubmit={async (e) => {
               e.preventDefault();
               setIsSubmitting(true);
@@ -812,7 +814,7 @@ export function ProductsClient({ initialProducts, categories, variantTypes }: Pr
               }
             }}>
               <Tabs defaultValue="basic" className="w-full">
-                <TabsList className="grid w-full grid-cols-3 bg-[var(--surface-container-low)] rounded-xl h-12 p-1 mb-8">
+                <TabsList className="grid w-full grid-cols-3 bg-[var(--surface-container-low)] rounded-xl h-12 p-1 mb-6 sticky top-0 z-10">
                   <TabsTrigger value="basic" className="rounded-lg font-bold text-xs uppercase tracking-wider">Info. Básica</TabsTrigger>
                   <TabsTrigger value="pricing" className="rounded-lg font-bold text-xs uppercase tracking-wider">Precio & Stock</TabsTrigger>
                   <TabsTrigger value="images" className="rounded-lg font-bold text-xs uppercase tracking-wider">Multimedia</TabsTrigger>
@@ -950,14 +952,16 @@ export function ProductsClient({ initialProducts, categories, variantTypes }: Pr
                   </div>
                 </TabsContent>
               </Tabs>
-              
-              <DialogFooter className="mt-12 gap-4 border-t border-[var(--outline-variant)]/20 pt-8">
-                <Button type="button" variant="ghost" onClick={() => setIsDialogOpen(false)} className="rounded-lg h-11 px-8 font-bold text-xs uppercase tracking-wider">Cancelar</Button>
-                <Button type="submit" disabled={isSubmitting} className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-white rounded-lg h-11 px-10 font-bold text-xs uppercase tracking-wider shadow-lg">
-                  {isSubmitting ? 'Procesando...' : (editingProduct ? 'Guardar Cambios' : 'Crear Producto')}
-                </Button>
-              </DialogFooter>
             </form>
+          </div>
+          
+          <div className="px-8 py-4 border-t border-[var(--outline-variant)]/20 bg-[var(--surface)]">
+            <DialogFooter className="gap-4">
+              <Button type="button" variant="ghost" onClick={() => setIsDialogOpen(false)} className="rounded-lg h-11 px-8 font-bold text-xs uppercase tracking-wider">Cancelar</Button>
+              <Button type="submit" form={undefined} disabled={isSubmitting} onClick={() => document.querySelector('form')?.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }))} className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-white rounded-lg h-11 px-10 font-bold text-xs uppercase tracking-wider shadow-lg">
+                {isSubmitting ? 'Procesando...' : (editingProduct ? 'Guardar Cambios' : 'Crear Producto')}
+              </Button>
+            </DialogFooter>
           </div>
         </DialogContent>
       </Dialog>
