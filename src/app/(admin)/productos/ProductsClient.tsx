@@ -769,7 +769,7 @@ export function ProductsClient({ initialProducts, categories, variantTypes }: Pr
 
       {/* Forms and Dialogs */}
       <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) setIsDialogOpen(false); }}>
-        <DialogContent className="max-w-4xl max-h-[90vh] p-0 border-none shadow-2xl rounded-2xl flex flex-col">
+        <DialogContent className="max-w-6xl max-h-[95vh] p-0 border-none shadow-2xl rounded-2xl flex flex-col">
           <div className="p-8 pb-4 border-b border-[var(--outline-variant)]/20">
             <DialogHeader className="mb-2">
               <DialogTitle className="text-2xl font-heading font-bold text-[var(--on-surface)]">
@@ -821,18 +821,11 @@ export function ProductsClient({ initialProducts, categories, variantTypes }: Pr
                 </TabsList>
                 
                 <TabsContent value="basic" className="space-y-6 focus-visible:outline-none">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="space-y-2">
                       <Label className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-variant)]">SKU Identificador *</Label>
                       <Input value={formData.sku} onChange={e => setFormData({...formData, sku: e.target.value.toUpperCase()})} required className="h-11 rounded-lg bg-[var(--surface-container-low)] border-[var(--outline-variant)]/30" />
                     </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-variant)]">Marca / Fabricante</Label>
-                      <Input value={formData.brand} onChange={e => setFormData({...formData, brand: e.target.value})} className="h-11 rounded-lg bg-[var(--surface-container-low)] border-[var(--outline-variant)]/30" placeholder="Ej. L'Oréal" />
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-variant)]">Nombre Comercial *</Label>
                       <Input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required className="h-11 rounded-lg bg-[var(--surface-container-low)] border-[var(--outline-variant)]/30" />
@@ -843,7 +836,7 @@ export function ProductsClient({ initialProducts, categories, variantTypes }: Pr
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="space-y-2">
                       <Label className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-variant)]">Categoría *</Label>
                       <Select value={formData.categoryId} onValueChange={v => setFormData({...formData, categoryId: v || ""})}>
@@ -856,6 +849,10 @@ export function ProductsClient({ initialProducts, categories, variantTypes }: Pr
                           ))}
                         </SelectContent>
                       </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-variant)]">Marca / Fabricante</Label>
+                      <Input value={formData.brand} onChange={e => setFormData({...formData, brand: e.target.value})} className="h-11 rounded-lg bg-[var(--surface-container-low)] border-[var(--outline-variant)]/30" placeholder="Ej. L'Oréal" />
                     </div>
                     <div className="space-y-2">
                       <Label className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-variant)]">Peso Neto (kg)</Label>
