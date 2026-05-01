@@ -1,10 +1,18 @@
 import { Resend } from "resend";
 
-if (!process.env.RESEND_API_KEY) {
-  throw new Error("RESEND_API_KEY environment variable is required");
+// Lazy initialization to allow build without RESEND_API_KEY
+let resendInstance: Resend | null = null;
+
+function getResend(): Resend {
+  if (!resendInstance) {
+    if (!process.env.RESEND_API_KEY) {
+      throw new Error("RESEND_API_KEY environment variable is required");
+    }
+    resendInstance = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resendInstance;
 }
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM_EMAIL = process.env.EMAIL_FROM || "noreply@cosmeticsshop.com";
 
 interface EmailOptions {
@@ -19,7 +27,7 @@ async function sendEmailWithRetry({ to, subject, html, text, maxRetries = 3 }: {
   
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      const { data, error } = await resend.emails.send({
+      const { data, error } = await getResend().emails.send({
         from: FROM_EMAIL,
         to,
         subject,
