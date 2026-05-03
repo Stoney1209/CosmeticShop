@@ -239,11 +239,17 @@ export async function createOrder(data: {
       // Don't fail the order if email fails
     }
 
-    // Mark WhatsApp as sent (non-blocking)
+    // Trigger notification (non-blocking)
     try {
-      await markWhatsAppSent(order.id);
-    } catch (whatsappError) {
-      console.error("Error marking WhatsApp as sent:", whatsappError);
+      const { createNotification } = await import("@/app/actions/notifications");
+      await createNotification({
+        type: "order",
+        title: "Nuevo Pedido",
+        message: `Se ha recibido el pedido ${orderNumber} por $${data.totalAmount.toFixed(2)}`,
+        link: `/pedidos/${order.id}`
+      });
+    } catch (notifError) {
+      console.error("Error creating order notification:", notifError);
     }
 
     return { success: true, order };

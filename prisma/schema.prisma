@@ -436,3 +436,16 @@ model AbandonedCart {
 
   customer    Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
 }
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  type      String   // order, stock, system, alert, payment
+  title     String
+  message   String
+  link      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([isRead])
+  @@index([createdAt])
+}
