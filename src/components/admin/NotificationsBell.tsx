@@ -103,22 +103,22 @@ export function NotificationsBell() {
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenuTrigger 
-        render={
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)] hover:text-[var(--primary)] rounded-full transition-all duration-300"
-          >
+      <DropdownMenuTrigger>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)] hover:text-[var(--primary)] rounded-full transition-all duration-300"
+        >
+          <div className="relative flex items-center justify-center size-full">
             <Bell className={cn("w-5 h-5", unreadCount > 0 && "animate-tada")} />
             {unreadCount > 0 && (
               <span className="absolute -top-0.5 -right-0.5 w-4.5 h-4.5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-sm">
                 {unreadCount > 9 ? "9+" : unreadCount}
               </span>
             )}
-          </Button>
-        }
-      />
+          </div>
+        </Button>
+      </DropdownMenuTrigger>
 
       <DropdownMenuContent 
         align="end" 
