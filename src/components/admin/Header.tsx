@@ -97,11 +97,11 @@ export function Header() {
               </div>
             </div>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="cursor-pointer" onClick={() => router.push("/mi-cuenta")}>
-              Perfil
+            <DropdownMenuItem className="cursor-pointer" onClick={() => router.push("/usuarios")}>
+              Usuarios
             </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer" onClick={() => router.push("/configuracion")}>
-              Configuración
+            <DropdownMenuItem className="cursor-pointer" onClick={() => router.push("/configuracion/variantes")}>
+              Variantes
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem 
