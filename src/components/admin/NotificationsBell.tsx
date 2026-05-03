@@ -10,7 +10,6 @@ import {
   DropdownMenuContent, 
   DropdownMenuItem, 
   DropdownMenuTrigger,
-  DropdownMenuLabel
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { getNotifications, markAsRead, markAllAsRead, type AppNotification } from "@/app/actions/notifications";
@@ -97,7 +96,6 @@ export function NotificationsBell() {
     }
   };
 
-  // P12: Avoid hydration issues by not rendering anything until mounted
   if (!mounted) {
     return (
       <div className="w-9 h-9 flex items-center justify-center rounded-full text-[var(--on-surface-variant)]">
@@ -109,38 +107,41 @@ export function NotificationsBell() {
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       {/* 
-        S1: Use a simple button element as the trigger to avoid complex component interaction 
-        and fix Base UI error #31 (Trigger must have a single child).
+        S1: Use native children for DropdownMenuTrigger to avoid any ambiguity with render props.
       */}
-      <DropdownMenuTrigger
-        render={
-          <button 
-            type="button"
-            className="relative w-9 h-9 flex items-center justify-center rounded-full text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)] hover:text-[var(--primary)] transition-all duration-300 outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/20"
-            aria-label={`Notificaciones${unreadCount > 0 ? ` (${unreadCount} sin leer)` : ""}`}
-          >
+      <DropdownMenuTrigger>
+        <button 
+          type="button"
+          className="relative w-9 h-9 flex items-center justify-center rounded-full text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)] hover:text-[var(--primary)] transition-all duration-300 outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/20"
+          aria-label={`Notificaciones${unreadCount > 0 ? ` (${unreadCount} sin leer)` : ""}`}
+        >
+          <div className="relative flex items-center justify-center pointer-events-none">
             <Bell className={cn("w-5 h-5", unreadCount > 0 && "animate-tada")} />
             {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center border border-white shadow-sm">
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center border border-white shadow-sm">
                 {unreadCount > 9 ? "9+" : unreadCount}
               </span>
             )}
-          </button>
-        }
-      />
+          </div>
+        </button>
+      </DropdownMenuTrigger>
 
       <DropdownMenuContent 
         align="end" 
-        className="w-[380px] p-0 border-none shadow-2xl rounded-2xl overflow-hidden bg-white ring-1 ring-black/5"
+        className="w-[380px] p-0 border-none shadow-2xl rounded-2xl overflow-hidden bg-white ring-1 ring-black/5 z-50"
       >
+        {/* 
+          P3: Use standard div instead of DropdownMenuLabel to avoid MenuGroupRootContext issues (Base UI Error #31).
+        */}
         <div className="p-4 bg-white border-b border-[var(--outline-variant)]/20 flex items-center justify-between">
-          <DropdownMenuLabel className="p-0 text-sm font-bold uppercase tracking-widest text-[var(--on-surface)]">
+          <span className="text-sm font-bold uppercase tracking-widest text-[var(--on-surface)]">
             Notificaciones
-          </DropdownMenuLabel>
+          </span>
           {unreadCount > 0 && (
             <button 
               type="button"
               onClick={(e) => {
+                e.preventDefault();
                 e.stopPropagation();
                 handleMarkAllAsRead();
               }}
