@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Package, 
@@ -18,7 +17,10 @@ import { Button } from "@/components/ui/button";
 import { STATUS_LABELS, type DashboardData } from "@/app/actions/dashboard-types";
 import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DashboardSkeleton } from "./DashboardSkeleton";
+import Image from "next/image";
 
+// P3: Use dynamic imports for charts with ssr: false to avoid hydration issues and dimension warnings
 const SalesChart = dynamic(
   () => import("@/components/admin/DashboardCharts").then((mod) => mod.SalesChart),
   { ssr: false, loading: () => <Skeleton className="h-80 w-full rounded-lg" /> }
@@ -28,7 +30,6 @@ const ComparisonBar = dynamic(
   () => import("@/components/admin/DashboardCharts").then((mod) => mod.ComparisonBar),
   { ssr: false }
 );
-import Image from "next/image";
 
 interface DashboardContentProps {
   data: DashboardData;
@@ -41,14 +42,17 @@ export function DashboardContent({ data }: DashboardContentProps) {
     setMounted(true);
   }, []);
 
-  const today = mounted 
-    ? new Date().toLocaleDateString('es-MX', { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      })
-    : "";
+  // P12: Ultimate hydration fix - render skeleton until client is ready
+  if (!mounted) {
+    return <DashboardSkeleton />;
+  }
+
+  const today = new Date().toLocaleDateString('es-MX', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
 
   const statCards = [
     {
@@ -234,6 +238,7 @@ export function DashboardContent({ data }: DashboardContentProps) {
                           alt={`Imagen de ${item.product.name}`}
                           fill
                           sizes="40px"
+                          unoptimized={item.product.mainImage.includes('placehold.co')}
                           className="object-cover"
                         />
                       ) : (
@@ -281,6 +286,7 @@ export function DashboardContent({ data }: DashboardContentProps) {
                           alt={`Imagen de ${product.name}`}
                           fill
                           sizes="48px"
+                          unoptimized={product.mainImage.includes('placehold.co')}
                           className="object-cover"
                         />
                       ) : (
