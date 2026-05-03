@@ -61,29 +61,28 @@ export function Header() {
         <NotificationsBell />
         
         <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <Button
-                variant="ghost"
-                className="relative h-9 w-9 rounded-full ml-2 ring-2 ring-transparent hover:ring-[var(--primary)]/10 transition-all"
-                aria-label="Menú de usuario"
-              >
-                {/* P6: Removed external avatar dependency, using pure CSS fallback */}
+          <DropdownMenuTrigger>
+            <Button
+              variant="ghost"
+              className="relative h-9 w-9 rounded-full ml-2 ring-2 ring-transparent hover:ring-[var(--primary)]/10 transition-all"
+              aria-label="Menú de usuario"
+            >
+              <div className="flex items-center justify-center size-full pointer-events-none">
                 <Avatar className="h-9 w-9">
                   <AvatarFallback className="bg-[var(--primary)] text-white text-sm font-medium">AD</AvatarFallback>
                 </Avatar>
-              </Button>
-            }
-          />
+              </div>
+            </Button>
+          </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end" forceMount>
-            <DropdownMenuLabel className="font-normal">
+            <div className="px-4 py-3 bg-[var(--surface-container-low)]/50 border-b border-[var(--outline-variant)]/30">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none text-[var(--on-surface)]">Administrador</p>
+                <p className="text-sm font-bold leading-none text-[var(--on-surface)]">Administrador</p>
                 <p className="text-xs leading-none text-[var(--outline)]">
                   admin@luxebeaute.com
                 </p>
               </div>
-            </DropdownMenuLabel>
+            </div>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="cursor-pointer">Perfil</DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer">Configuración</DropdownMenuItem>
