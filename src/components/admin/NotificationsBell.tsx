@@ -15,13 +15,12 @@ import {
   DropdownMenuLabel
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
-import { getNotifications, markAsRead, markAllAsRead, type Notification } from "@/app/actions/notifications";
+import { getNotifications, markAsRead, markAllAsRead, type AppNotification } from "@/app/actions/notifications";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 export function NotificationsBell() {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
@@ -31,8 +30,8 @@ export function NotificationsBell() {
     try {
       const data = await getNotifications();
       if (!isMountedRef.current) return;
-      setNotifications(data.notifications);
-      setUnreadCount(data.unreadCount);
+      setNotifications(data.notifications || []);
+      setUnreadCount(data.unreadCount || 0);
     } catch (error) {
       console.error("Failed to load notifications:", error);
     }
@@ -42,7 +41,6 @@ export function NotificationsBell() {
     isMountedRef.current = true;
     loadNotifications();
     
-    // P3: Refresh every 30 seconds as requested
     const interval = setInterval(loadNotifications, 30000);
     
     return () => {
@@ -52,20 +50,28 @@ export function NotificationsBell() {
   }, [loadNotifications]);
 
   const handleMarkAsRead = async (id: number, link?: string | null) => {
-    await markAsRead(id);
-    loadNotifications();
-    if (link) {
-      router.push(link);
-      setIsOpen(false);
+    try {
+      await markAsRead(id);
+      loadNotifications();
+      if (link) {
+        setIsOpen(false);
+        router.push(link);
+      }
+    } catch (error) {
+      console.error("Error marking as read:", error);
     }
   };
 
   const handleMarkAllAsRead = async () => {
-    await markAllAsRead();
-    loadNotifications();
+    try {
+      await markAllAsRead();
+      loadNotifications();
+    } catch (error) {
+      console.error("Error marking all as read:", error);
+    }
   };
 
-  const getIcon = (type: string) => {
+  const renderIcon = (type: string) => {
     switch (type) {
       case "order": return <Package className="w-4 h-4 text-emerald-500" />;
       case "stock": return <AlertTriangle className="w-4 h-4 text-amber-500" />;
@@ -76,16 +82,23 @@ export function NotificationsBell() {
     }
   };
 
-  const formatRelativeTime = (date: Date) => {
-    const now = new Date();
-    const diffInSeconds = Math.floor((now.getTime() - new Date(date).getTime()) / 1000);
-    
-    if (diffInSeconds < 60) return "ahora mismo";
-    if (diffInSeconds < 3600) return `hace ${Math.floor(diffInSeconds / 60)} min`;
-    if (diffInSeconds < 86400) return `hace ${Math.floor(diffInSeconds / 3600)} h`;
-    if (diffInSeconds < 604800) return `hace ${Math.floor(diffInSeconds / 86400)} d`;
-    
-    return new Date(date).toLocaleDateString();
+  const formatRelativeTime = (date: string | Date) => {
+    try {
+      const d = new Date(date);
+      if (isNaN(d.getTime())) return "Reciente";
+      
+      const now = new Date();
+      const diffInSeconds = Math.floor((now.getTime() - d.getTime()) / 1000);
+      
+      if (diffInSeconds < 60) return "ahora mismo";
+      if (diffInSeconds < 3600) return `hace ${Math.floor(diffInSeconds / 60)} min`;
+      if (diffInSeconds < 86400) return `hace ${Math.floor(diffInSeconds / 3600)} h`;
+      if (diffInSeconds < 604800) return `hace ${Math.floor(diffInSeconds / 86400)} d`;
+      
+      return d.toLocaleDateString();
+    } catch (e) {
+      return "Reciente";
+    }
   };
 
   return (
@@ -96,9 +109,8 @@ export function NotificationsBell() {
             variant="ghost"
             size="icon"
             className="relative text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)] hover:text-[var(--primary)] rounded-full transition-all duration-300"
-            aria-label={`Notificaciones${unreadCount > 0 ? ` (${unreadCount} sin leer)` : ""}`}
           >
-            <Bell className={cn("w-5 h-5", unreadCount > 0 && "animate-tada")} aria-hidden="true" />
+            <Bell className={cn("w-5 h-5", unreadCount > 0 && "animate-tada")} />
             {unreadCount > 0 && (
               <span className="absolute -top-0.5 -right-0.5 w-4.5 h-4.5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-sm">
                 {unreadCount > 9 ? "9+" : unreadCount}
@@ -110,7 +122,7 @@ export function NotificationsBell() {
 
       <DropdownMenuContent 
         align="end" 
-        className="w-[380px] p-0 border-none shadow-2xl rounded-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+        className="w-[380px] p-0 border-none shadow-2xl rounded-2xl overflow-hidden"
       >
         <div className="p-4 bg-white border-b border-[var(--outline-variant)]/20 flex items-center justify-between">
           <DropdownMenuLabel className="p-0 text-sm font-bold uppercase tracking-widest text-[var(--on-surface)]">
@@ -121,7 +133,7 @@ export function NotificationsBell() {
               variant="ghost" 
               size="sm" 
               onClick={(e) => {
-                e.preventDefault();
+                e.stopPropagation();
                 handleMarkAllAsRead();
               }}
               className="h-8 px-2 text-[10px] font-bold uppercase tracking-wider text-[var(--primary)] hover:bg-[var(--primary)]/5 rounded-lg"
@@ -133,7 +145,7 @@ export function NotificationsBell() {
         </div>
 
         <ScrollArea className="h-[420px]">
-          {notifications.length > 0 ? (
+          {notifications && notifications.length > 0 ? (
             <div className="py-1">
               {notifications.map((n) => (
                 <DropdownMenuItem 
@@ -150,7 +162,7 @@ export function NotificationsBell() {
                     n.type === 'stock' ? 'bg-amber-50' : 
                     n.type === 'alert' ? 'bg-red-50' : 'bg-slate-50'
                   )}>
-                    {getIcon(n.type)}
+                    {renderIcon(n.type)}
                   </div>
                   
                   <div className="flex-1 min-w-0 space-y-1">
@@ -199,11 +211,11 @@ export function NotificationsBell() {
             variant="ghost" 
             className="w-full h-10 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--outline)] hover:text-[var(--primary)] transition-colors"
             onClick={() => {
-              router.push("/notificaciones");
               setIsOpen(false);
+              router.push("/dashboard");
             }}
           >
-            Ver historial completo
+            Ir al Dashboard
           </Button>
         </div>
       </DropdownMenuContent>
