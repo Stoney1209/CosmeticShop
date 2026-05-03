@@ -27,6 +27,7 @@ import {
 import { MobileSidebar } from "./MobileSidebar";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { signOut } from "next-auth/react";
 
 export function Header() {
   const router = useRouter();
@@ -96,10 +97,19 @@ export function Header() {
               </div>
             </div>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="cursor-pointer">Perfil</DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer">Configuración</DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer" onClick={() => router.push("/mi-cuenta")}>
+              Perfil
+            </DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer" onClick={() => router.push("/configuracion")}>
+              Configuración
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-[var(--error)] cursor-pointer font-medium">Cerrar Sesión</DropdownMenuItem>
+            <DropdownMenuItem 
+              className="text-[var(--error)] cursor-pointer font-medium" 
+              onClick={() => signOut({ callbackUrl: "/login" })}
+            >
+              Cerrar Sesión
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
