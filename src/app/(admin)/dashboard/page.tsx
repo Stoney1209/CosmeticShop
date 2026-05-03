@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { getDashboardData } from "@/app/actions/dashboard";
 import dynamic from "next/dynamic";
+import { DashboardSkeleton } from "./DashboardSkeleton";
 
 const DashboardContent = dynamic(
   () => import("./DashboardContent").then((mod) => mod.DashboardContent),
