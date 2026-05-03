@@ -5,7 +5,7 @@ import { DashboardSkeleton } from "./DashboardSkeleton";
 
 const DashboardContent = dynamic(
   () => import("./DashboardContent").then((mod) => mod.DashboardContent),
-  { ssr: false, fallback: <DashboardSkeleton /> }
+  { ssr: false, loading: () => <DashboardSkeleton /> }
 );
 
 // P2: Server Component - data fetching happens on server with streaming
