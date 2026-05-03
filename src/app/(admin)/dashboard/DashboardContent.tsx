@@ -16,7 +16,18 @@ import {
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { STATUS_LABELS, type DashboardData } from "@/app/actions/dashboard-types";
-import { SalesChart, ComparisonBar } from "@/components/admin/DashboardCharts";
+import dynamic from "next/dynamic";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const SalesChart = dynamic(
+  () => import("@/components/admin/DashboardCharts").then((mod) => mod.SalesChart),
+  { ssr: false, loading: () => <Skeleton className="h-80 w-full rounded-lg" /> }
+);
+
+const ComparisonBar = dynamic(
+  () => import("@/components/admin/DashboardCharts").then((mod) => mod.ComparisonBar),
+  { ssr: false }
+);
 import Image from "next/image";
 
 interface DashboardContentProps {
