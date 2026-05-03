@@ -115,6 +115,11 @@ model Product {
   variants        ProductVariant[]
   reviews         Review[]
   wishlists       Wishlist[]
+
+  @@index([categoryId])
+  @@index([isActive])
+  @@index([slug])
+  @@index([createdAt])
 }
 
 // NUEVO: Sistema de Variantes
@@ -235,6 +240,11 @@ model Order {
   reviews         Review[]
   invoices        Invoice[]
   statusHistory   OrderStatusHistory[]
+
+  @@index([customerId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([orderNumber])
 }
 
 model OrderStatusHistory {
@@ -334,6 +344,9 @@ model LoginAttempt {
   ipAddress String
   username  String   @default("")
   createdAt DateTime @default(now())
+
+  @@index([ipAddress])
+  @@index([createdAt])
 }
 
 model IpBlocklist {

@@ -42,17 +42,17 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center p-4">
+    <div className="min-h-screen bg-[var(--surface-container-low)] flex flex-col justify-center items-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-pink-100 mb-4">
-            <span className="text-pink-600 text-3xl">✦</span>
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[var(--primary-container)] mb-4">
+            <span className="text-[var(--primary)] text-3xl">✦</span>
           </div>
-          <h1 className="text-2xl font-bold text-slate-900">CosmeticsAdmin</h1>
-          <p className="text-slate-500 mt-2">Inicia sesión en tu panel de control</p>
+          <h1 className="text-2xl font-bold text-[var(--on-surface)]">CosmeticsAdmin</h1>
+          <p className="text-[var(--on-surface-variant)] mt-2">Inicia sesión en tu panel de control</p>
         </div>
 
-        <Card className="border-slate-200 shadow-lg">
+        <Card className="border-[var(--outline-variant)] shadow-lg">
           <CardHeader>
             <CardTitle>Acceso</CardTitle>
             <CardDescription>Ingresa tus credenciales para continuar.</CardDescription>
@@ -60,7 +60,7 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
               {error && (
-                <div className="bg-red-50 text-red-600 p-3 rounded-md flex items-center text-sm font-medium">
+                <div className="bg-[var(--error-container)] text-[var(--error)] p-3 rounded-md flex items-center text-sm font-medium">
                   <AlertCircle className="w-4 h-4 mr-2" />
                   {error}
                 </div>
@@ -75,7 +75,7 @@ export default function LoginPage() {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
-                  className="focus-visible:ring-pink-500"
+                  className="focus-visible:ring-[var(--primary)]"
                 />
               </div>
               <div className="space-y-2">
@@ -88,12 +88,12 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="focus-visible:ring-pink-500"
+                  className="focus-visible:ring-[var(--primary)]"
                 />
               </div>
             </CardContent>
             <CardFooter>
-              <Button type="submit" className="w-full bg-pink-600 hover:bg-pink-700 text-white" disabled={isLoading}>
+              <Button type="submit" className="w-full bg-[var(--primary)] hover:bg-[var(--on-primary-container)] text-[var(--on-primary)]" disabled={isLoading}>
                 {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
               </Button>
             </CardFooter>

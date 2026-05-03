@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { ShoppingBag, X, Plus, Minus, ArrowRight, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -189,7 +190,15 @@ export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
                   <div key={`${item.id}-${item.variantId || 'base'}`} className="flex gap-4 group">
                     <div className="h-20 w-20 bg-[var(--surface-container-low)] rounded-xl border border-[var(--outline-variant)]/20 overflow-hidden flex-shrink-0">
                       {item.image ? (
-                        <img src={item.image} alt={`${item.name}`} className="h-full w-full object-cover" />
+                        <div className="relative h-full w-full">
+                          <Image
+                            src={item.image}
+                            alt={`${item.name}`}
+                            fill
+                            sizes="80px"
+                            className="object-cover"
+                          />
+                        </div>
                       ) : (
                         <div className="h-full w-full flex items-center justify-center text-[var(--outline-variant)]/40" aria-hidden="true">✦</div>
                       )}

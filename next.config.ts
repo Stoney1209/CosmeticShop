@@ -14,7 +14,13 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "**",
+        hostname: "res.cloudinary.com",
+        pathname: "/image/upload/**",
+      },
+      {
+        protocol: "https",
+        hostname: "*.cloudinary.com",
+        pathname: "/image/upload/**",
       },
     ],
   },
@@ -50,6 +56,10 @@ const nextConfig: NextConfig = {
           {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=()'
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self'; connect-src 'self' https://*.googleapis.com https://res.cloudinary.com; frame-ancestors 'self'; base-uri 'self'; form-action 'self';"
           }
         ]
       },
