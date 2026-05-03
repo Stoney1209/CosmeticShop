@@ -42,6 +42,35 @@ export function OrdersClient({ initialOrders }: { initialOrders: any[] }) {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [statusNote, setStatusNote] = useState("");
+  const [selectedOrders, setSelectedOrders] = useState<number[]>([]);
+
+  const handleBulkStatusChange = async (newStatus: string) => {
+    if (selectedOrders.length === 0) return;
+    
+    setIsStatusSubmitting(true);
+    const toastId = toast.loading(`Actualizando ${selectedOrders.length} pedidos...`);
+    
+    try {
+      // For simplicity in this demo, we'll iterate. 
+      // In production, a dedicated bulk action would be better.
+      const promises = selectedOrders.map(id => updateOrderStatus(id, newStatus as any, "Actualización masiva"));
+      const results = await Promise.all(promises);
+      
+      const successCount = results.filter(r => r.success).length;
+      
+      if (successCount > 0) {
+        toast.success(`${successCount} pedidos actualizados correctamente`, { id: toastId });
+        setOrders(orders.map(o => selectedOrders.includes(o.id) ? { ...o, status: newStatus } : o));
+        setSelectedOrders([]);
+      } else {
+        toast.error("Error al actualizar los pedidos", { id: toastId });
+      }
+    } catch (e) {
+      toast.error("Ocurrió un error inesperado", { id: toastId });
+    } finally {
+      setIsStatusSubmitting(false);
+    }
+  };
 
   // Apply filters
   useEffect(() => {
@@ -168,10 +197,50 @@ export function OrdersClient({ initialOrders }: { initialOrders: any[] }) {
       </div>
 
       {/* Orders Table */}
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto relative">
+        {selectedOrders.length > 0 && (
+          <div className="absolute top-0 left-0 w-full h-12 bg-[var(--primary)] text-white z-20 flex items-center justify-between px-6 animate-in slide-in-from-top duration-300">
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-bold">{selectedOrders.length} pedidos seleccionados</span>
+              <div className="h-4 w-px bg-white/20" />
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] uppercase tracking-wider font-bold opacity-80">Cambiar estado a:</span>
+                <div className="flex gap-1">
+                  {["PROCESSING", "SHIPPED", "COMPLETED"].map((status) => (
+                    <Button 
+                      key={status}
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-7 text-[10px] font-bold bg-white/10 hover:bg-white/20 border-none text-white px-3"
+                      onClick={() => handleBulkStatusChange(status)}
+                      disabled={isStatusSubmitting}
+                    >
+                      {statusConfig[status as keyof typeof statusConfig].label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => setSelectedOrders([])} className="text-white hover:bg-white/10 h-8">
+              Cancelar
+            </Button>
+          </div>
+        )}
+
         <Table>
           <TableHeader className="bg-[var(--surface-container-low)]">
             <TableRow>
+              <TableHead className="w-12 pl-6">
+                <input 
+                  type="checkbox" 
+                  className="w-4 h-4 rounded border-[var(--outline-variant)] accent-[var(--primary)]"
+                  checked={selectedOrders.length === filteredOrders.length && filteredOrders.length > 0}
+                  onChange={(e) => {
+                    if (e.target.checked) setSelectedOrders(filteredOrders.map(o => o.id));
+                    else setSelectedOrders([]);
+                  }}
+                />
+              </TableHead>
               <TableHead className="font-bold text-[var(--on-surface-variant)] uppercase tracking-wider text-[10px]">Nº Pedido</TableHead>
               <TableHead className="font-bold text-[var(--on-surface-variant)] uppercase tracking-wider text-[10px]">Fecha de Registro</TableHead>
               <TableHead className="font-bold text-[var(--on-surface-variant)] uppercase tracking-wider text-[10px]">Información del Cliente</TableHead>
@@ -183,7 +252,7 @@ export function OrdersClient({ initialOrders }: { initialOrders: any[] }) {
           <TableBody>
             {filteredOrders.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-32 text-center text-[var(--outline)] italic">
+                <TableCell colSpan={7} className="h-32 text-center text-[var(--outline)] italic">
                   No se encontraron pedidos que coincidan con los criterios de búsqueda.
                 </TableCell>
               </TableRow>
@@ -191,8 +260,20 @@ export function OrdersClient({ initialOrders }: { initialOrders: any[] }) {
               filteredOrders.map((order) => {
                 const config = statusConfig[order.status as keyof typeof statusConfig];
                 const StatusIcon = config.icon;
+                const isSelected = selectedOrders.includes(order.id);
                 return (
-                  <TableRow key={order.id} className="group hover:bg-[var(--surface-container-lowest)] transition-colors">
+                  <TableRow key={order.id} className={`group transition-colors ${isSelected ? 'bg-[var(--primary-container)]/5' : 'hover:bg-[var(--surface-container-lowest)]'}`}>
+                    <TableCell className="pl-6">
+                      <input 
+                        type="checkbox" 
+                        className="w-4 h-4 rounded border-[var(--outline-variant)] accent-[var(--primary)]"
+                        checked={isSelected}
+                        onChange={(e) => {
+                          if (e.target.checked) setSelectedOrders([...selectedOrders, order.id]);
+                          else setSelectedOrders(selectedOrders.filter(id => id !== order.id));
+                        }}
+                      />
+                    </TableCell>
                     <TableCell className="font-bold text-[var(--on-surface)]">{order.orderNumber}</TableCell>
                     <TableCell className="text-[var(--on-surface-variant)] text-xs">
                       <div className="font-medium">
