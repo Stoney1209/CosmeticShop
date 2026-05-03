@@ -50,13 +50,16 @@ export function MobileSidebar() {
                     <Link
                       href={item.href}
                       onClick={() => setOpen(false)}
-                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-300 group relative overflow-hidden ${
                         isActive
-                          ? "bg-[var(--primary)] text-white font-medium shadow-md"
+                          ? "bg-[var(--primary)] text-white font-semibold shadow-[0_4px_12px_rgba(122,86,70,0.3)]"
                           : "text-[#a89690] hover:bg-[#3d3836] hover:text-white"
                       }`}
                     >
-                      <Icon className={`w-5 h-5 ${isActive ? "text-white" : "text-[#a89690]"}`} aria-hidden="true" />
+                      {isActive && (
+                        <span className="absolute left-0 top-0 w-1 h-full bg-white/20" />
+                      )}
+                      <Icon className={`w-5 h-5 transition-transform duration-300 ${isActive ? "text-white scale-110" : "text-[#a89690] group-hover:scale-110"}`} aria-hidden="true" />
                       {item.name}
                     </Link>
                   </li>

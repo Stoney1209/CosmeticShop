@@ -41,16 +41,16 @@ export function ProductCard({ product }: ProductCardProps) {
   };
 
   return (
-    <div className="group bg-[var(--surface-container-lowest)] rounded-xl overflow-hidden shadow-[var(--shadow-ambient)] hover:shadow-[var(--shadow-ambient-hover)] transition-all duration-300 flex flex-col">
+    <div className="group bg-[var(--surface-container-lowest)] rounded-xl overflow-hidden shadow-[var(--shadow-ambient)] hover:shadow-[var(--shadow-ambient-hover)] transition-all duration-500 flex flex-col hover:-translate-y-1">
       <Link href={`/producto/${product.slug}`} className="aspect-[4/5] bg-[var(--surface-container-low)] relative overflow-hidden flex items-center justify-center">
         {product.mainImage ? (
-          /* P1: Next.js Image component for optimized loading */
+          /* P1: Next.js Image component for optimized loading with graceful transition */
           <Image
             src={product.mainImage}
             alt={`${product.name} — ${product.category?.name || 'cosmético premium'}`}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className="object-cover group-hover:scale-105 transition-transform duration-700"
+            className="object-cover group-hover:scale-110 transition-transform duration-1000 ease-out animate-in fade-in duration-700"
           />
         ) : (
           <div className="text-[var(--outline-variant)]/40 flex flex-col items-center group-hover:scale-110 transition-transform duration-700" aria-hidden="true">

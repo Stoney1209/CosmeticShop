@@ -3,6 +3,7 @@ import { Search, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CartDrawer } from "./CartDrawer";
+import { NavbarLinks } from "./NavbarLinks";
 import { MobileMenu, MobileSearchButton } from "./MobileMenu";
 import { getCustomerSession } from "@/lib/customer-session";
 import { prisma } from "@/lib/prisma";
@@ -93,23 +94,9 @@ export async function Header() {
           </div>
         </div>
       </div>
-      {/* A3: aria-label on nav for screen reader differentiation */}
       <nav className="hidden md:block border-t border-[var(--outline-variant)]/20 bg-[var(--surface-container-lowest)]" aria-label="Categorías de productos">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <ul className="flex items-center gap-6 lg:gap-8 py-3.5 text-sm font-medium text-[var(--on-surface-variant)]">
-            <li><Link href="/tienda" className="hover:text-[var(--primary)] transition-colors">Ver Todo</Link></li>
-            {parentCategories.map((category) => (
-              <li key={category.id}>
-                <Link 
-                  href={`/tienda?category=${category.slug}`} 
-                  className="hover:text-[var(--primary)] transition-colors"
-                >
-                  {category.name}
-                </Link>
-              </li>
-            ))}
-            <li><Link href="/tienda?sort=price_asc" className="text-[var(--primary)] font-semibold hover:text-[var(--primary-container)] transition-colors">Ofertas</Link></li>
-          </ul>
+          <NavbarLinks categories={parentCategories} />
         </div>
       </nav>
     </header>
