@@ -100,9 +100,6 @@ export function Header() {
             <DropdownMenuItem className="cursor-pointer" onClick={() => router.push("/usuarios")}>
               Usuarios
             </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer" onClick={() => router.push("/configuracion/variantes")}>
-              Variantes
-            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem 
               className="text-[var(--error)] cursor-pointer font-medium" 
