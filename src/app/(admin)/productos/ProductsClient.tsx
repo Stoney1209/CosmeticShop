@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { 
   Plus, Pencil, Trash2, Image as ImageIcon, CheckCircle2, XCircle, 
   ChevronLeft, ChevronRight, CheckSquare, Square, Upload, X, Copy, 
-  AlertCircle, ArrowUpDown, Search, RotateCcw, Settings2 
+  AlertCircle, ArrowUpDown, Search, RotateCcw, Settings2, LayoutDashboard 
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -21,6 +21,7 @@ import { createProduct, updateProduct, deleteProduct } from "@/app/actions/produ
 import { CldUploadWidget } from 'next-cloudinary';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
+import { ProductFormWizard } from "@/components/admin/ProductFormWizard";
 import type { AdminProduct, AdminCategory, AdminVariantType, ImportResult } from "@/types/admin";
 
 interface ProductsClientProps {
@@ -769,196 +770,62 @@ export function ProductsClient({ initialProducts, categories, variantTypes }: Pr
 
       {/* Forms and Dialogs */}
       <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) setIsDialogOpen(false); }}>
-        <DialogContent className="max-w-6xl max-h-[95vh] p-0 border-none shadow-2xl rounded-2xl flex flex-col">
-          <div className="p-8 pb-4 border-b border-[var(--outline-variant)]/20">
-            <DialogHeader className="mb-2">
-              <DialogTitle className="text-2xl font-heading font-bold text-[var(--on-surface)]">
-                {editingProduct ? 'Editar Producto' : 'Crear Nuevo Producto'}
-              </DialogTitle>
-              <p className="text-sm text-[var(--on-surface-variant)]">Completa los campos para {editingProduct ? 'actualizar' : 'añadir'} un producto al catálogo.</p>
+        <DialogContent className="max-w-[95vw] lg:max-w-[1200px] max-h-[95vh] p-0 border-none shadow-2xl rounded-[2rem] flex flex-col overflow-hidden">
+          <div className="p-8 pb-0 bg-white">
+            <DialogHeader className="mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-[var(--primary)]/5 flex items-center justify-center">
+                  <LayoutDashboard className="w-6 h-6 text-[var(--primary)]" />
+                </div>
+                <div>
+                  <DialogTitle className="text-3xl font-heading font-black text-[var(--on-surface)] tracking-tight">
+                    {editingProduct ? 'Editar Producto' : 'Diseñar Nuevo Producto'}
+                  </DialogTitle>
+                  <p className="text-sm font-medium text-[var(--on-surface-variant)]">
+                    {editingProduct ? `Modificando: ${editingProduct.name}` : 'Define los detalles, precios e imágenes para tu nuevo lanzamiento.'}
+                  </p>
+                </div>
+              </div>
             </DialogHeader>
           </div>
           
-          <div className="flex-1 overflow-y-auto px-8 py-4">
-            <form onSubmit={async (e) => {
-              e.preventDefault();
-              setIsSubmitting(true);
-              
-              const payload = {
-                ...formData,
-                categoryId: parseInt(formData.categoryId),
-                price: parseFloat(formData.price),
-                costPrice: formData.costPrice ? parseFloat(formData.costPrice) : undefined,
-                stock: parseInt(formData.stock),
-                minStock: parseInt(formData.minStock) || 10,
-                weight: formData.weight || undefined,
-              };
-
-              try {
-                const result = editingProduct 
-                  ? await updateProduct(editingProduct.id, payload)
-                  : await createProduct(payload);
-                  
-                if (result.success) {
-                  toast.success(editingProduct ? 'Producto actualizado' : 'Producto creado con éxito');
-                  setIsDialogOpen(false);
-                  router.refresh();
-                  window.location.reload();
-                } else {
-                  toast.error(result.error);
-                }
-              } catch {
-                toast.error('Ocurrió un error inesperado');
-              } finally {
-                setIsSubmitting(false);
-              }
-            }}>
-              <Tabs defaultValue="basic" className="w-full">
-                <TabsList className="grid w-full grid-cols-3 bg-[var(--surface-container-low)] rounded-xl h-12 p-1 mb-6 sticky top-0 z-10">
-                  <TabsTrigger value="basic" className="rounded-lg font-bold text-xs uppercase tracking-wider">Info. Básica</TabsTrigger>
-                  <TabsTrigger value="pricing" className="rounded-lg font-bold text-xs uppercase tracking-wider">Precio & Stock</TabsTrigger>
-                  <TabsTrigger value="images" className="rounded-lg font-bold text-xs uppercase tracking-wider">Multimedia</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="basic" className="space-y-6 focus-visible:outline-none">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="space-y-2">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-variant)]">SKU Identificador *</Label>
-                      <Input value={formData.sku} onChange={e => setFormData({...formData, sku: e.target.value.toUpperCase()})} required className="h-11 rounded-lg bg-[var(--surface-container-low)] border-[var(--outline-variant)]/30" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-variant)]">Nombre Comercial *</Label>
-                      <Input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required className="h-11 rounded-lg bg-[var(--surface-container-low)] border-[var(--outline-variant)]/30" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-variant)]">Slug (URL) *</Label>
-                      <Input value={formData.slug} onChange={e => setFormData({...formData, slug: e.target.value})} required className="h-11 rounded-lg bg-[var(--surface-container-low)] border-[var(--outline-variant)]/30" placeholder="nombre-producto-slug" />
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="space-y-2">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-variant)]">Categoría *</Label>
-                      <Select value={formData.categoryId} onValueChange={v => setFormData({...formData, categoryId: v || ""})}>
-                        <SelectTrigger className="h-11 rounded-lg bg-[var(--surface-container-low)] border-[var(--outline-variant)]/30">
-                          <SelectValue placeholder="Selecciona una categoría" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categories.map(c => (
-                            <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-variant)]">Marca / Fabricante</Label>
-                      <Input value={formData.brand} onChange={e => setFormData({...formData, brand: e.target.value})} className="h-11 rounded-lg bg-[var(--surface-container-low)] border-[var(--outline-variant)]/30" placeholder="Ej. L'Oréal" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-variant)]">Peso Neto (kg)</Label>
-                      <Input type="number" step="0.01" value={formData.weight} onChange={e => setFormData({...formData, weight: e.target.value})} className="h-11 rounded-lg bg-[var(--surface-container-low)] border-[var(--outline-variant)]/30" />
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-variant)]">Descripción Breve</Label>
-                    <Textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} rows={2} className="rounded-lg bg-[var(--surface-container-low)] border-[var(--outline-variant)]/30" />
-                  </div>
-                  
-                  <div className="flex gap-8 p-4 bg-[var(--surface-container-low)] rounded-xl">
-                    <div className="flex items-center gap-3">
-                      <input 
-                        type="checkbox" 
-                        id="form-isActive" 
-                        checked={formData.isActive}
-                        onChange={e => setFormData({...formData, isActive: e.target.checked})}
-                        className="w-5 h-5 accent-[var(--primary)]"
-                      />
-                      <Label htmlFor="form-isActive" className="cursor-pointer font-bold text-sm text-[var(--on-surface)]">Producto Activo</Label>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <input 
-                        type="checkbox" 
-                        id="form-isFeatured" 
-                        checked={formData.isFeatured}
-                        onChange={e => setFormData({...formData, isFeatured: e.target.checked})}
-                        className="w-5 h-5 accent-[var(--primary)]"
-                      />
-                      <Label htmlFor="form-isFeatured" className="cursor-pointer font-bold text-sm text-[var(--on-surface)]">Destacar en Inicio</Label>
-                    </div>
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="pricing" className="space-y-6 focus-visible:outline-none">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                    <div className="space-y-2">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-variant)]">Precio Venta *</Label>
-                      <Input type="number" step="0.01" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} required className="h-11 rounded-lg bg-[var(--surface-container-low)] border-[var(--outline-variant)]/30" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-variant)]">Precio Costo</Label>
-                      <Input type="number" step="0.01" value={formData.costPrice} onChange={e => setFormData({...formData, costPrice: e.target.value})} className="h-11 rounded-lg bg-[var(--surface-container-low)] border-[var(--outline-variant)]/30" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-variant)]">Margen Bruto</Label>
-                      <div className="h-11 flex items-center px-4 bg-[var(--surface-container-high)] rounded-lg text-sm font-bold text-[var(--primary)]">
-                        {calculateMargin(Number(formData.price), Number(formData.costPrice)) ? 
-                          `${calculateMargin(Number(formData.price), Number(formData.costPrice))}%` : 
-                          '—'}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-variant)]">Stock Disponible *</Label>
-                      <Input type="number" value={formData.stock} onChange={e => setFormData({...formData, stock: e.target.value})} required className="h-11 rounded-lg bg-[var(--surface-container-low)] border-[var(--outline-variant)]/30" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-variant)]">Mínimo Crítico</Label>
-                      <Input type="number" value={formData.minStock} onChange={e => setFormData({...formData, minStock: e.target.value})} className="h-11 rounded-lg bg-[var(--surface-container-low)] border-[var(--outline-variant)]/30" />
-                    </div>
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="images" className="space-y-6 focus-visible:outline-none">
-                  <div className="p-6 border-2 border-dashed border-[var(--outline-variant)]/30 rounded-2xl flex flex-col items-center gap-6">
-                    {formData.mainImage ? (
-                      <div className="relative w-40 h-40 rounded-2xl overflow-hidden shadow-lg border border-[var(--outline-variant)]/30">
-                        <Image src={formData.mainImage} alt="Vista previa" fill className="object-cover" />
-                      </div>
-                    ) : (
-                      <div className="w-32 h-32 bg-[var(--surface-container-low)] rounded-2xl flex items-center justify-center">
-                        <ImageIcon className="w-12 h-12 text-[var(--outline-variant)]" aria-hidden="true" />
-                      </div>
-                    )}
+          <div className="flex-1 overflow-y-auto px-8 py-4 bg-white">
+            <ProductFormWizard
+              categories={categories}
+              initialData={editingProduct ? {
+                ...editingProduct,
+                categoryId: editingProduct.categoryId.toString(),
+                description: editingProduct.description || undefined,
+                longDescription: editingProduct.longDescription || undefined,
+                costPrice: editingProduct.costPrice || undefined,
+                weight: editingProduct.weight ? parseFloat(editingProduct.weight) : undefined,
+                brand: editingProduct.brand || undefined,
+                mainImage: editingProduct.mainImage || undefined,
+              } : undefined}
+              isSubmitting={isSubmitting}
+              onCancel={() => setIsDialogOpen(false)}
+              onSave={async (data) => {
+                setIsSubmitting(true);
+                try {
+                  const result = editingProduct 
+                    ? await updateProduct(editingProduct.id, data as any)
+                    : await createProduct(data as any);
                     
-                    <div className="text-center">
-                      <CldUploadWidget 
-                        uploadPreset="cosmetics_unsigned" 
-                        onSuccess={(result: any) => setFormData({...formData, mainImage: result.info.secure_url})}
-                      >
-                        {({ open }) => (
-                          <Button type="button" variant="outline" onClick={() => open()} className="rounded-full px-8 h-11 border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-white transition-all">
-                            {formData.mainImage ? 'Cambiar Imagen' : 'Subir Imagen Principal'}
-                          </Button>
-                        )}
-                      </CldUploadWidget>
-                      <p className="text-[10px] text-[var(--outline)] mt-4 uppercase font-bold tracking-widest">Formatos: JPG, PNG, WEBP (Max 2MB)</p>
-                    </div>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </form>
-          </div>
-          
-          <div className="px-8 py-4 border-t border-[var(--outline-variant)]/20 bg-[var(--surface)]">
-            <DialogFooter className="gap-4">
-              <Button type="button" variant="ghost" onClick={() => setIsDialogOpen(false)} className="rounded-lg h-11 px-8 font-bold text-xs uppercase tracking-wider">Cancelar</Button>
-              <Button type="submit" form={undefined} disabled={isSubmitting} onClick={() => document.querySelector('form')?.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }))} className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-white rounded-lg h-11 px-10 font-bold text-xs uppercase tracking-wider shadow-lg">
-                {isSubmitting ? 'Procesando...' : (editingProduct ? 'Guardar Cambios' : 'Crear Producto')}
-              </Button>
-            </DialogFooter>
+                  if (result.success) {
+                    toast.success(editingProduct ? 'Producto actualizado' : 'Producto creado con éxito');
+                    setIsDialogOpen(false);
+                    router.refresh();
+                    setTimeout(() => window.location.reload(), 1000);
+                  } else {
+                    toast.error(result.error);
+                  }
+                } catch {
+                  toast.error('Ocurrió un error inesperado');
+                } finally {
+                  setIsSubmitting(false);
+                }
+              }}
+            />
           </div>
         </DialogContent>
       </Dialog>
