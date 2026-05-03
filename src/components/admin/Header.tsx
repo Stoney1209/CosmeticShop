@@ -1,7 +1,19 @@
 "use client";
 
-import { Search } from "lucide-react";
-import { NotificationsBell } from "./NotificationsBell";
+import { Search, Bell } from "lucide-react";
+import dynamic from "next/dynamic";
+
+const NotificationsBell = dynamic(
+  () => import("./NotificationsBell").then((mod) => mod.NotificationsBell),
+  { 
+    ssr: false, 
+    loading: () => (
+      <div className="w-9 h-9 flex items-center justify-center rounded-full text-[var(--on-surface-variant)] opacity-20">
+        <Bell className="w-5 h-5" />
+      </div>
+    )
+  }
+);
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
