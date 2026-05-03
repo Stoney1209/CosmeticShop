@@ -83,7 +83,7 @@ export function DashboardContent({ data }: DashboardContentProps) {
     <div className="space-y-8 animate-fade-up">
       <div>
         <h1 className="text-3xl font-heading font-bold text-[var(--on-surface)]">Dashboard</h1>
-        <p className="text-[var(--on-surface-variant)] mt-1">{today}</p>
+        <p className="text-[var(--on-surface-variant)] mt-1" suppressHydrationWarning>{today}</p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">

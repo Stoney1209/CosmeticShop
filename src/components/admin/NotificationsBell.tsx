@@ -5,13 +5,11 @@ import {
   Bell, Package, AlertTriangle, Info, CheckCheck, 
   CreditCard, Settings, Calendar, ArrowRight, BellOff
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
   DropdownMenuLabel
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -23,6 +21,7 @@ export function NotificationsBell() {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const isMountedRef = useRef(true);
 
@@ -39,6 +38,7 @@ export function NotificationsBell() {
 
   useEffect(() => {
     isMountedRef.current = true;
+    setMounted(true);
     loadNotifications();
     
     const interval = setInterval(loadNotifications, 30000);
@@ -86,73 +86,81 @@ export function NotificationsBell() {
     try {
       const d = new Date(date);
       if (isNaN(d.getTime())) return "Reciente";
-      
       const now = new Date();
       const diffInSeconds = Math.floor((now.getTime() - d.getTime()) / 1000);
-      
       if (diffInSeconds < 60) return "ahora mismo";
       if (diffInSeconds < 3600) return `hace ${Math.floor(diffInSeconds / 60)} min`;
       if (diffInSeconds < 86400) return `hace ${Math.floor(diffInSeconds / 3600)} h`;
-      if (diffInSeconds < 604800) return `hace ${Math.floor(diffInSeconds / 86400)} d`;
-      
       return d.toLocaleDateString();
     } catch (e) {
       return "Reciente";
     }
   };
 
+  // P12: Avoid hydration issues by not rendering anything until mounted
+  if (!mounted) {
+    return (
+      <div className="w-9 h-9 flex items-center justify-center rounded-full text-[var(--on-surface-variant)]">
+        <Bell className="w-5 h-5 opacity-20" />
+      </div>
+    );
+  }
+
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenuTrigger>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)] hover:text-[var(--primary)] rounded-full transition-all duration-300"
-        >
-          <div className="relative flex items-center justify-center size-full">
+      {/* 
+        S1: Use a simple button element as the trigger to avoid complex component interaction 
+        and fix Base UI error #31 (Trigger must have a single child).
+      */}
+      <DropdownMenuTrigger
+        render={
+          <button 
+            type="button"
+            className="relative w-9 h-9 flex items-center justify-center rounded-full text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)] hover:text-[var(--primary)] transition-all duration-300 outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/20"
+            aria-label={`Notificaciones${unreadCount > 0 ? ` (${unreadCount} sin leer)` : ""}`}
+          >
             <Bell className={cn("w-5 h-5", unreadCount > 0 && "animate-tada")} />
             {unreadCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-4.5 h-4.5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+              <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center border border-white shadow-sm">
                 {unreadCount > 9 ? "9+" : unreadCount}
               </span>
             )}
-          </div>
-        </Button>
-      </DropdownMenuTrigger>
+          </button>
+        }
+      />
 
       <DropdownMenuContent 
         align="end" 
-        className="w-[380px] p-0 border-none shadow-2xl rounded-2xl overflow-hidden"
+        className="w-[380px] p-0 border-none shadow-2xl rounded-2xl overflow-hidden bg-white ring-1 ring-black/5"
       >
         <div className="p-4 bg-white border-b border-[var(--outline-variant)]/20 flex items-center justify-between">
           <DropdownMenuLabel className="p-0 text-sm font-bold uppercase tracking-widest text-[var(--on-surface)]">
             Notificaciones
           </DropdownMenuLabel>
           {unreadCount > 0 && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <button 
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 handleMarkAllAsRead();
               }}
-              className="h-8 px-2 text-[10px] font-bold uppercase tracking-wider text-[var(--primary)] hover:bg-[var(--primary)]/5 rounded-lg"
+              className="h-8 px-2 text-[10px] font-bold uppercase tracking-wider text-[var(--primary)] hover:bg-[var(--primary)]/5 rounded-lg transition-colors flex items-center"
             >
               <CheckCheck className="w-3 h-3 mr-1.5" />
               Marcar todas
-            </Button>
+            </button>
           )}
         </div>
 
-        <ScrollArea className="h-[420px]">
-          {notifications && notifications.length > 0 ? (
-            <div className="py-1">
-              {notifications.map((n) => (
+        <ScrollArea className="max-h-[420px]">
+          <div className="py-1">
+            {notifications.length > 0 ? (
+              notifications.map((n) => (
                 <DropdownMenuItem 
                   key={n.id}
                   onClick={() => handleMarkAsRead(n.id, n.link)}
                   className={cn(
-                    "flex gap-4 p-4 cursor-pointer border-b border-[var(--outline-variant)]/5 last:border-0 transition-colors focus:bg-[var(--surface-container-low)]",
+                    "flex gap-4 p-4 cursor-pointer border-b border-[var(--outline-variant)]/5 last:border-0 transition-colors focus:bg-[var(--surface-container-low)] outline-none",
                     !n.isRead && "bg-[var(--primary)]/[0.02]"
                   )}
                 >
@@ -183,40 +191,33 @@ export function NotificationsBell() {
                         <Calendar className="w-3 h-3 mr-1 opacity-50" />
                         {formatRelativeTime(n.createdAt)}
                       </span>
-                      {n.link && (
-                        <span className="text-[10px] text-[var(--primary)] font-bold uppercase tracking-wider flex items-center">
-                          Ver detalle <ArrowRight className="w-3 h-3 ml-1" />
-                        </span>
-                      )}
                     </div>
                   </div>
                 </DropdownMenuItem>
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-[350px] p-8 text-center gap-4">
-              <div className="w-16 h-16 rounded-full bg-[var(--surface-container-low)] flex items-center justify-center">
-                <BellOff className="w-8 h-8 text-[var(--outline)] opacity-20" />
+              ))
+            ) : (
+              <div className="flex flex-col items-center justify-center h-[300px] p-8 text-center gap-4">
+                <BellOff className="w-12 h-12 text-[var(--outline)] opacity-10" />
+                <div>
+                  <p className="text-sm font-bold text-[var(--on-surface)]">Sin novedades</p>
+                  <p className="text-xs text-[var(--on-surface-variant)] mt-1">Todo está al día por ahora.</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-bold text-[var(--on-surface)]">Todo al día</p>
-                <p className="text-xs text-[var(--on-surface-variant)] mt-1">No tienes notificaciones nuevas por el momento.</p>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </ScrollArea>
 
         <div className="p-3 bg-[var(--surface-container-lowest)] border-t border-[var(--outline-variant)]/20">
-          <Button 
-            variant="ghost" 
-            className="w-full h-10 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--outline)] hover:text-[var(--primary)] transition-colors"
+          <button 
+            type="button"
+            className="w-full h-10 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--outline)] hover:text-[var(--primary)] transition-colors rounded-lg flex items-center justify-center"
             onClick={() => {
               setIsOpen(false);
               router.push("/dashboard");
             }}
           >
             Ir al Dashboard
-          </Button>
+          </button>
         </div>
       </DropdownMenuContent>
     </DropdownMenu>
