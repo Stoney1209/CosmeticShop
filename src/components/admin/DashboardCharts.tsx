@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useEffect } from "react";
+
 import {
   LineChart,
   Line,
@@ -22,6 +24,12 @@ interface SalesChartProps {
  * This also helps with Recharts hydration issues.
  */
 export function SalesChart({ data }: SalesChartProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   if (!data || data.length === 0) {
     return (
       <div className="h-full flex items-center justify-center bg-[var(--surface-container-low)] rounded-lg">
@@ -30,6 +38,10 @@ export function SalesChart({ data }: SalesChartProps) {
         </p>
       </div>
     );
+  }
+
+  if (!mounted) {
+    return <div className="h-80 w-full animate-pulse bg-[var(--surface-container-low)] rounded-lg" />;
   }
 
   return (

@@ -25,7 +25,6 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "LUXE BEAUTÉ | Premium Beauty & Skincare",
   description: "Discover luxury beauty products curated for the discerning clientele. Radiance reimagined.",
-  manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
