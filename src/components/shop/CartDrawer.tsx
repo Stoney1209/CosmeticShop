@@ -31,6 +31,27 @@ export function CartDrawer({ whatsappNumber }: { whatsappNumber: string }) {
 
   useEffect(() => {
     setIsMounted(true);
+    
+    // Fetch customer data and pre-fill form
+    const fetchCustomerData = async () => {
+      try {
+        const res = await fetch("/api/v1/auth/me");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.data) {
+            const customer = data.data;
+            setName(customer.fullName || "");
+            setEmail(customer.email || "");
+            setPhone(customer.phone || "");
+          }
+        }
+      } catch (error) {
+        // Silently fail - user can manually fill the form
+        console.log("Could not fetch customer data");
+      }
+    };
+    
+    fetchCustomerData();
   }, []);
 
   // P3: Render a stable placeholder during SSR to avoid CLS
