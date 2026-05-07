@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getCustomerSession } from "@/lib/customer-session";
+import DOMPurify from "isomorphic-dompurify";
 
 export async function createReview(data: {
   productId: number;
@@ -40,8 +41,8 @@ export async function createReview(data: {
       productId: data.productId,
       customerId: session.id,
       rating: data.rating,
-      title: data.title?.trim() || null,
-      comment: data.comment?.trim() || null,
+      title: data.title ? DOMPurify.sanitize(data.title.trim()) : null,
+      comment: data.comment ? DOMPurify.sanitize(data.comment.trim()) : null,
       isActive: true,
       isApproved: true,
       isVerified: false,

@@ -1,5 +1,6 @@
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { getCustomerSession } from "@/lib/customer-session";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -234,12 +235,14 @@ export default async function OrderDetailPage({ params }: PageProps) {
               {order.items.map((item) => (
                 <div key={item.id} className="flex gap-4 rounded-xl border border-slate-100 p-4">
                   {/* Product Image */}
-                  <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg bg-slate-100">
+                  <div className="h-20 w-20 relative flex-shrink-0 overflow-hidden rounded-lg bg-slate-100">
                     {item.product?.mainImage ? (
-                      <img 
+                      <Image 
                         src={item.product.mainImage} 
                         alt={item.productName}
-                        className="h-full w-full object-cover"
+                        fill
+                        sizes="80px"
+                        className="object-cover"
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center text-slate-300">

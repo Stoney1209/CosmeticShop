@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { redirect } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,7 +36,7 @@ export default async function WishlistPage() {
               <Card key={id} className="overflow-hidden group">
                 <div className="relative aspect-[4/5] bg-slate-100">
                   {product.mainImage ? (
-                    <img src={product.mainImage} alt={product.name} className="h-full w-full object-cover" />
+                    <Image src={product.mainImage} alt={product.name} fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" className="object-cover" />
                   ) : (
                     <div className="flex h-full items-center justify-center text-4xl text-slate-300">
                       <Heart className="h-12 w-12" />

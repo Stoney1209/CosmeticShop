@@ -4,34 +4,42 @@ import bcrypt from "bcryptjs";
 import crypto from "node:crypto";
 import { setCustomerSession } from "@/lib/customer-session";
 import { sendEmail, generateEmailVerificationEmail, generateWelcomeEmail } from "@/lib/email";
-import { validatePassword } from "@/lib/password-validation";
-import { validateEmail } from "@/lib/email-validation";
+import { z } from "zod";
+import { getClientIp, isIpBlocked, getRecentFailedAttempts, checkAndBlockIp, recordLoginAttempt } from "@/lib/security";
+
+const registerSchema = z.object({
+  fullName: z.string().min(2, "El nombre completo debe tener al menos 2 caracteres"),
+  email: z.string().email("Correo electrónico inválido"),
+  password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
+  phone: z.string().optional(),
+});
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { fullName, email, password, phone } = body;
-
-    if (!fullName || !email || !password) {
+    const validation = registerSchema.safeParse(body);
+    if (!validation.success) {
       return NextResponse.json(
-        { success: false, error: "Todos los campos son obligatorios" },
+        { success: false, error: validation.error.issues[0]?.message || "Datos inválidos" },
         { status: 400 }
       );
     }
 
-    const emailValidation = validateEmail(email);
-    if (!emailValidation.valid) {
+    const { fullName, email, password, phone } = validation.data;
+
+    const ip = getClientIp(request);
+    if (await isIpBlocked(ip)) {
       return NextResponse.json(
-        { success: false, error: emailValidation.error },
-        { status: 400 }
+        { success: false, error: "Demasiados intentos. Por favor intente más tarde." },
+        { status: 429 }
       );
     }
-
-    const passwordValidation = validatePassword(password);
-    if (!passwordValidation.valid) {
+    const recentAttempts = await getRecentFailedAttempts(ip);
+    if (recentAttempts >= 5) {
+      await checkAndBlockIp(ip);
       return NextResponse.json(
-        { success: false, error: passwordValidation.error },
-        { status: 400 }
+        { success: false, error: "Demasiados intentos. Por favor intente más tarde." },
+        { status: 429 }
       );
     }
 
@@ -42,6 +50,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (existing) {
+      await recordLoginAttempt(ip, false);
       return NextResponse.json(
         { success: false, error: "Ese correo ya está registrado" },
         { status: 409 }

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { requireAdminServerAuth } from "@/lib/server-auth";
 import { createProductSchema, updateProductSchema } from "@/lib/validations";
+import DOMPurify from "isomorphic-dompurify";
 
 export async function getProducts(search?: string) {
   await requireAdminServerAuth();
@@ -63,11 +64,16 @@ export async function createProduct(data: {
   try {
     // Validate input
     const validatedData = createProductSchema.parse(data);
-    const { variants, ...productData } = validatedData;
+    let { variants, description, longDescription, ...productData } = validatedData;
+    
+    if (description) description = DOMPurify.sanitize(description);
+    if (longDescription) longDescription = DOMPurify.sanitize(longDescription);
 
     const product = await prisma.product.create({
       data: {
         ...productData,
+        description,
+        longDescription,
         variants: variants ? {
           create: variants.map(v => ({
             sku: v.sku,
@@ -99,7 +105,10 @@ export async function updateProduct(id: number, data: any) {
   try {
     // Validate input
     const validatedData = updateProductSchema.parse(data);
-    const { variants, ...productData } = validatedData;
+    let { variants, description, longDescription, ...productData } = validatedData;
+    
+    if (description) description = DOMPurify.sanitize(description);
+    if (longDescription) longDescription = DOMPurify.sanitize(longDescription);
 
     // Check if slug is unique (excluding current product)
     if (productData.slug) {
@@ -126,6 +135,8 @@ export async function updateProduct(id: number, data: any) {
       where: { id },
       data: {
         ...productData,
+        description,
+        longDescription,
         variants: variants ? {
           create: variants.map((v: any) => ({
             sku: v.sku,

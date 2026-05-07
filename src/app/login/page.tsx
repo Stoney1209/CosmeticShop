@@ -8,23 +8,37 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+
+const loginSchema = z.object({
+  username: z.string().min(1, "El usuario es requerido"),
+  password: z.string().min(1, "La contraseña es requerida"),
+});
 
 export default function LoginPage() {
   const router = useRouter();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const form = useForm<z.infer<typeof loginSchema>>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      username: "",
+      password: "",
+    },
+  });
+
+  const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     setIsLoading(true);
     setError("");
 
     try {
       const res = await signIn("credentials", {
-        username,
-        password,
+        username: values.username,
+        password: values.password,
         redirect: false,
       });
 
@@ -57,47 +71,61 @@ export default function LoginPage() {
             <CardTitle>Acceso</CardTitle>
             <CardDescription>Ingresa tus credenciales para continuar.</CardDescription>
           </CardHeader>
-          <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-4">
-              {error && (
-                <div className="bg-[var(--error-container)] text-[var(--error)] p-3 rounded-md flex items-center text-sm font-medium">
-                  <AlertCircle className="w-4 h-4 mr-2" />
-                  {error}
-                </div>
-              )}
-              
-              <div className="space-y-2">
-                <Label htmlFor="username">Usuario</Label>
-                <Input
-                  id="username"
-                  type="text"
-                  placeholder="admin"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                  className="focus-visible:ring-[var(--primary)]"
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)}>
+              <CardContent className="space-y-4">
+                {error && (
+                  <div className="bg-[var(--error-container)] text-[var(--error)] p-3 rounded-md flex items-center text-sm font-medium">
+                    <AlertCircle className="w-4 h-4 mr-2" />
+                    {error}
+                  </div>
+                )}
+                
+                <FormField
+                  control={form.control}
+                  name="username"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel>Usuario</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="admin"
+                          {...field}
+                          className="focus-visible:ring-[var(--primary)]"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Contraseña</Label>
-                </div>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="focus-visible:ring-[var(--primary)]"
+                
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <FormLabel>Contraseña</FormLabel>
+                      </div>
+                      <FormControl>
+                        <Input
+                          type="password"
+                          {...field}
+                          className="focus-visible:ring-[var(--primary)]"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button type="submit" className="w-full bg-[var(--primary)] hover:bg-[var(--on-primary-container)] text-[var(--on-primary)]" disabled={isLoading}>
-                {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
-              </Button>
-            </CardFooter>
-          </form>
+              </CardContent>
+              <CardFooter>
+                <Button type="submit" className="w-full bg-[var(--primary)] hover:bg-[var(--on-primary-container)] text-[var(--on-primary)]" disabled={isLoading}>
+                  {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
+                </Button>
+              </CardFooter>
+            </form>
+          </Form>
         </Card>
       </div>
     </div>
